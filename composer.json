@@ -1,0 +1,11 @@
+{
+    "name": "hospital/refeitorio",
+    "description": "Sistema de Agendamento de Refeitório",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "require": {}
+}

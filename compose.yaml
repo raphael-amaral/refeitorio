@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: refeitorio_app
+    restart: always
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+      - /etc/localtime:/etc/localtime:ro # Sincroniza relógio do sistema
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      TZ: ${TIMEZONE} # Adicionado para o PHP
+
+  db:
+    image: mysql:8.0
+    container_name: refeitorio_db
+    restart: always
+    command: --default-time-zone=-03:00
+    ports:
+      - "3101:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TIMEZONE}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /etc/localtime:/etc/localtime:ro # Sincroniza relógio do sistema
+
+volumes:
+  db_data:

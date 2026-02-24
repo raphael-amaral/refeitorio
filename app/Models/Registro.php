@@ -13,24 +13,44 @@ class Registro
         $this->db = Database::getConnection();
     }
 
-    public function salvar($usuario_id, $matricula, $data)
+    public function salvar($matricula, $data)
     {
         try {
-            $stmt = $this->db->prepare("INSERT IGNORE INTO registros (usuario_id, matricula, data_agendada, status) VALUES (:uid, :mat, :data, 'agendado')");
+            // Se já existir registro, volta o status para 'agendado'
+            $sql = "INSERT INTO registros (matricula, data_agendada, status) 
+                    VALUES (:mat, :data, 'agendado')
+                    ON DUPLICATE KEY UPDATE status = 'agendado'";
+
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([':mat' => $matricula, ':data' => $data]);
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
+    public function alterarStatus($matricula, $data, $novoStatus)
+    {
+        try {
+            $sql = "UPDATE registros 
+                    SET status = :status 
+                    WHERE matricula = :mat 
+                    AND data_agendada = :data";
+
+            $stmt = $this->db->prepare($sql);
             return $stmt->execute([
-                ':uid'  => $usuario_id,
-                ':mat'  => $matricula,
-                ':data' => $data
+                ':status' => $novoStatus,
+                ':mat'    => $matricula,
+                ':data'   => $data
             ]);
         } catch (\PDOException $e) {
             return false;
         }
     }
 
-    public function buscarMeusAgendamentos($usuario_id)
+    public function buscarMeusAgendamentos($matricula)
     {
-        $stmt = $this->db->prepare("SELECT data_agendada, status, criado_em FROM registros WHERE usuario_id = :uid ORDER BY data_agendada ASC LIMIT 15");
-        $stmt->execute([':uid' => $usuario_id]);
+        $stmt = $this->db->prepare("SELECT data_agendada, status FROM registros WHERE matricula = :mat AND status != 'cancelado' ORDER BY data_agendada ASC");
+        $stmt->execute([':mat' => $matricula]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

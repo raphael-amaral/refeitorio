@@ -67,15 +67,25 @@
             $segundaFeira = date('Y-m-d', strtotime("-$diffSegunda days"));
 
             $registroModel = new \App\Models\Registro();
-            $meusAgendamentos = $registroModel->buscarMeusAgendamentos($_SESSION['usuario_id']);
-            $datasAgendadas = array_column($meusAgendamentos, 'data_agendada');
+            // Usando 'usuario_matricula' para manter o padrão que definimos para o init.sql
+            $matriculaUser = $_SESSION['usuario_matricula'] ?? $_SESSION['matricula'];
+            $meusAgendamentos = $registroModel->buscarMeusAgendamentos($matriculaUser);
 
-            $diasNome = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            // Criamos um mapa de status para facilitar a busca no loop
+            $statusPorData = [];
+            foreach ($meusAgendamentos as $reg) {
+                $statusPorData[$reg['data_agendada']] = $reg['status'];
+            }
+
+            $diasNome = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado'];
 
             for ($i = 0; $i < 7; $i++):
                 $dataAlvo = date('Y-m-d', strtotime("$segundaFeira +$i days"));
                 $diaNum = (int)date('w', strtotime($dataAlvo));
-                $jaAgendado = in_array($dataAlvo, $datasAgendadas);
+
+                // Verifica se está agendado e se o status não é cancelado
+                $jaAgendado = (isset($statusPorData[$dataAlvo]) && $statusPorData[$dataAlvo] === 'agendado');
+
                 $isHoje = ($dataAlvo === $hoje);
                 $isPassado = ($dataAlvo < $hoje);
                 $passouLimite = ($isHoje && $agora >= $limite);
@@ -95,6 +105,16 @@
                     <div class="status-box">
                         <?php if ($jaAgendado): ?>
                             <span class="status-confirmado">✓ AGENDADO</span>
+
+                            <?php if (!$isPassado && !$passouLimite): ?>
+                                <form action="/cancelar" method="POST" style="margin-top: 5px;">
+                                    <input type="hidden" name="data_cancelar" value="<?= $dataAlvo ?>">
+                                    <button type="submit" class="btn-cancelar" onclick="return confirm('Deseja realmente cancelar o agendamento de <?= $diasNome[$diaNum] ?>?')">
+                                        Cancelar
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+
                         <?php elseif ($isPassado || $passouLimite): ?>
                             <span class="bloqueado-txt">🔒 INDISPONÍVEL</span>
                         <?php else: ?>

@@ -1,5 +1,5 @@
 <?php
-session_start(); // Sempre a primeira linha
+session_start();
 date_default_timezone_set('America/Sao_Paulo');
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -24,7 +24,7 @@ switch ($url) {
         break;
 
     case '/dashboard':
-        if (!isset($_SESSION['usuario_id'])) {
+        if (!isset($_SESSION['matricula'])) {
             header('Location: /login');
             exit;
         }
@@ -32,11 +32,22 @@ switch ($url) {
         break;
 
     case '/agendar':
-        if (!isset($_SESSION['usuario_id'])) {
+        if (!isset($_SESSION['matricula'])) {
+            header('Location: /login');
             exit;
         }
         $controller = new RegistroController();
         $controller->agendar();
+        break;
+
+    // --- NOVA ROTA DE CANCELAMENTO ---
+    case '/cancelar':
+        if (!isset($_SESSION['matricula'])) {
+            header('Location: /login');
+            exit;
+        }
+        $controller = new RegistroController();
+        $controller->cancelar();
         break;
 
     default:

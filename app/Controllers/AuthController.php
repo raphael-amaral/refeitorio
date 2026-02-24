@@ -14,23 +14,28 @@ class AuthController
 
     public function login()
     {
-        // Garante que não há espaços em branco saindo antes do header
         ob_start();
         if (session_status() === PHP_SESSION_NONE) session_start();
 
-        $matricula = $_POST['matricula'] ?? '';
+        // Limpa a matrícula para garantir que apenas números cheguem ao Model
+        $matriculaRaw = $_POST['matricula'] ?? '';
+        $matricula = preg_replace('/[^0-9]/', '', $matriculaRaw);
         $senha = $_POST['senha'] ?? '';
+
+        if (empty($matricula)) {
+            $_SESSION['erro_login'] = "Matrícula inválida.";
+            header('Location: /login');
+            exit;
+        }
 
         $userModel = new Usuario();
         $usuario = $userModel->buscarPorMatricula($matricula);
 
         if ($usuario && password_verify($senha, $usuario['senha'])) {
-            $_SESSION['usuario_id'] = $usuario['id'];
-            $_SESSION['usuario_matricula'] = $usuario['matricula'];
+            $_SESSION['matricula'] = $usuario['matricula'];
             $_SESSION['usuario_nome'] = $usuario['nome'];
             $_SESSION['usuario_tipo'] = $usuario['tipo_usuario'];
 
-            // Força a gravação da sessão antes de redirecionar
             session_write_close();
             header('Location: /dashboard');
             exit;

@@ -1,47 +1,52 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Refeitório</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Login - Refeitorio</title>
-    <style>
-        body {
-            background: #f4f7f6;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
-            padding: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/login.css?v=<?= time() ?>">
 </head>
 
 <body>
-    <div class="login-card">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h3 class="text-center mb-4">Refeitório Santa Casa Alegrete</h3>
-                <form action="/login/processar" method="POST">
-                    <div class="mb-3">
-                        <label>Matrícula</label>
-                        <input type="text" name="matricula" class="form-control" required autofocus>
-                    </div>
-                    <div class="mb-3">
-                        <label>Senha</label>
-                        <input type="password" name="senha" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
-                </form>
+
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-4">
+                <div class="card card-login p-4">
+
+                    <h2 class="titulo-login text-center">Refeitório</h2>
+
+                    <?php if (isset($_SESSION['erro_login'])): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <?= $_SESSION['erro_login']; ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        <?php unset($_SESSION['erro_login']); ?>
+                    <?php endif; ?>
+
+                    <form action="/login/processar" method="POST">
+                        <div class="mb-3">
+                            <label class="label-custom">Matrícula</label>
+                            <input type="text" name="matricula" class="form-control" required placeholder="Digite sua matrícula">
+                        </div>
+                        <div class="mb-3">
+                            <label class="label-custom">Senha</label>
+                            <input type="password" name="senha" class="form-control" required placeholder="******">
+                        </div>
+                        <button type="submit" class="btn btn-oliva w-100 fw-bold shadow-sm">ENTRAR</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

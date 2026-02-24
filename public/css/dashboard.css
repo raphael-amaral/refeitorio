@@ -1,0 +1,388 @@
+@charset "UTF-8";
+
+:root {
+  --oliva: #5b5f2c;
+  --oliva-claro: #5b5f2c85;
+  --laranja: #d16822;
+  --font-principal: "Cormorant Garamond", serif;
+  --font-secundaria: "Nunito", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-image: url(../img/teste3.png);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  font-family: var(--font-principal);
+}
+
+/* Header Estilo Cardápio */
+header {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 1px 5px 5px rgba(0, 0, 0, 0.2);
+  padding: 20px 0;
+}
+
+#cab {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  color: white;
+  font-size: 2.2rem;
+}
+
+.user-info {
+  color: white;
+  font-family: var(--font-secundaria);
+}
+
+.btn-sair {
+  text-decoration: none;
+  color: white;
+  background-color: var(--laranja);
+  padding: 5px 15px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Notificações Flutuantes (Pop-up) */
+#toast-container {
+  position: fixed;
+  top: 90px; /* Aumentado de 20px para 90px para descer o pop-up */
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.alerta-toast {
+  min-width: 280px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-secundaria);
+  animation: slideIn 0.4s ease-out;
+}
+
+.alerta-toast.sucesso {
+  background-color: var(--oliva);
+  border-left: 6px solid #8db142;
+}
+.alerta-toast.erro {
+  background-color: #b32d2d;
+  border-left: 6px solid #ff5c5c;
+}
+
+.alerta-toast button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+/* Conteúdo */
+#almoco-faixa {
+  background-color: var(--oliva-claro);
+  color: white;
+  padding: 12px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.botao-semana-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.btn-agendar-semana {
+  background-color: var(--oliva);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  font-family: var(--font-principal);
+  font-weight: bold;
+}
+
+.legenda-botao {
+  color: white;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  font-family: var(--font-secundaria);
+}
+
+/* Grid e Cards */
+#grid-agendamento {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  padding-bottom: 50px;
+}
+
+.card-dia {
+  background: white;
+  width: 190px;
+  min-height: 240px;
+  box-shadow: 1px 5px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-dia.hoje {
+  border: 3px solid var(--laranja);
+  transform: scale(1.05);
+}
+
+.cardtitle {
+  color: var(--laranja);
+  font-weight: bold;
+  font-size: 1.3rem;
+  margin-bottom: 2px;
+}
+
+.badge-hoje {
+  background: var(--laranja);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: sans-serif;
+  vertical-align: middle;
+}
+
+.data-texto {
+  font-family: var(--font-secundaria);
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.linha {
+  margin: 10px 0;
+  border: 0;
+  border-top: 1px solid #eee;
+}
+
+.conteudo-vazio {
+  flex-grow: 1;
+}
+
+.btn-card {
+  background-color: var(--oliva);
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.status-confirmado {
+  color: var(--oliva);
+  font-weight: bold;
+  font-family: var(--font-secundaria);
+} /* Header com Título Centralizado e User à Direita */
+header {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Escurecido para melhor leitura */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  padding: 15px 0;
+  position: relative;
+  z-index: 10;
+}
+
+#cab {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; /* Divide em 3 partes: Esquerda, Centro, Direita */
+  align-items: center;
+  padding: 0 40px;
+}
+
+/* Título Centralizado */
+header h1 {
+  grid-column: 2; /* Garante que o H1 fique na coluna do meio */
+  color: white;
+  font-size: 2.2rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Informações do Usuário à Direita */
+.user-info {
+  grid-column: 3; /* Vai para a coluna da direita */
+  justify-self: end; /* Alinha o conteúdo ao final (direita) */
+  color: white;
+  font-family: var(--font-secundaria);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info span {
+  font-size: 0.85rem; /* Nome do usuário menor */
+  opacity: 0.9;
+}
+
+.user-info strong {
+  font-size: 0.9rem;
+}
+
+.btn-sair {
+  text-decoration: none;
+  color: white;
+  background-color: var(--laranja);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  transition: 0.3s;
+}
+
+.btn-sair:hover {
+  background-color: #f3833a;
+}
+
+/* Ajuste da Badge para ficar ao lado do dia */
+.dia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.cardtitle {
+  color: var(--laranja);
+  font-weight: bold;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.badge-hoje {
+  background: var(--laranja);
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: sans-serif;
+  font-weight: bold;
+}
+
+/* Faixa com Botão Semanal */
+#almoco-faixa {
+  /* 0.3 de opacidade sem blur */
+  background-color: rgba(91, 95, 44, 0.3);
+  color: white;
+  padding: 15px 30px;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+
+  /* Removido o backdrop-filter (blur) */
+
+  /* Borda sutil apenas para dar um limite visual elegante */
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#almoco-faixa h2 {
+  font-family: var(--font-principal);
+  font-size: 1.8rem;
+}
+
+.btn-agendar-semana {
+  background-color: var(--laranja);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: var(--font-secundaria);
+  font-weight: bold;
+}
+
+/* Card Passado Sólido */
+.dia-passado {
+  background-color: #ebebeb !important;
+  opacity: 1 !important; /* Remove transparência que atrapalha */
+}
+
+.bloqueado-txt {
+  color: #999;
+  font-size: 0.8rem;
+  font-family: var(--font-secundaria);
+}
+
+.dia-passado {
+  background-color: #f2f2f2;
+  opacity: 0.7;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.btn-sair,
+.btn-agendar-semana {
+  transition: all 0.3s ease;
+}
+
+.btn-sair:hover,
+.btn-agendar-semana:hover {
+  background-color: #f3833a !important; /* Laranja mais claro */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Efeito nos botões oliva (Cards) */
+.btn-card {
+  transition: all 0.3s ease;
+}
+
+.btn-card:hover {
+  background-color: #454921 !important; /* Oliva mais escuro */
+  transform: scale(1.02);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Garante que o texto da badge e título fiquem na mesma linha */
+.dia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}

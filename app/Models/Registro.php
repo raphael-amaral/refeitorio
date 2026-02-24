@@ -16,11 +16,10 @@ class Registro
     public function salvar($usuario_id, $matricula, $data)
     {
         try {
-            // Agora salvamos ID e MATRICULA para facilitar a auditoria/relatórios
-            $stmt = $this->db->prepare("INSERT IGNORE INTO registros (usuario_id, matricula, data_agendada, status) VALUES (:usuario_id, :matricula, :data, 'agendado')");
+            $stmt = $this->db->prepare("INSERT IGNORE INTO registros (usuario_id, matricula, data_agendada, status) VALUES (:uid, :mat, :data, 'agendado')");
             return $stmt->execute([
-                ':usuario_id'  => $usuario_id,
-                ':matricula'  => $matricula,
+                ':uid'  => $usuario_id,
+                ':mat'  => $matricula,
                 ':data' => $data
             ]);
         } catch (\PDOException $e) {
@@ -30,14 +29,8 @@ class Registro
 
     public function buscarMeusAgendamentos($usuario_id)
     {
-        $stmt = $this->db->prepare("
-        SELECT data_agendada, status, criado_em 
-        FROM registros 
-        WHERE usuario_id = :uid 
-        ORDER BY data_agendada ASC 
-        LIMIT 10
-    ");
+        $stmt = $this->db->prepare("SELECT data_agendada, status, criado_em FROM registros WHERE usuario_id = :uid ORDER BY data_agendada ASC LIMIT 15");
         $stmt->execute([':uid' => $usuario_id]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

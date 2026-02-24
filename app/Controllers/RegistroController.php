@@ -6,42 +6,42 @@ use App\Models\Registro;
 
 class RegistroController
 {
-
     public function agendar()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $usuario_id = $_SESSION['usuario_id'];
-        $matricula  = $_SESSION['usuario_matricula'] ?? 'N/A'; // Precisamos garantir que a matricula está na sessão
-        $tipo       = $_POST['tipo'] ?? 'hoje';
+        $matricula  = $_SESSION['usuario_matricula'];
+        $tipo = $_POST['tipo'] ?? null;
+        $data_especifica = $_POST['data_especifica'] ?? null;
 
-        $agendamentoModel = new Registro();
+        $model = new Registro();
+        $hoje = date('Y-m-d');
+        $agora = date('H:i');
         $limite = "09:30";
-        $agora  = date('H:i');
-        $hoje   = date('Y-m-d');
 
-        if ($tipo === 'hoje') {
-            if ($agora > $limite) {
-                header('Location: /dashboard?erro=horario');
+        if ($data_especifica) {
+            if ($data_especifica === $hoje && $agora >= $limite) {
+                $_SESSION['aviso_erro'] = "Horário limite atingido.";
+                header('Location: /dashboard');
                 exit;
             }
-            $agendamentoModel->salvar($usuario_id, $matricula, $hoje);
+            $model->salvar($usuario_id, $matricula, $data_especifica);
+            $_SESSION['aviso_sucesso'] = "Agendado para o dia " . date('d/m', strtotime($data_especifica));
         } elseif ($tipo === 'semana') {
-            // Agendar para hoje e os próximos 4 dias úteis (total 5 dias)
-            for ($i = 0; $i < 5; $i++) {
-                $dataAlvo = date('Y-m-d', strtotime("+$i days"));
-                $diaSemana = date('w', strtotime($dataAlvo));
-
-                if ($diaSemana == 0 || $diaSemana == 6) continue; // Pula finais de semana
-
-                // Se for hoje e passou das 09:30, pula o dia de hoje mas agenda os outros
-                if ($dataAlvo === $hoje && $agora > $limite) continue;
-
-                $agendamentoModel->salvar($usuario_id, $matricula, $dataAlvo);
+            $diaDaSemanaAtual = (int)date('w');
+            if ($diaDaSemanaAtual <= 5) {
+                $inicio = ($diaDaSemanaAtual == 0) ? 1 : 0;
+                $diasAteSexta = 5 - $diaDaSemanaAtual;
+                for ($i = $inicio; $i <= $diasAteSexta; $i++) {
+                    $dataAlvo = date('Y-m-d', strtotime("+$i days"));
+                    if ($dataAlvo === $hoje && $agora >= $limite) continue;
+                    $model->salvar($usuario_id, $matricula, $dataAlvo);
+                }
+                $_SESSION['aviso_sucesso'] = "Semana agendada com sucesso!";
             }
         }
-
-        header('Location: /dashboard?sucesso=1');
+        header('Location: /dashboard');
         exit;
     }
 }

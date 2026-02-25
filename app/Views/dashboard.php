@@ -5,9 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Agendamento</title>
+    <title>Agendamento</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@300;400;600&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/dashboard.css?v=<?= time() ?>">
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
@@ -34,7 +35,7 @@
     <header>
         <section id="cabs">
             <div id="cab">
-                <h1>Agendamento de Almoço</h1>
+                <h1>Agendamento Refeitório</h1>
                 <div class="user-info">
                     <span>Usuário: <strong><?= htmlspecialchars($_SESSION['usuario_nome']) ?></strong></span>
                     <a href="/logout" class="btn-sair">Sair</a>
@@ -45,15 +46,15 @@
 
     <main class="conteudo-principal">
         <div id="almoco-faixa">
-            <h2>Selecione o Dia</h2>
-        </div>
-
-        <div class="botao-semana-container">
-            <form action="/agendar" method="POST">
-                <input type="hidden" name="tipo" value="semana">
-                <button type="submit" class="btn-agendar-semana">🗓️ Agendar de Segunda a Sexta</button>
-            </form>
-            <p class="legenda-botao">* Clique nos cards para agendamentos individuais.</p>
+            <div class="faixa-titulo">
+                <h2>Almoço</h2>
+            </div>
+            <div class="botao-semana-container right">
+                <form action="/agendar" method="POST">
+                    <input type="hidden" name="tipo" value="semana">
+                    <button type="submit" class="btn-agendar-semana">🗓️ Agendar de Segunda a Sexta</button>
+                </form>
+            </div>
         </div>
 
         <section id="grid-agendamento">
@@ -67,11 +68,9 @@
             $segundaFeira = date('Y-m-d', strtotime("-$diffSegunda days"));
 
             $registroModel = new \App\Models\Registro();
-            // Usando 'usuario_matricula' para manter o padrão que definimos para o init.sql
             $matriculaUser = $_SESSION['usuario_matricula'] ?? $_SESSION['matricula'];
             $meusAgendamentos = $registroModel->buscarMeusAgendamentos($matriculaUser);
 
-            // Criamos um mapa de status para facilitar a busca no loop
             $statusPorData = [];
             foreach ($meusAgendamentos as $reg) {
                 $statusPorData[$reg['data_agendada']] = $reg['status'];
@@ -83,8 +82,10 @@
                 $dataAlvo = date('Y-m-d', strtotime("$segundaFeira +$i days"));
                 $diaNum = (int)date('w', strtotime($dataAlvo));
 
-                // Verifica se está agendado e se o status não é cancelado
-                $jaAgendado = (isset($statusPorData[$dataAlvo]) && $statusPorData[$dataAlvo] === 'agendado');
+                $status = $statusPorData[$dataAlvo] ?? null;
+                $estaReservado = ($status && $status !== 'cancelado');
+                $isAgendado = ($status === 'agendado');
+                $isConcluido = ($status === 'concluido');
 
                 $isHoje = ($dataAlvo === $hoje);
                 $isPassado = ($dataAlvo < $hoje);
@@ -95,24 +96,30 @@
                         <h5 class="cardtitle"><?= $diasNome[$diaNum] ?></h5>
                         <?php if ($isHoje): ?>
                             <span class="badge-hoje">HOJE</span>
-                        <?php endif; ?>
+                        <? endif; ?>
                     </div>
                     <p class="data-texto"><?= date('d/m/Y', strtotime($dataAlvo)) ?></p>
                     <hr class="linha">
-
-                    <div class="conteudo-vazio"></div>
+                    <p class="cardapio-placeholder">ARROZ, FEIJAO ,CARNE MOIDA COM OVO PICADO E TV,FAROFA E MASSA NA MANTEIGA E SALADA MISTA.</p>
 
                     <div class="status-box">
-                        <?php if ($jaAgendado): ?>
-                            <span class="status-confirmado">✓ AGENDADO</span>
+                        <?php if ($estaReservado): ?>
+                            <?php if ($isAgendado): ?>
+                                <span class="status-confirmado">✓ AGENDADO</span>
 
-                            <?php if (!$isPassado && !$passouLimite): ?>
-                                <form action="/cancelar" method="POST" style="margin-top: 5px;">
-                                    <input type="hidden" name="data_cancelar" value="<?= $dataAlvo ?>">
-                                    <button type="submit" class="btn-cancelar" onclick="return confirm('Deseja realmente cancelar o agendamento de <?= $diasNome[$diaNum] ?>?')">
-                                        Cancelar
-                                    </button>
-                                </form>
+                                <?php if (!$isPassado && !$passouLimite): ?>
+                                    <form action="/cancelar" method="POST" style="margin-top: 5px;">
+                                        <input type="hidden" name="data_cancelar" value="<?= $dataAlvo ?>">
+                                        <button type="submit" class="btn-cancelar" onclick="return confirm('Deseja realmente cancelar o agendamento de <?= $diasNome[$diaNum] ?>?')">
+                                            Cancelar
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+
+                            <?php elseif ($isConcluido): ?>
+                                <span class="status-confirmado">✓ CONCLUÍDO</span>
+                            <?php else: ?>
+                                <span class="status-confirmado"><?= htmlspecialchars(strtoupper($status)) ?></span>
                             <?php endif; ?>
 
                         <?php elseif ($isPassado || $passouLimite): ?>

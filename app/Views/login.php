@@ -13,6 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/login.css?v=<?= time() ?>">
+    <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
@@ -37,13 +38,12 @@ if (session_status() === PHP_SESSION_NONE) {
                                 name="matricula"
                                 class="form-control"
                                 required
-                                placeholder="Somente números"
                                 inputmode="numeric"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="mb-3">
                             <label class="label-custom">Senha</label>
-                            <input type="password" name="senha" class="form-control" required placeholder="******">
+                            <input type="password" name="senha" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-oliva w-100 fw-bold shadow-sm">ENTRAR</button>
                     </form>

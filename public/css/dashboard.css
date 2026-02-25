@@ -90,11 +90,21 @@ header h1 {
   padding: 15px 30px;
   margin: 20px 0;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   gap: 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative; /* needed for absolute title */
+}
+
+.faixa-titulo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 100%;
+  pointer-events: none; /* allow clicks through if overlapping */
 }
 
 #almoco-faixa h2 {
@@ -123,7 +133,12 @@ header h1 {
 
 .botao-semana-container {
   text-align: center;
-  padding: 20px;
+  padding: 0; /* remove extra padding inside faixa */
+}
+
+/* flag class to align right when placed inside header */
+.botao-semana-container.right {
+  margin-left: auto;
 }
 
 .legenda-botao {
@@ -145,17 +160,19 @@ header h1 {
 .card-dia {
   background: white;
   width: 190px;
-  min-height: 240px;
+  min-height: 240px; /* allow growth when menu is large */
   box-shadow: 1px 5px 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-  padding: 15px;
+  padding: 15px 15px 80px 15px; /* extra bottom padding for status */
   display: flex;
   flex-direction: column;
+  position: relative; /* for absolute status-box */
+  border: 3px solid transparent; /* reserve space for highlight */
 }
 
 .card-dia.hoje {
   border: 3px solid var(--laranja);
-  transform: scale(1.05);
+  /* remove scaling so size matches other cards */
 }
 
 .dia-header {
@@ -189,6 +206,16 @@ header h1 {
   color: #777;
 }
 
+.cardapio-placeholder {
+  font-family: var(--font-secundaria);
+  font-size: 0.95rem; /* slightly larger */
+  color: #555;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  font-weight: normal;
+  /* let text expand card height */
+}
+
 .linha {
   margin: 10px 0;
   border: 0;
@@ -197,6 +224,13 @@ header h1 {
 
 .conteudo-vazio {
   flex-grow: 1;
+}
+
+.status-box {
+  position: absolute;
+  bottom: 10px; /* keep at bottom */
+  left: 15px;
+  right: 15px; /* original formatting inside remains */
 }
 
 .btn-card {

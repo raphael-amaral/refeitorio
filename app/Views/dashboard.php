@@ -134,6 +134,35 @@
                 </div>
             <?php endfor; ?>
         </section>
+
+        <div id="jantar-faixa">
+            <div class="faixa-titulo">
+                <h2>Jantar</h2>
+            </div>
+        </div>
+
+        <section id="grid-jantar">
+            <?php
+            // reutiliza datas já calculadas acima para a semana
+            for ($i = 0; $i < 7; $i++):
+                $dataAlvo = date('Y-m-d', strtotime("$segundaFeira +$i days"));
+                $diaNum = (int)date('w', strtotime($dataAlvo));
+                $isHoje = ($dataAlvo === $hoje);
+            ?>
+                <div class="card-dia card-jantar <?= $isHoje ? 'hoje' : '' ?>">
+                    <div class="dia-header">
+                        <h5 class="cardtitle"><?= $diasNome[$diaNum] ?></h5>
+                        <?php if ($isHoje): ?>
+                            <span class="badge-hoje">HOJE</span>
+                        <?php endif; ?>
+                    </div>
+                    <p class="data-texto"><?= date('d/m/Y', strtotime($dataAlvo)) ?></p>
+                    <hr class="linha">
+                    <p class="cardapio-placeholder">ARROZ, FEIJAO ,CARNE MOIDA COM OVO PICADO E TV,FAROFA E MASSA NA MANTEIGA E SALADA MISTA.</p>
+                </div>
+            <?php endfor; ?>
+        </section>
+
     </main>
 
     <script>

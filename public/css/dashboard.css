@@ -98,6 +98,29 @@ header h1 {
   position: relative; /* needed for absolute title */
 }
 
+#almoco-faixa h2 {
+  font-family: var(--font-principal);
+  font-size: 1.8rem;
+}
+
+#jantar-faixa {
+  background-color: rgba(91, 95, 44, 0.3);
+  color: white;
+  padding: 30px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative; /* needed for absolute title */
+}
+
+#jantar-faixa h2 {
+  font-family: var(--font-principal);
+  font-size: 1.8rem;
+}
+
 .faixa-titulo {
   position: absolute;
   left: 50%;
@@ -105,11 +128,6 @@ header h1 {
   text-align: center;
   width: 100%;
   pointer-events: none; /* allow clicks through if overlapping */
-}
-
-#almoco-faixa h2 {
-  font-family: var(--font-principal);
-  font-size: 1.8rem;
 }
 
 .btn-agendar-semana {
@@ -149,18 +167,24 @@ header h1 {
 }
 
 /* --- GRID E CARDS --- */
-#grid-agendamento {
+#grid-agendamento,
+#grid-jantar {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 15px;
-  padding-bottom: 50px;
+  padding-bottom: 20px;
+}
+
+/* add some top margin for the dinner grid so it doesn't stick to the "Jantar" bar */
+#grid-jantar {
+  margin-top: 20px;
 }
 
 .card-dia {
   background: white;
-  width: 190px;
-  min-height: 240px; /* allow growth when menu is large */
+  width: 220px;
+  min-height: 190px; /* allow growth when menu is large */
   box-shadow: 1px 5px 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   padding: 15px 15px 80px 15px; /* extra bottom padding for status */
@@ -168,6 +192,11 @@ header h1 {
   flex-direction: column;
   position: relative; /* for absolute status-box */
   border: 3px solid transparent; /* reserve space for highlight */
+}
+
+/* dinner cards don't need the extra status padding */
+.card-dia.card-jantar {
+  padding-bottom: 15px;
 }
 
 .card-dia.hoje {

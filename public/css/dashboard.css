@@ -26,7 +26,7 @@ body {
 /* --- HEADER E NAVEGAÇÃO --- */
 header {
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   padding: 15px 0;
   position: relative;
@@ -63,7 +63,7 @@ header h1 {
   opacity: 0.9;
 }
 .user-info strong {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .btn-sair {
@@ -73,7 +73,7 @@ header h1 {
   padding: 6px 12px;
   border-radius: 4px;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
@@ -85,10 +85,10 @@ header h1 {
 
 /* --- FAIXA CENTRAL --- */
 #almoco-faixa {
-  background-color: rgba(91, 95, 44, 0.3);
+  background-color: rgba(91, 95, 44, 0.4);
   color: white;
-  padding: 15px 30px;
-  margin: 20px 0;
+  padding: 10px 30px;
+  margin: 10px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -100,11 +100,11 @@ header h1 {
 
 #almoco-faixa h2 {
   font-family: var(--font-principal);
-  font-size: 1.8rem;
+  font-size: 1.9rem;
 }
 
 #jantar-faixa {
-  background-color: rgba(91, 95, 44, 0.3);
+  background-color: rgba(91, 95, 44, 0.4);
   color: white;
   padding: 30px 30px;
   display: flex;
@@ -118,7 +118,7 @@ header h1 {
 
 #jantar-faixa h2 {
   font-family: var(--font-principal);
-  font-size: 1.8rem;
+  font-size: 1.9rem;
 }
 
 .faixa-titulo {
@@ -185,6 +185,7 @@ header h1 {
   background: white;
   width: 220px;
   min-height: 190px; /* allow growth when menu is large */
+  max-height: 220px;
   box-shadow: 1px 5px 15px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   padding: 15px 15px 80px 15px; /* extra bottom padding for status */
@@ -237,7 +238,7 @@ header h1 {
 
 .cardapio-placeholder {
   font-family: var(--font-secundaria);
-  font-size: 0.95rem; /* slightly larger */
+  font-size: 0.75rem; /* slightly larger */
   color: #555;
   margin-top: 4px;
   margin-bottom: 4px;

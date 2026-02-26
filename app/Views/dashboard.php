@@ -19,7 +19,6 @@
             <div class="alerta-toast sucesso">
                 <span>✅ <?= $_SESSION['aviso_sucesso'];
                         unset($_SESSION['aviso_sucesso']); ?></span>
-                <button onclick="this.parentElement.remove()">×</button>
             </div>
         <?php endif; ?>
 
@@ -27,7 +26,6 @@
             <div class="alerta-toast erro">
                 <span>⚠️ <?= $_SESSION['aviso_erro'];
                             unset($_SESSION['aviso_erro']); ?></span>
-                <button onclick="this.parentElement.remove()">×</button>
             </div>
         <?php endif; ?>
     </div>
@@ -35,7 +33,7 @@
     <header>
         <section id="cabs">
             <div id="cab">
-                <h1>Agendamento Refeitório</h1>
+                <h1>Bem Vindo ao Cardápio</h1>
                 <div class="user-info">
                     <span>Usuário: <strong><?= htmlspecialchars($_SESSION['usuario_nome']) ?></strong></span>
                     <a href="/logout" class="btn-sair">Sair</a>
@@ -110,7 +108,7 @@
                                 <?php if (!$isPassado && !$passouLimite): ?>
                                     <form action="/cancelar" method="POST" style="margin-top: 5px;">
                                         <input type="hidden" name="data_cancelar" value="<?= $dataAlvo ?>">
-                                        <button type="submit" class="btn-cancelar" onclick="return confirm('Deseja realmente cancelar o agendamento de <?= $diasNome[$diaNum] ?>?')">
+                                        <button type="submit" class="btn-cancelar">
                                             Cancelar
                                         </button>
                                     </form>

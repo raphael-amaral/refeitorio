@@ -26,7 +26,6 @@ if (session_status() === PHP_SESSION_NONE) {
                     <?php if (isset($_SESSION['erro_login'])): ?>
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <?= $_SESSION['erro_login']; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         <?php unset($_SESSION['erro_login']); ?>
                     <?php endif; ?>

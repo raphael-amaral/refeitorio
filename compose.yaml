@@ -1,37 +1,27 @@
 services:
-  app:
+  web:
     build: .
-    container_name: refeitorio_app
-    restart: always
     ports:
-      - "${APP_PORT}:80"
+      - "8101:80" # Acesso no navegador: porta 8101. O Docker direciona para a 80 do Apache.
     volumes:
       - .:/var/www/html
-      - /var/www/html/vendor
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      DB_HOST: ${DB_HOST}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_PORT: ${DB_PORT}
-      TZ: ${TIMEZONE}
+    env_file:
+      - .env
+    depends_on:
+      - db
 
   db:
     image: mysql:8.0
-    container_name: refeitorio_db
-    restart: always
-    command: --default-time-zone=-03:00
     ports:
       - "3101:3306"
+    env_file:
+      - .env
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      TZ: ${TIMEZONE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
     volumes:
       - db_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - /etc/localtime:/etc/localtime:ro # Sincroniza relógio do sistema
-
+      
 volumes:
   db_data:

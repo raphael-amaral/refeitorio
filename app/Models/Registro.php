@@ -2,55 +2,102 @@
 
 namespace App\Models;
 
+use App\Core\Model;
 use PDO;
 
-class Registro
+class Registro extends Model
 {
-    private $db;
+    protected static string $tabela        = 'registros';
+    protected static string $chavePrimaria = 'id';
 
-    public function __construct()
+    /**
+     * Retorna os agendamentos de um usuário com os dados do cardápio via JOIN.
+     * Filtra por status se fornecido ('agendado', 'cancelado', 'concluido').
+     */
+    public static function buscarPorUsuario(string $matricula, string $status = ''): array
     {
-        $this->db = Database::getConnection();
-    }
+        $sql = 'SELECT r.*, c.data, c.tipo AS tipo_refeicao, c.descricao
+                  FROM registros r
+                  JOIN cardapios c ON r.id_cardapio = c.id
+                 WHERE r.matricula_usuario = :matricula';
 
-    public function salvar($matricula, $data)
-    {
-        try {
-            // Se já existir registro, volta o status para 'agendado'
-            $sql = "INSERT INTO registros (matricula, data_agendada, status) 
-                    VALUES (:mat, :data, 'agendado')
-                    ON DUPLICATE KEY UPDATE status = 'agendado'";
+        $params = ['matricula' => $matricula];
 
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([':mat' => $matricula, ':data' => $data]);
-        } catch (\PDOException $e) {
-            return false;
+        if ($status !== '') {
+            $sql .= ' AND r.status = :status';
+            $params['status'] = $status;
         }
-    }
 
-    public function alterarStatus($matricula, $data, $novoStatus)
-    {
-        try {
-            $sql = "UPDATE registros 
-                    SET status = :status 
-                    WHERE matricula = :mat 
-                    AND data_agendada = :data";
+        $sql .= ' ORDER BY c.data DESC, c.tipo ASC';
 
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([
-                ':status' => $novoStatus,
-                ':mat'    => $matricula,
-                ':data'   => $data
-            ]);
-        } catch (\PDOException $e) {
-            return false;
-        }
-    }
-
-    public function buscarMeusAgendamentos($matricula)
-    {
-        $stmt = $this->db->prepare("SELECT data_agendada, status FROM registros WHERE matricula = :mat AND status != 'cancelado' ORDER BY data_agendada ASC");
-        $stmt->execute([':mat' => $matricula]);
+        $stmt = static::db()->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retorna todos os agendamentos de um cardápio (visão da copa).
+     */
+    public static function buscarPorCardapio(int $idCardapio): array
+    {
+        $stmt = static::db()->prepare(
+            'SELECT r.*, u.nome AS nome_usuario
+               FROM registros r
+               JOIN usuarios u ON r.matricula_usuario = u.matricula
+              WHERE r.id_cardapio = :id_cardapio
+              ORDER BY u.nome ASC'
+        );
+        $stmt->execute(['id_cardapio' => $idCardapio]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Verifica se o usuário já tem um agendamento ativo para o cardápio informado.
+     */
+    public static function jaAgendado(string $matricula, int $idCardapio): bool
+    {
+        $stmt = static::db()->prepare(
+            "SELECT COUNT(*) FROM registros
+              WHERE matricula_usuario = :matricula
+                AND id_cardapio       = :id_cardapio
+                AND status            = 'agendado'"
+        );
+        $stmt->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Cria ou reativa (se cancelado) um agendamento para o usuário/cardápio.
+     */
+    public static function upsertAgendado(string $matricula, int $idCardapio): void
+    {
+        static::db()->prepare(
+            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
+             VALUES (:matricula, :id_cardapio, 'agendado')
+             ON DUPLICATE KEY UPDATE status = 'agendado', atualizado_em = NOW()"
+        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+    }
+
+    /**
+     * Cancela um agendamento do próprio usuário (não deixa cancelar registros alheios).
+     */
+    public static function cancelarDoUsuario(int $id, string $matricula): bool
+    {
+        $stmt = static::db()->prepare(
+            "UPDATE registros
+                SET status = 'cancelado'
+              WHERE id               = :id
+                AND matricula_usuario = :matricula
+                AND status           = 'agendado'"
+        );
+        return $stmt->execute(['id' => $id, 'matricula' => $matricula]);
+    }
+
+    /**
+     * Marca um agendamento como concluído (ação da copa).
+     */
+    public static function concluir(int $id): bool
+    {
+        return static::atualizar($id, ['status' => 'concluido']);
     }
 }

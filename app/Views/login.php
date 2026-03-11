@@ -1,56 +1,39 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Refeitório</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/login.css?v=<?= time() ?>">
-    <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
+    <title>Login — Refeitório Hospitalar</title>
+    <link rel="stylesheet" href="/css/login.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-4">
-                <div class="card card-login p-4">
-                    <h2 class="titulo-login text-center">Refeitório</h2>
 
-                    <?php if (isset($_SESSION['erro_login'])): ?>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <?= $_SESSION['erro_login']; ?>
-                        </div>
-                        <?php unset($_SESSION['erro_login']); ?>
-                    <?php endif; ?>
+    <div class="login-container">
+        <h2>Sistema de Refeitório</h2>
 
-                    <form action="/login/processar" method="POST">
-                        <div class="mb-3">
-                            <label class="label-custom">Matrícula</label>
-                            <input type="text"
-                                name="matricula"
-                                class="form-control"
-                                required
-                                inputmode="numeric"
-                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        </div>
-                        <div class="mb-3">
-                            <label class="label-custom">Senha</label>
-                            <input type="password" name="senha" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-oliva w-100 fw-bold shadow-sm">ENTRAR</button>
-                    </form>
-                </div>
+        <?php if (!empty($erro)): ?>
+            <div class="alert-error">
+                <?= htmlspecialchars($erro) ?>
             </div>
-        </div>
+        <?php endif; ?>
+
+        <form action="/login" method="POST">
+            <div class="form-group">
+                <label for="matricula">Matrícula</label>
+                <input type="text" id="matricula" name="matricula" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required>
+            </div>
+
+            <button type="submit">Entrar</button>
+        </form>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>

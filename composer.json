@@ -1,11 +1,11 @@
 {
-    "name": "hospital/refeitorio",
-    "description": "Sistema de Agendamento de Refeitório",
-    "type": "project",
-    "autoload": {
-        "psr-4": {
-            "App\\": "app/"
-        }
-    },
-    "require": {}
+  "name": "santa-casa/sistema-refeitorio",
+  "description": "Sistema interno de agendamento de refeições.",
+  "type": "project",
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "require": {}
 }

@@ -1,56 +1,41 @@
 <?php
-session_start();
-date_default_timezone_set('America/Sao_Paulo');
+
+// Carrega o Autoload do Composer
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use App\Controllers\AuthController;
-use App\Controllers\RegistroController;
+// Timezone do Brasil (UTC-3)
+date_default_timezone_set('America/Sao_Paulo');
 
-$url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$auth = new AuthController();
-
-switch ($url) {
-    case '/':
-    case '/login':
-        $auth->index();
-        break;
-
-    case '/login/processar':
-        $auth->login();
-        break;
-
-    case '/logout':
-        $auth->logout();
-        break;
-
-    case '/dashboard':
-        if (!isset($_SESSION['matricula'])) {
-            header('Location: /login');
-            exit;
-        }
-        require_once __DIR__ . '/../app/Views/dashboard.php';
-        break;
-
-    case '/agendar':
-        if (!isset($_SESSION['matricula'])) {
-            header('Location: /login');
-            exit;
-        }
-        $controller = new RegistroController();
-        $controller->agendar();
-        break;
-
-    // --- NOVA ROTA DE CANCELAMENTO ---
-    case '/cancelar':
-        if (!isset($_SESSION['matricula'])) {
-            header('Location: /login');
-            exit;
-        }
-        $controller = new RegistroController();
-        $controller->cancelar();
-        break;
-
-    default:
-        http_response_code(404);
-        echo "Página não encontrada.";
+// Define exibição de erros com base no ambiente (.env APP_ENV=development para ativar)
+$appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
+if ($appEnv === 'development') {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    error_reporting(E_ALL);               // registra no log mas não exibe
 }
+
+// Captura exceções não tratadas e exibe mensagem amigável
+set_exception_handler(function (Throwable $e) use ($appEnv): void {
+    http_response_code(500);
+    if ($appEnv === 'development') {
+        echo '<pre>' . htmlspecialchars($e->getMessage() . "\n" . $e->getTraceAsString()) . '</pre>';
+    } else {
+        echo '<h1>Erro interno</h1><p>Tente novamente em instantes.</p>';
+    }
+    error_log($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+});
+
+// Inicia a sessão uma única vez para toda a aplicação
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Captura a URI e o método HTTP da requisição
+$uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Carrega as rotas e despacha a requisição
+$router = require_once __DIR__ . '/../app/routes.php';
+$router->dispatch($uri, $method);

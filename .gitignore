@@ -1,5 +1,41 @@
-/vendor
-/node_modules
+# 1. Credenciais e Variáveis de Ambiente
+# Nunca suba senhas ou configurações específicas do servidor/máquina local
 .env
-db_data/
+.env.local
+.env.backup
+
+# 2. Dependências do PHP (Composer)
+# A pasta vendor é gerada automaticamente pelo Composer e costuma ser pesada.
+# Apenas o arquivo composer.json e composer.lock devem ser versionados.
+/vendor/
+composer.phar
+
+# 3. Arquivos de Banco de Dados Local
+# Evita subir os arquivos físicos do banco de dados caso você decida
+# mapear o volume do Docker para uma pasta local no futuro.
+/db_data/
+/mysql/
+/data/
+
+# 4. Logs e Arquivos Temporários do Sistema
+# Evita o envio de logs de erro que mudam constantemente.
+*.log
+/logs/
+/tmp/
+
+# 5. Configurações de IDEs e Editores de Código (VS Code, PhpStorm, etc.)
+# Arquivos de configuração pessoal do seu editor não devem ir para o servidor.
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# 6. Arquivos Gerados pelo Sistema Operacional
+# Arquivos ocultos que o Windows ou macOS criam nas pastas automaticamente.
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -1,22 +1,42 @@
+SET NAMES utf8mb4;
+
 CREATE TABLE usuarios (
-    matricula VARCHAR(20) PRIMARY KEY,
+    matricula VARCHAR(12) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo_usuario ENUM('comum', 'admin', 'dev') NOT NULL DEFAULT 'comum',
-    ativo TINYINT(1) DEFAULT 1
+    tipo ENUM('comum', 'admin', 'copa', 'dev') NOT NULL DEFAULT 'comum',
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cardapios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    data DATE NOT NULL,
+    descricao TEXT,
+    tipo ENUM('almoco', 'jantar') NOT NULL,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_data_tipo (data, tipo)
 );
 
 CREATE TABLE registros (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    matricula VARCHAR(20) NOT NULL,
-    data_agendada DATE NOT NULL,
+    matricula_usuario VARCHAR(12) NOT NULL,
+    id_cardapio INT NOT NULL,
     status ENUM('agendado', 'cancelado', 'concluido') NOT NULL DEFAULT 'agendado',
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- A unicidade agora é por Matrícula + Data
-    CONSTRAINT uq_matricula_data UNIQUE (matricula, data_agendada),
-    CONSTRAINT fk_registros_usuario FOREIGN KEY (matricula) REFERENCES usuarios(matricula) 
-        ON DELETE RESTRICT ON UPDATE CASCADE
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (matricula_usuario) REFERENCES usuarios(matricula),
+    FOREIGN KEY (id_cardapio) REFERENCES cardapios(id),
+    UNIQUE KEY uk_matricula_cardapio (matricula_usuario, id_cardapio)
 );
 
-CREATE INDEX idx_data_agendada ON registros(data_agendada);
+-- Contas padrão (hashes gerados com password_hash + PASSWORD_BCRYPT)
+-- snd   → senha: snd123
+-- teste → senha: teste123
+-- dev   → senha: Ran277353
+INSERT INTO usuarios (matricula, nome, senha, tipo) VALUES
+('snd',   'Equipe Copa (SND)',  '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'copa'),
+('teste', 'Usuário Teste',      '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),
+('dev',   'Desenvolvedor',      '$2y$10$3FJuPha3dwDcBPs5MIQFLuMkPsGKByM4VKGEK9g3yOj6cBbYNq5tu', 'dev');

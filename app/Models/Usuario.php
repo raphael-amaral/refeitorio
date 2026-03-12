@@ -89,4 +89,25 @@ class Usuario extends Model
         );
         $stmt->execute(['ativo' => $ativo, 'matricula' => $matricula]);
     }
+
+    /**
+     * Verifica se o usuário possui registros (agendamentos).
+     */
+    public static function temRegistros(string $matricula): bool
+    {
+        $stmt = static::db()->prepare(
+            'SELECT COUNT(*) FROM registros WHERE matricula_usuario = :matricula'
+        );
+        $stmt->execute(['matricula' => $matricula]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Exclui permanentemente um usuário sem registros.
+     */
+    public static function excluir(string $matricula): void
+    {
+        $stmt = static::db()->prepare('DELETE FROM usuarios WHERE matricula = :matricula');
+        $stmt->execute(['matricula' => $matricula]);
+    }
 }

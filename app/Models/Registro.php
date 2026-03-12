@@ -126,4 +126,24 @@ class Registro extends Model
     {
         return static::atualizar($id, ['status' => 'concluido']);
     }
+
+    /**
+     * Busca o agendamento ativo de hoje para uma matrícula (usado pelo scanner).
+     */
+    public static function buscarAgendadoHoje(string $matricula): ?array
+    {
+        $stmt = static::db()->prepare(
+            "SELECT r.*, c.tipo AS tipo_refeicao, c.descricao, u.nome AS nome_usuario
+               FROM registros r
+               JOIN cardapios c ON r.id_cardapio = c.id
+               JOIN usuarios  u ON r.matricula_usuario = u.matricula
+              WHERE r.matricula_usuario = :matricula
+                AND c.data             = CURDATE()
+                AND r.status           = 'agendado'
+              LIMIT 1"
+        );
+        $stmt->execute(['matricula' => $matricula]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
 }

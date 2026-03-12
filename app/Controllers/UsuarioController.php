@@ -95,4 +95,24 @@ class UsuarioController extends Controller
         $this->flash('Usuário reativado.', 'success');
         $this->redirect('/usuario');
     }
+
+    /**
+     * Exclui permanentemente um usuário sem registros (POST /usuario/{matricula}/excluir).
+     */
+    public function excluir(string $matricula): void
+    {
+        if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
+            $this->flash('Você não pode excluir sua própria conta.', 'error');
+            $this->redirect('/usuario');
+        }
+
+        if (Usuario::temRegistros($matricula)) {
+            $this->flash('Não é possível excluir: usuário possui agendamentos.', 'error');
+            $this->redirect('/usuario');
+        }
+
+        Usuario::excluir($matricula);
+        $this->flash('Usuário excluído com sucesso.', 'success');
+        $this->redirect('/usuario');
+    }
 }

@@ -1,3 +1,6 @@
+<?php
+
+use App\Models\Usuario; ?>
 <div class="usuarios-page">
 
     <div class="usuarios-layout">
@@ -35,7 +38,10 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="col-acao">
-                                    <?php $proprio = $u['matricula'] === ($_SESSION['usuario']['matricula'] ?? ''); ?>
+                                    <?php
+                                    $proprio      = $u['matricula'] === ($_SESSION['usuario']['matricula'] ?? '');
+                                    $temRegistros = Usuario::temRegistros($u['matricula']);
+                                    ?>
                                     <div class="acoes-inline">
                                         <button class="btn-acao btn-editar-u"
                                             data-matricula="<?= htmlspecialchars($u['matricula']) ?>"
@@ -50,6 +56,12 @@
                                         <?php elseif (!$u['ativo']): ?>
                                             <form method="POST" action="/usuario/<?= urlencode($u['matricula']) ?>/ativar">
                                                 <button class="btn-acao btn-ativar">Reativar</button>
+                                            </form>
+                                        <?php endif; ?>
+                                        <?php if (!$proprio && !$temRegistros): ?>
+                                            <form method="POST" action="/usuario/<?= urlencode($u['matricula']) ?>/excluir"
+                                                onsubmit="return confirm('Excluir permanentemente <?= htmlspecialchars($u['nome'], ENT_QUOTES) ?>?')">
+                                                <button class="btn-acao btn-excluir">Excluir</button>
                                             </form>
                                         <?php endif; ?>
                                     </div>

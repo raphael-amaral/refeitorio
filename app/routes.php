@@ -37,6 +37,12 @@ $router->post('/registro/{id}/cancelar', 'App\Controllers\RegistroController', '
 $router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', 'concluir', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
+// Scanner de crachá (SND)
+// ---------------------------------------------------------------------------
+$router->get('/scanner',            'App\Controllers\ScannerController', 'index',     ['App\Middleware\Auth@snd']);
+$router->post('/scanner/processar', 'App\Controllers\ScannerController', 'processar', ['App\Middleware\Auth@snd']);
+
+// ---------------------------------------------------------------------------
 // Usuários (apenas dev)
 // ---------------------------------------------------------------------------
 $router->get('/usuario',                          'App\Controllers\UsuarioController', 'index',    ['App\Middleware\Auth@dev']);
@@ -44,5 +50,6 @@ $router->post('/usuario',                         'App\Controllers\UsuarioContro
 $router->post('/usuario/{matricula}/inativar',    'App\Controllers\UsuarioController', 'inativar', ['App\Middleware\Auth@dev']);
 $router->post('/usuario/{matricula}/ativar',      'App\Controllers\UsuarioController', 'ativar',   ['App\Middleware\Auth@dev']);
 $router->post('/usuario/{matricula}/editar',      'App\Controllers\UsuarioController', 'editar',   ['App\Middleware\Auth@dev']);
+$router->post('/usuario/{matricula}/excluir',     'App\Controllers\UsuarioController', 'excluir',  ['App\Middleware\Auth@dev']);
 
 return $router;

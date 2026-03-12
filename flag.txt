@@ -1,0 +1,3 @@
+No Chrome de cada celular, acesse: chrome://flags/#unsafely-treat-insecure-origin-as-secure
+
+No campo de texto da flag, insira: http://10.1.0.225:8101

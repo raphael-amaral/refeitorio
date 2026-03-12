@@ -181,13 +181,18 @@ button:hover {
 }
 
 /* =========================================================
-   Responsivo — celular
+   Responsivo — esconde cardápio lateral quando não há espaço
    ========================================================= */
-@media (max-width: 600px) {
+@media (max-width: 1100px) {
   .login-cardapios {
     display: none;
   }
+}
 
+/* =========================================================
+   Responsivo — celular
+   ========================================================= */
+@media (max-width: 600px) {
   body {
     background-attachment: scroll;
     min-height: 100dvh;

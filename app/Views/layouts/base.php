@@ -12,7 +12,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($titulo ?? 'Refeitório') ?> — Refeitório</title>
-    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app.css?v=2">
 </head>
 
 <body>
@@ -25,7 +25,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <li><a href="/registro" <?= $navAtivo('/registro') ?>>Meus Agendamentos</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['copa', 'dev'], true)): ?>
+            <?php if (in_array($u['tipo'] ?? '', ['snd', 'dev'], true)): ?>
                 <li><a href="/cardapio" <?= $navAtivo('/cardapio') ?>>Cardápios</a></li>
             <?php endif; ?>
             <?php if (($u['tipo'] ?? '') === 'dev'): ?>

@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Usuario;
+use App\Models\Cardapio;
 
 class LoginController extends Controller
 {
@@ -27,7 +28,13 @@ class LoginController extends Controller
         $erro = $_SESSION['erro_login'] ?? null;
         unset($_SESSION['erro_login']);
 
-        $this->render('login', ['erro' => $erro], null);
+        // Cardápios do dia para exibir sem login
+        $cardapiosHoje = [];
+        foreach (Cardapio::buscarPorData(date('Y-m-d')) as $c) {
+            $cardapiosHoje[$c['tipo']] = $c;
+        }
+
+        $this->render('login', ['erro' => $erro, 'cardapiosHoje' => $cardapiosHoje], null);
     }
 
     /**

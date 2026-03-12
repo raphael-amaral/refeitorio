@@ -8,7 +8,7 @@ namespace App\Middleware;
  * Uso nas rotas:
  *   'App\Middleware\Auth'         → handle() — apenas usuário logado
  *   'App\Middleware\Auth@dev'     → apenas dev
- *   'App\Middleware\Auth@copa'    → copa / dev
+ *   'App\Middleware\Auth@snd'     → snd / dev
  *   'App\Middleware\Auth@comum'   → apenas comum
  */
 class Auth
@@ -38,13 +38,13 @@ class Auth
     }
 
     /**
-     * Exige perfil de copa ou dev.
+     * Exige perfil de snd ou dev.
      */
-    public static function copa(): void
+    public static function snd(): void
     {
         self::handle();
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['copa', 'dev'], true)) {
+        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true)) {
             header('Location: /painel');
             exit;
         }

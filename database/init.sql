@@ -4,7 +4,7 @@ CREATE TABLE usuarios (
     matricula VARCHAR(12) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('comum', 'copa', 'dev') NOT NULL DEFAULT 'comum',
+    tipo ENUM('comum', 'snd', 'dev') NOT NULL DEFAULT 'comum',
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -32,11 +32,7 @@ CREATE TABLE registros (
     UNIQUE KEY uk_matricula_cardapio (matricula_usuario, id_cardapio)
 );
 
--- Contas padrão (hashes gerados com password_hash + PASSWORD_BCRYPT)
--- snd   → senha: snd123
--- teste → senha: teste123
--- dev   → senha: Ran277353
 INSERT INTO usuarios (matricula, nome, senha, tipo) VALUES
-('snd',   'Equipe Copa (SND)',  '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'copa'),
-('teste', 'Usuário Teste',      '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),
-('dev',   'Desenvolvedor',      '$2y$10$3FJuPha3dwDcBPs5MIQFLuMkPsGKByM4VKGEK9g3yOj6cBbYNq5tu', 'dev');
+('snd',   'Equipe SND', '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'snd'),
+('teste', 'Usuário Teste', '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),
+('dev',   'Desenvolvedor', '$2y$10$3FJuPha3dwDcBPs5MIQFLuMkPsGKByM4VKGEK9g3yOj6cBbYNq5tu', 'dev');

@@ -1,7 +1,6 @@
 <?php
-$isAdminDev  = $_SESSION['usuario']['tipo'] === 'dev'; // criar/editar/excluir estrutural — só dev
-$isCopa      = in_array($_SESSION['usuario']['tipo'], ['copa', 'dev'], true);
-$mostraAcoes = $isAdminDev || $isCopa;
+$isAdminDev  = $_SESSION['usuario']['tipo'] === 'dev'; // criar novo cardápio — só dev
+$isSND      = in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true);
 
 // Intervalo editável: hoje até próximo domingo
 $hojeStr   = date('Y-m-d');
@@ -57,9 +56,6 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
                 <th>Refeição</th>
                 <th>Descrição</th>
                 <th>Atualizado em</th>
-                <?php if ($mostraAcoes): ?>
-                    <th style="width:160px;">Ações</th>
-                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
@@ -89,27 +85,6 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
                         }
                         ?>
                     </td>
-                    <?php if ($mostraAcoes): ?>
-                        <?php $editavel = $c['data'] >= $hojeStr && $c['data'] <= $domingoStr; ?>
-                        <td>
-                            <div style="display:flex;gap:6px;align-items:center;">
-                                <?php if ($isAdminDev): ?>
-                                    <a href="/cardapio/<?= (int) $c['id'] ?>/editar"
-                                        class="btn btn-outline" style="font-size:0.78rem;padding:4px 10px;">Editar</a>
-                                    <form method="POST" action="/cardapio/<?= (int) $c['id'] ?>/excluir"
-                                        onsubmit="return confirm('Excluir este cardápio?')">
-                                        <button type="submit" class="btn"
-                                            style="background:#fee2e2;color:#991b1b;font-size:0.78rem;padding:4px 10px;border:1px solid #fca5a5;">Excluir</button>
-                                    </form>
-                                <?php elseif ($isCopa && $editavel): ?>
-                                    <a href="/cardapio/<?= htmlspecialchars($c['data']) ?>/<?= htmlspecialchars($c['tipo']) ?>/editar?from=cardapio"
-                                        class="btn btn-outline" style="font-size:0.78rem;padding:4px 10px;">Editar</a>
-                                <?php elseif ($isCopa): ?>
-                                    <span style="font-size:0.75rem;color:#bbb;">—</span>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
         </tbody>

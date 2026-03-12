@@ -110,7 +110,7 @@ class RegistroController extends Controller
     }
 
     /**
-     * Marca um agendamento como concluído (copa/admin/dev).
+     * Marca um agendamento como concluído (SND/admin/dev).
      */
     public function concluir(string $id): void
     {

@@ -90,7 +90,7 @@
                         <label for="tipo">Perfil</label>
                         <select id="tipo" name="tipo">
                             <option value="comum">Comum</option>
-                            <option value="copa">Copa</option>
+                            <option value="snd">SND</option>
                             <option value="dev">Dev</option>
                         </select>
                     </div>

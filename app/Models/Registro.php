@@ -50,7 +50,7 @@ class Registro extends Model
     }
 
     /**
-     * Retorna todos os agendamentos de um cardápio (visão da copa).
+     * Retorna todos os agendamentos de um cardápio (visão da SND).
      */
     public static function buscarPorCardapio(int $idCardapio): array
     {
@@ -120,7 +120,7 @@ class Registro extends Model
     }
 
     /**
-     * Marca um agendamento como concluído (ação da copa).
+     * Marca um agendamento como concluído (ação da SND).
      */
     public static function concluir(int $id): bool
     {

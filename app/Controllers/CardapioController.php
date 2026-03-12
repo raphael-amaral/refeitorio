@@ -8,7 +8,7 @@ use App\Models\Cardapio;
 class CardapioController extends Controller
 {
     /**
-     * Lista cardápios (usuário comum vê apenas os próximos; admin/copa vê todos com filtro por data).
+     * Lista cardápios (usuário comum vê apenas os próximos; admin/SND vê todos com filtro por data).
      */
     public function index(): void
     {
@@ -22,7 +22,7 @@ class CardapioController extends Controller
         $inicioOk = $dataInicio !== '' && preg_match($reData, $dataInicio);
         $fimOk    = $dataFim    !== '' && preg_match($reData, $dataFim);
 
-        if (in_array($tipo, ['copa', 'dev'], true)) {
+        if (in_array($tipo, ['snd', 'dev'], true)) {
             if ($inicioOk && $fimOk && $dataInicio <= $dataFim) {
                 // Ambas válidas e coerentes
                 $cardapios = Cardapio::buscarPorPeriodo($dataInicio, $dataFim);
@@ -135,29 +135,10 @@ class CardapioController extends Controller
     }
 
     /**
-     * Formulário de edição de um dia/tipo a partir do painel (copa).
+     * Formulário de edição de um dia/tipo a partir do painel (SND).
      */
-    public function editarDia(string $data, string $tipo): void
-    {
-        if (!in_array($tipo, ['almoco', 'jantar'], true) || !$this->dataNaSemanaAtual($data)) {
-            $this->redirect('/painel');
-        }
-
-        $cardapio = Cardapio::buscarPorDataETipo($data, $tipo);
-        $labels   = ['almoco' => 'Almoço', 'jantar' => 'Jantar'];
-
-        $this->render('cardapio/editar_dia', [
-            'titulo'    => 'Editar Cardápio',
-            'data'      => $data,
-            'tipo'      => $tipo,
-            'labelTipo' => $labels[$tipo],
-            'descricao' => $cardapio['descricao'] ?? '',
-            'redirect'  => $_GET['from'] === 'cardapio' ? '/cardapio' : '/painel',
-        ]);
-    }
-
     /**
-     * Salva (cria ou atualiza) o cardápio de um dia/tipo (copa).
+     * Salva (cria ou atualiza) o cardápio de um dia/tipo (SND).
      */
     public function salvarDia(string $data, string $tipo): void
     {
@@ -171,7 +152,7 @@ class CardapioController extends Controller
 
         if ($descricao === '') {
             $_SESSION['flash'] = ['tipo' => 'error', 'mensagem' => 'A descrição do cardápio não pode ser vazia.'];
-            $this->redirect('/cardapio/' . $data . '/' . $tipo . '/editar?from=' . ($destino === '/cardapio' ? 'cardapio' : 'painel'));
+            $this->redirect('/painel');
         }
 
         Cardapio::salvarDia($data, $tipo, $descricao);

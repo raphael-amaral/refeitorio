@@ -28,7 +28,7 @@ class UsuarioController extends Controller
         $senha     = $_POST['senha'] ?? '';
         $tipo      = $_POST['tipo'] ?? 'comum';
 
-        $tiposPermitidos = ['comum', 'copa', 'dev'];
+        $tiposPermitidos = ['comum', 'snd', 'dev'];
 
         if (!$matricula || !$nome || !$senha || !in_array($tipo, $tiposPermitidos, true)) {
             $this->flash('Preencha todos os campos corretamente.', 'error');
@@ -58,7 +58,7 @@ class UsuarioController extends Controller
         $tipo  = $_POST['tipo'] ?? 'comum';
         $senha = $_POST['senha'] ?? '';
 
-        $tiposPermitidos = ['comum', 'copa', 'dev'];
+        $tiposPermitidos = ['comum', 'snd', 'dev'];
 
         if (!$nome || !in_array($tipo, $tiposPermitidos, true)) {
             $this->flash('Preencha os campos corretamente.', 'error');

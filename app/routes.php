@@ -24,21 +24,17 @@ $router->get('/cardapio',      'App\Controllers\CardapioController', 'index', ['
 $router->get('/cardapio/novo', 'App\Controllers\CardapioController', 'novo',  ['App\Middleware\Auth@dev']);
 $router->post('/cardapio',     'App\Controllers\CardapioController', 'criar', ['App\Middleware\Auth@dev']);
 
-$router->get('/cardapio/{id}/editar',   'App\Controllers\CardapioController', 'editar',    ['App\Middleware\Auth@dev']);
-$router->post('/cardapio/{id}',         'App\Controllers\CardapioController', 'atualizar', ['App\Middleware\Auth@dev']);
-$router->post('/cardapio/{id}/excluir', 'App\Controllers\CardapioController', 'excluir',   ['App\Middleware\Auth@dev']);
 
-// Edição de cardápio por dia/tipo (copa)
-$router->get('/cardapio/{data}/{tipo}/editar', 'App\Controllers\CardapioController', 'editarDia',  ['App\Middleware\Auth@copa']);
-$router->post('/cardapio/{data}/{tipo}',        'App\Controllers\CardapioController', 'salvarDia',  ['App\Middleware\Auth@copa']);
+// Edição de cardápio por dia/tipo (snd)
+$router->post('/cardapio/{data}/{tipo}',        'App\Controllers\CardapioController', 'salvarDia',  ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
-// Agendamentos (apenas usuários comuns agendam; concluir é copa+)
+// Agendamentos (apenas usuários comuns agendam; concluir é snd+)
 // ---------------------------------------------------------------------------
 $router->get('/registro',              'App\Controllers\RegistroController', 'index',   ['App\Middleware\Auth@comum']);
 $router->post('/registro',             'App\Controllers\RegistroController', 'criar',   ['App\Middleware\Auth@comum']);
 $router->post('/registro/{id}/cancelar', 'App\Controllers\RegistroController', 'cancelar', ['App\Middleware\Auth@comum']);
-$router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', 'concluir', ['App\Middleware\Auth@copa']);
+$router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', 'concluir', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
 // Usuários (apenas dev)

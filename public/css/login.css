@@ -1,5 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,300&family=Nunito:wght@200;400&display=swap");
 
+html {
+  overflow-x: hidden;
+  background-color: #5b5f2c;
+}
+
 body {
   font-family: "Cormorant Garamond", Georgia, serif;
   background-image: url("/img/background.png");
@@ -10,8 +15,88 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
+}
+
+/* Wrapper removido — card de cardápios é overlay fixo */
+
+/* Painel esquerdo — cardápios do dia (overlay fixo) */
+.login-cardapios {
+  position: fixed;
+  top: 50%;
+  left: 30px;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 6px;
+  box-shadow: 2px 8px 24px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.login-cardapios__cabecalho {
+  background: #5b5f2c;
+  padding: 18px 20px 14px;
+}
+
+.login-cardapios__titulo {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.login-cardapios__data {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 4px 0 0;
+}
+
+.login-cardapios__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+}
+
+.login-card {
+  border-bottom: 1px solid #e5e5e5;
+  overflow: hidden;
+}
+
+.login-card:last-child {
+  border-bottom: none;
+}
+
+.login-card__header {
+  background: #f5f5f0;
+  color: #5b5f2c;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0d8;
+}
+
+.login-card__body {
+  padding: 14px 16px;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.5;
+  min-height: 56px;
+}
+
+.login-card__vazio {
+  color: #999;
+  font-style: italic;
+  font-size: 0.95rem;
 }
 
 .login-container {
@@ -21,6 +106,7 @@ body {
   box-shadow: 2px 8px 24px rgba(0, 0, 0, 0.28);
   width: 100%;
   max-width: 440px;
+  box-sizing: border-box;
   border-top: 4px solid #5b5f2c;
 }
 
@@ -92,4 +178,44 @@ button:hover {
   margin-bottom: 20px;
   font-size: 1rem;
   text-align: center;
+}
+
+/* =========================================================
+   Responsivo — celular
+   ========================================================= */
+@media (max-width: 600px) {
+  .login-cardapios {
+    display: none;
+  }
+
+  body {
+    background-attachment: scroll;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0 14px;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-container {
+    padding: 24px 18px;
+  }
+  .login-container h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  label {
+    font-size: 0.95rem;
+  }
+  input[type="text"],
+  input[type="password"] {
+    padding: 10px 11px;
+    font-size: 0.95rem;
+  }
+  button {
+    font-size: 1.1rem;
+    padding: 11px;
+  }
+  .form-group {
+    margin-bottom: 14px;
+  }
 }

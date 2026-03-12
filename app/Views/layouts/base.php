@@ -16,13 +16,13 @@
 
         <ul class="navbar-nav">
             <li><a href="/painel">Painel</a></li>
-            <?php if (($u['tipo'] ?? '') !== 'dev'): ?>
+            <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <li><a href="/registro">Meus Agendamentos</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['copa', 'admin'], true)): ?>
+            <?php if (in_array($u['tipo'] ?? '', ['copa', 'dev'], true)): ?>
                 <li><a href="/cardapio">Cardápios</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['admin', 'dev'], true)): ?>
+            <?php if (($u['tipo'] ?? '') === 'dev'): ?>
                 <li><a href="/usuario">Usuários</a></li>
             <?php endif; ?>
         </ul>

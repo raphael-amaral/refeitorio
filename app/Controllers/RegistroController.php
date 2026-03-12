@@ -14,12 +14,23 @@ class RegistroController extends Controller
      */
     public function index(): void
     {
-        $usuario   = $_SESSION['usuario'];
-        $registros = Registro::buscarPorUsuario($usuario['matricula']);
+        $usuario = $_SESSION['usuario'];
+        $reData  = '/^\d{4}-\d{2}-\d{2}$/';
+
+        $status     = in_array($_GET['status'] ?? '', ['agendado', 'cancelado', 'concluido'], true)
+            ? $_GET['status']
+            : '';
+        $dataInicio = preg_match($reData, $_GET['data_inicio'] ?? '') ? $_GET['data_inicio'] : '';
+        $dataFim    = preg_match($reData, $_GET['data_fim']    ?? '') ? $_GET['data_fim']    : '';
+
+        $registros = Registro::buscarPorUsuario($usuario['matricula'], $status, $dataInicio, $dataFim);
 
         $this->render('registro/index', [
-            'titulo'    => 'Meus Agendamentos',
-            'registros' => $registros,
+            'titulo'     => 'Meus Agendamentos',
+            'registros'  => $registros,
+            'status'     => $status,
+            'dataInicio' => $dataInicio,
+            'dataFim'    => $dataFim,
         ]);
     }
 
@@ -86,13 +97,16 @@ class RegistroController extends Controller
                 $diaCardapio->format('Y-m-d') < $hoje ||
                 ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
             ) {
+                $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
                 $this->flash('Cancelamento encerrado para este dia. Prazo: até 09h30.', 'warning');
-                $this->redirect('/painel');
+                $this->redirect($destino);
             }
         }
 
         Registro::cancelarDoUsuario((int) $id, $usuario['matricula']);
-        $this->redirect('/painel');
+
+        $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
+        $this->redirect($destino);
     }
 
     /**

@@ -12,10 +12,14 @@ class Registro extends Model
 
     /**
      * Retorna os agendamentos de um usuário com os dados do cardápio via JOIN.
-     * Filtra por status se fornecido ('agendado', 'cancelado', 'concluido').
+     * Filtra por status e/ou período de datas se fornecidos.
      */
-    public static function buscarPorUsuario(string $matricula, string $status = ''): array
-    {
+    public static function buscarPorUsuario(
+        string $matricula,
+        string $status = '',
+        string $dataInicio = '',
+        string $dataFim = ''
+    ): array {
         $sql = 'SELECT r.*, c.data, c.tipo AS tipo_refeicao, c.descricao
                   FROM registros r
                   JOIN cardapios c ON r.id_cardapio = c.id
@@ -26,6 +30,16 @@ class Registro extends Model
         if ($status !== '') {
             $sql .= ' AND r.status = :status';
             $params['status'] = $status;
+        }
+
+        if ($dataInicio !== '') {
+            $sql .= ' AND c.data >= :data_inicio';
+            $params['data_inicio'] = $dataInicio;
+        }
+
+        if ($dataFim !== '') {
+            $sql .= ' AND c.data <= :data_fim';
+            $params['data_fim'] = $dataFim;
         }
 
         $sql .= ' ORDER BY c.data DESC, c.tipo ASC';
@@ -49,6 +63,18 @@ class Registro extends Model
         );
         $stmt->execute(['id_cardapio' => $idCardapio]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Retorna a quantidade de registros vinculados a um cardápio (qualquer status).
+     */
+    public static function contarPorCardapio(int $idCardapio): int
+    {
+        $stmt = static::db()->prepare(
+            'SELECT COUNT(*) FROM registros WHERE id_cardapio = :id_cardapio'
+        );
+        $stmt->execute(['id_cardapio' => $idCardapio]);
+        return (int) $stmt->fetchColumn();
     }
 
     /**

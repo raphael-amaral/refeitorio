@@ -1,5 +1,7 @@
 <div class="page-header" style="margin-bottom: 24px;">
-    <a href="/painel" class="btn btn-outline">← Voltar ao painel</a>
+    <a href="<?= htmlspecialchars($redirect ?? '/painel') ?>" class="btn btn-outline">
+        ← Voltar
+    </a>
 </div>
 
 <div class="editar-dia-card">
@@ -9,6 +11,7 @@
     </h2>
 
     <form method="POST" action="/cardapio/<?= htmlspecialchars($data) ?>/<?= htmlspecialchars($tipo) ?>">
+        <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect ?? '/painel') ?>">
         <div class="form-group">
             <label for="descricao">Descrição do cardápio</label>
             <textarea

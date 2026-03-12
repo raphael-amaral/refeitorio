@@ -6,15 +6,15 @@ namespace App\Middleware;
  * Middleware de autenticação e controle de acesso por tipo de usuário.
  *
  * Uso nas rotas:
- *   'App\Middleware\Auth'          → handle() — apenas usuário logado
- *   'App\Middleware\Auth@admin'    → apenas admin / dev
- *   'App\Middleware\Auth@copa'     → copa / admin / dev
+ *   'App\Middleware\Auth'         → handle() — apenas usuário logado
+ *   'App\Middleware\Auth@dev'     → apenas dev
+ *   'App\Middleware\Auth@copa'    → copa / dev
+ *   'App\Middleware\Auth@comum'   → apenas comum
  */
 class Auth
 {
     /**
      * Exige apenas que o usuário esteja logado.
-     * Redireciona para '/' caso contrário.
      */
     public static function handle(): void
     {
@@ -25,26 +25,39 @@ class Auth
     }
 
     /**
-     * Exige perfil administrativo (admin ou dev).
+     * Exige perfil dev.
      */
-    public static function admin(): void
+    public static function dev(): void
     {
         self::handle();
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['admin', 'dev'], true)) {
+        if ($_SESSION['usuario']['tipo'] !== 'dev') {
             header('Location: /painel');
             exit;
         }
     }
 
     /**
-     * Exige perfil de copa ou superior (copa, admin, dev).
+     * Exige perfil de copa ou dev.
      */
     public static function copa(): void
     {
         self::handle();
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['copa', 'admin', 'dev'], true)) {
+        if (!in_array($_SESSION['usuario']['tipo'], ['copa', 'dev'], true)) {
+            header('Location: /painel');
+            exit;
+        }
+    }
+
+    /**
+     * Exige perfil comum (apenas usuários comuns podem agendar).
+     */
+    public static function comum(): void
+    {
+        self::handle();
+
+        if ($_SESSION['usuario']['tipo'] !== 'comum') {
             header('Location: /painel');
             exit;
         }

@@ -4,8 +4,11 @@
 
         <!-- Tabela de usuários -->
         <section class="usuarios-lista card">
-            <div class="card__header">
+            <div class="card__header" style="gap:12px;">
                 <strong>Usuários cadastrados</strong>
+                <input type="search" id="busca-usuario"
+                    placeholder="Buscar por nome ou matrícula…"
+                    style="margin-left:auto;padding:4px 10px;border:1px solid #ccc;border-radius:4px;font-size:0.85rem;font-family:var(--font-cards);width:220px;">
             </div>
             <div class="card__body" style="overflow-y: auto;">
                 <table class="tabela-usuarios">
@@ -88,7 +91,6 @@
                         <select id="tipo" name="tipo">
                             <option value="comum">Comum</option>
                             <option value="copa">Copa</option>
-                            <option value="admin">Admin</option>
                             <option value="dev">Dev</option>
                         </select>
                     </div>
@@ -155,6 +157,16 @@
         // Na criação, senha é obrigatória
         inputMat.setAttribute('required', '');
         inputSenha.setAttribute('required', '');
+
+        // Busca em tempo real por nome ou matrícula
+        document.getElementById('busca-usuario').addEventListener('input', function() {
+            var termo = this.value.trim().toLowerCase();
+            document.querySelectorAll('.tabela-usuarios tbody tr').forEach(function(tr) {
+                var mat = tr.cells[0] ? tr.cells[0].textContent.toLowerCase() : '';
+                var nome = tr.cells[1] ? tr.cells[1].textContent.toLowerCase() : '';
+                tr.style.display = (!termo || mat.includes(termo) || nome.includes(termo)) ? '' : 'none';
+            });
+        });
     }());
 </script>
 

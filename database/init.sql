@@ -4,7 +4,7 @@ CREATE TABLE usuarios (
     matricula VARCHAR(12) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('comum', 'admin', 'copa', 'dev') NOT NULL DEFAULT 'comum',
+    tipo ENUM('comum', 'copa', 'dev') NOT NULL DEFAULT 'comum',
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

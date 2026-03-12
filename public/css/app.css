@@ -143,9 +143,16 @@ body:has(.painel-dashboard) .container {
 .painel-header,
 .page-header {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.painel-header {
+  justify-content: flex-end;
+}
+
+.page-header {
+  justify-content: space-between;
 }
 
 .painel-header h1,
@@ -420,6 +427,80 @@ body:has(.painel-dashboard) .container {
 }
 .tabela tr:hover td {
   background: #f8fafc;
+}
+
+.tabela tr.linha-hoje td {
+  background: rgba(209, 104, 34, 0.06);
+}
+.tabela tr.linha-hoje:hover td {
+  background: rgba(209, 104, 34, 0.1);
+}
+
+/* =========================================================
+   Filtro de datas (página cardápios)
+   ========================================================= */
+.filtro-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 1px 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.filtro-card-titulo {
+  font-family: var(--font-principal);
+  font-size: 1rem;
+  color: var(--verde);
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filtro-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filtro-grupo label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filtro-input {
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: var(--font-cards);
+  background: #fafafa;
+  color: #333;
+  min-width: 160px;
+}
+
+.filtro-input:focus {
+  outline: none;
+  border-color: var(--verde);
+  box-shadow: 0 0 0 2px rgba(91, 95, 44, 0.15);
+  background: #fff;
+}
+
+.filtro-acoes {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding-bottom: 1px;
 }
 
 /* =========================================================

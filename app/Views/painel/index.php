@@ -9,14 +9,16 @@ $domingo = array_values(array_slice($semana, -1))[0]['data'];
             <div class="cards-grid">
                 <?php foreach ($semana as $chave => $dia): ?>
                     <?php
-                    $cardapio   = $dia[$tipo];
-                    $registroId = $agendados[$cardapio['id'] ?? ''] ?? null;
-                    $agendado   = $registroId !== null;
+                    $cardapio    = $dia[$tipo];
+                    $reg         = $registrosSemana[$cardapio['id'] ?? ''] ?? null;
+                    $registroId  = $reg['id'] ?? null;
+                    $statusReg   = $reg['status'] ?? null;
+                    $agendado    = $statusReg === 'agendado';
                     $podeAgendar = $dia['podeAgendar'];
-                    $classes    = 'card';
-                    if ($chave === $hoje)  $classes .= ' card--hoje';
-                    if ($agendado)   $classes .= ' card--agendado';
-                    if (!$cardapio)  $classes .= ' card--vazio';
+                    $classes     = 'card';
+                    if ($chave === $hoje) $classes .= ' card--hoje';
+                    if ($agendado)        $classes .= ' card--agendado';
+                    if (!$cardapio)       $classes .= ' card--vazio';
                     ?>
                     <div class="<?= $classes ?>">
                         <div class="card__header">
@@ -41,7 +43,26 @@ $domingo = array_values(array_slice($semana, -1))[0]['data'];
                                     <form method="POST" action="/registro/<?= (int) $registroId ?>/cancelar">
                                         <button class="btn btn-cancelar">Cancelar</button>
                                     </form>
+                                <?php else: ?>
+                                    <span class="badge badge--agendado">Agendado</span>
                                 <?php endif; ?>
+                                <?php if ($usuario['tipo'] === 'copa'): ?>
+                                    <a href="/cardapio/<?= $chave ?>/<?= $tipo ?>/editar" class="btn-editar">Editar</a>
+                                <?php endif; ?>
+                            <?php elseif ($statusReg === 'cancelado'): ?>
+                                <?php if ($cardapio && $podeAgendar): ?>
+                                    <form method="POST" action="/registro">
+                                        <input type="hidden" name="id_cardapio" value="<?= (int) $cardapio['id'] ?>">
+                                        <button class="btn btn-agendar">Agendar</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="badge badge--cancelado">Cancelado</span>
+                                <?php endif; ?>
+                                <?php if ($usuario['tipo'] === 'copa'): ?>
+                                    <a href="/cardapio/<?= $chave ?>/<?= $tipo ?>/editar" class="btn-editar">Editar</a>
+                                <?php endif; ?>
+                            <?php elseif ($statusReg === 'concluido'): ?>
+                                <span class="badge badge--concluido">Concluído</span>
                                 <?php if ($usuario['tipo'] === 'copa'): ?>
                                     <a href="/cardapio/<?= $chave ?>/<?= $tipo ?>/editar" class="btn-editar">Editar</a>
                                 <?php endif; ?>
@@ -57,10 +78,12 @@ $domingo = array_values(array_slice($semana, -1))[0]['data'];
                                 <?php if ($usuario['tipo'] === 'copa'): ?>
                                     <a href="/cardapio/<?= $chave ?>/<?= $tipo ?>/editar" class="btn-editar">Editar</a>
                                 <?php else: ?>
-                                    <span class="badge badge--vazio">—</span>
+                                    <span class="badge badge--vazio">Indisponível</span>
                                 <?php endif; ?>
                             <?php elseif ($usuario['tipo'] === 'copa'): ?>
                                 <a href="/cardapio/<?= $chave ?>/<?= $tipo ?>/editar" class="btn-editar">Editar</a>
+                            <?php else: ?>
+                                <span class="badge badge--vazio">Indisponível</span>
                             <?php endif; ?>
                         </div>
                     </div>

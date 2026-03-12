@@ -81,6 +81,11 @@ body {
   color: #fff;
 }
 
+.navbar-nav a.active {
+  background: var(--laranja);
+  color: #fff;
+}
+
 .navbar-user {
   display: flex;
   align-items: center;

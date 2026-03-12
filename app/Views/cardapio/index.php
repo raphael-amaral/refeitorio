@@ -79,7 +79,15 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
                     </td>
                     <td><?= htmlspecialchars($c['descricao'] ?? '—') ?></td>
                     <td style="white-space:nowrap;color:#888;font-size:0.82rem;">
-                        <?= $c['atualizado_em'] ? htmlspecialchars(date('d/m/Y H:i', strtotime($c['atualizado_em']))) : '—' ?>
+                        <?php
+                        if ($c['atualizado_em']) {
+                            $dt = new DateTime($c['atualizado_em'], new DateTimeZone('UTC'));
+                            $dt->setTimezone(new DateTimeZone('America/Sao_Paulo'));
+                            echo htmlspecialchars($dt->format('d/m/Y H:i'));
+                        } else {
+                            echo '—';
+                        }
+                        ?>
                     </td>
                     <?php if ($mostraAcoes): ?>
                         <?php $editavel = $c['data'] >= $hojeStr && $c['data'] <= $domingoStr; ?>

@@ -51,20 +51,27 @@ class PainelController extends Controller
             }
         }
 
-        // Mapa: id_cardapio => id_registro  (apenas agendamentos ativos)
-        $agendados = [];
-        foreach (Registro::buscarPorUsuario($usuario['matricula'], 'agendado') as $r) {
-            $agendados[$r['id_cardapio']] = $r['id'];
+        // Mapa: id_cardapio => ['id', 'status'] — todos os registros da semana atual
+        $registrosSemana = [];
+        $domingoSemana   = (clone $segunda)->modify('+6 days');
+        foreach (
+            Registro::buscarPorUsuario(
+                $usuario['matricula'],
+                '',
+                $segunda->format('Y-m-d'),
+                $domingoSemana->format('Y-m-d')
+            ) as $r
+        ) {
+            $registrosSemana[$r['id_cardapio']] = ['id' => $r['id'], 'status' => $r['status']];
         }
 
-        // Regras de negócio para o painel
         $this->render('painel/index', [
-            'titulo'    => 'Painel',
-            'usuario'   => $usuario,
-            'semana'    => $semana,
-            'agendados' => $agendados,
-            'segunda'   => $segunda,
-            'hoje'      => $hoje,
+            'titulo'          => 'Painel',
+            'usuario'         => $usuario,
+            'semana'          => $semana,
+            'registrosSemana' => $registrosSemana,
+            'segunda'         => $segunda,
+            'hoje'            => $hoje,
         ]);
     }
 }

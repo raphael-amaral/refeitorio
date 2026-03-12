@@ -167,7 +167,13 @@ class CardapioController extends Controller
 
         $destino = $this->input('redirect') === '/cardapio' ? '/cardapio' : '/painel';
 
-        $descricao = $this->input('descricao');
+        $descricao = trim($this->input('descricao') ?? '');
+
+        if ($descricao === '') {
+            $_SESSION['flash'] = ['tipo' => 'error', 'mensagem' => 'A descrição do cardápio não pode ser vazia.'];
+            $this->redirect('/cardapio/' . $data . '/' . $tipo . '/editar?from=' . ($destino === '/cardapio' ? 'cardapio' : 'painel'));
+        }
+
         Cardapio::salvarDia($data, $tipo, $descricao);
         $this->redirect($destino);
     }

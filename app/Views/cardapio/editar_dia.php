@@ -19,6 +19,7 @@
                 name="descricao"
                 class="form-textarea"
                 rows="4"
+                required
                 placeholder="Ex: Arroz, feijão, frango grelhado, salada..."><?= htmlspecialchars($descricao) ?></textarea>
         </div>
         <div class="form-actions">

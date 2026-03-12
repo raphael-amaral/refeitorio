@@ -1,4 +1,10 @@
-<?php $u = $_SESSION['usuario'] ?? []; ?>
+<?php
+$u       = $_SESSION['usuario'] ?? [];
+$urlAtual = strtok($_SERVER['REQUEST_URI'], '?');
+$navAtivo = function (string $href) use ($urlAtual): string {
+    return $urlAtual === $href ? ' class="active"' : '';
+};
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -15,15 +21,15 @@
         <a href="/painel" class="navbar-brand">Refeitório</a>
 
         <ul class="navbar-nav">
-            <li><a href="/painel">Painel</a></li>
+            <li><a href="/painel" <?= $navAtivo('/painel') ?>>Painel</a></li>
             <?php if (($u['tipo'] ?? '') === 'comum'): ?>
-                <li><a href="/registro">Meus Agendamentos</a></li>
+                <li><a href="/registro" <?= $navAtivo('/registro') ?>>Meus Agendamentos</a></li>
             <?php endif; ?>
             <?php if (in_array($u['tipo'] ?? '', ['copa', 'dev'], true)): ?>
-                <li><a href="/cardapio">Cardápios</a></li>
+                <li><a href="/cardapio" <?= $navAtivo('/cardapio') ?>>Cardápios</a></li>
             <?php endif; ?>
             <?php if (($u['tipo'] ?? '') === 'dev'): ?>
-                <li><a href="/usuario">Usuários</a></li>
+                <li><a href="/usuario" <?= $navAtivo('/usuario') ?>>Usuários</a></li>
             <?php endif; ?>
         </ul>
 

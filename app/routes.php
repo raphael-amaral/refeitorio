@@ -21,7 +21,6 @@ $router->get('/painel', 'App\Controllers\PainelController', 'index', ['App\Middl
 // Rotas estáticas ANTES das dinâmicas para evitar conflito de padrão regex
 // ---------------------------------------------------------------------------
 $router->get('/cardapio',      'App\Controllers\CardapioController', 'index', ['App\Middleware\Auth']);
-$router->get('/cardapio/novo', 'App\Controllers\CardapioController', 'novo',  ['App\Middleware\Auth@dev']);
 $router->post('/cardapio',     'App\Controllers\CardapioController', 'criar', ['App\Middleware\Auth@dev']);
 
 

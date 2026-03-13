@@ -602,21 +602,6 @@ body:has(.painel-dashboard) {
 /* =========================================================
    Editar cardápio do dia (SND)
    ========================================================= */
-.editar-dia-card {
-  background: #fff;
-  border-radius: 6px;
-  max-width: 560px;
-  padding: 28px 32px;
-  box-shadow: 1px 5px 12px rgba(0, 0, 0, 0.25);
-  margin: 0 auto;
-}
-
-.editar-dia-titulo {
-  font-family: var(--font-principal);
-  font-size: 1.5rem;
-  color: var(--verde);
-  margin-bottom: 20px;
-}
 
 .form-group {
   display: flex;
@@ -1122,13 +1107,6 @@ body:has(.painel-dashboard) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     white-space: nowrap;
-  }
-
-  /* ----- Cabeçalhos de página ----- */
-  .painel-header,
-  .page-header {
-    flex-wrap: wrap;
-    gap: 8px;
   }
 
   /* ----- Modal ----- */

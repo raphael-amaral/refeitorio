@@ -8,13 +8,6 @@ $diaNum    = (int) date('N'); // 1=Seg…7=Dom
 $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
 ?>
 
-<div class="page-header">
-    <h1>Cardápios</h1>
-    <?php if ($isAdminDev): ?>
-        <a href="/cardapio/novo" class="btn" style="background:var(--verde);color:#fff;">+ Novo Cardápio</a>
-    <?php endif; ?>
-</div>
-
 <!-- Filtro por data -->
 <div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.25);">
     <p style="font-family:var(--font-principal);font-size:0.85rem;font-weight:600;color:var(--verde);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px;">

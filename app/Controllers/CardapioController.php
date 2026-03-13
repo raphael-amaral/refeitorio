@@ -55,17 +55,6 @@ class CardapioController extends Controller
     }
 
     /**
-     * Exibe o formulário de criação (admin/dev).
-     */
-    public function novo(): void
-    {
-        $this->render('cardapio/form', [
-            'titulo'   => 'Novo Cardápio',
-            'cardapio' => null,
-        ]);
-    }
-
-    /**
      * Processa o formulário de criação (admin/dev).
      */
     public function criar(): void

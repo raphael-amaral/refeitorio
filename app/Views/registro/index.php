@@ -3,11 +3,6 @@ $temFiltro = !empty($dataInicio) || !empty($dataFim) || !empty($status);
 $labelStatus = ['agendado' => 'Agendado', 'cancelado' => 'Cancelado', 'concluido' => 'Concluído'];
 ?>
 
-<div class="page-header">
-    <h1>Meus Agendamentos</h1>
-    <a href="/painel" class="btn btn-outline">← Voltar ao Painel</a>
-</div>
-
 <!-- Filtros -->
 <div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.25);">
     <p style="font-family:var(--font-principal);font-size:0.85rem;font-weight:600;color:var(--verde);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px;">

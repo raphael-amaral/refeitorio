@@ -27,7 +27,6 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <?php endif; ?>
             <?php if (in_array($u['tipo'] ?? '', ['snd', 'dev'], true)): ?>
                 <li><a href="/cardapio" <?= $navAtivo('/cardapio') ?>>Cardápios</a></li>
-                <li><a href="/scanner" <?= $navAtivo('/scanner') ?>>Scanner</a></li>
             <?php endif; ?>
             <?php if (($u['tipo'] ?? '') === 'dev'): ?>
                 <li><a href="/usuario" <?= $navAtivo('/usuario') ?>>Usuários</a></li>

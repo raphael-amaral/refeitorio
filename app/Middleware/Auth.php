@@ -62,4 +62,26 @@ class Auth
             exit;
         }
     }
+
+    /**
+     * Exige um Token de API válido para o aplicativo do scanner (Kotlin).
+     */
+    public static function apiSnd(): void
+    {
+        // Pega os cabeçalhos da requisição
+        $headers = apache_request_headers();
+        
+        // Busca o token enviado pelo app Kotlin
+        $tokenEnviado = $headers['Authorization'] ?? '';
+
+        // Defina uma chave fixa para o seu aplicativo
+        $tokenEsperado = 'Bearer CHAVE_SECRETA_COPA_2026';
+
+        if ($tokenEnviado !== $tokenEsperado) {
+            header('Content-Type: application/json');
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'erro' => 'Acesso negado pelo aplicativo.']);
+            exit;
+        }
+    }
 }

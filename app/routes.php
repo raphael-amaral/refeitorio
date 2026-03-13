@@ -37,10 +37,10 @@ $router->post('/registro/{id}/cancelar', 'App\Controllers\RegistroController', '
 $router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', 'concluir', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
-// Scanner de crachá (SND)
+// Scanner de crachá (SND) - Via App Android
 // ---------------------------------------------------------------------------
-$router->get('/scanner',            'App\Controllers\ScannerController', 'index',     ['App\Middleware\Auth@snd']);
-$router->post('/scanner/processar', 'App\Controllers\ScannerController', 'processar', ['App\Middleware\Auth@snd']);
+$router->post('/api/login', 'App\Controllers\ScannerController', 'loginApp');
+$router->post('/scanner/processar', 'App\Controllers\ScannerController', 'processar', ['App\Middleware\Auth@apiSnd']);
 
 // ---------------------------------------------------------------------------
 // Usuários (apenas dev)

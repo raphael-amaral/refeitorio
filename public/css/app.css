@@ -337,18 +337,18 @@ body:has(.painel-dashboard) .container {
 
 .btn-cancelar {
   width: 100%;
-  background: transparent;
-  color: var(--laranja-dark);
+  background: rgba(255, 0, 0, 0.2);
+  color: #d32f2f;
+  font-family: var(--font-principal);
   font-size: 0.7rem;
   padding: 3px 0;
   border-radius: 3px;
-  border: 1px solid var(--laranja);
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .btn-cancelar:hover {
-  background: rgba(209, 104, 34, 0.08);
+  background: rgba(255, 0, 0, 0.3);
 }
 
 .btn-outline {

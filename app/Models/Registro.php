@@ -146,4 +146,24 @@ class Registro extends Model
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }
+
+    public static function buscarParaScannerHoje(string $matricula): ?array
+    {
+        // Se houver dois cardápios no mesmo dia (almoço e jantar),
+        // queremos o que foi agendado ou concluído.
+        // O ORDER BY prioriza mostrar registros que ainda não foram cancelados.
+        $stmt = static::db()->prepare(
+            "SELECT r.*, c.tipo AS tipo_refeicao, u.nome AS nome_usuario
+               FROM registros r
+               JOIN cardapios c ON r.id_cardapio = c.id
+               JOIN usuarios  u ON r.matricula_usuario = u.matricula
+              WHERE r.matricula_usuario = :matricula
+                AND c.data = CURDATE()
+              ORDER BY r.status ASC
+              LIMIT 1"
+        );
+        $stmt->execute(['matricula' => $matricula]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
 }

@@ -56,6 +56,25 @@
                 '';
         }
 
+        function tentarFocar() {
+            var video = document.querySelector('#js-reader video');
+            if (!video || !video.srcObject) return;
+            var track = video.srcObject.getVideoTracks()[0];
+            if (!track || !track.applyConstraints) return;
+
+            var caps = track.getCapabilities ? track.getCapabilities() : null;
+            if (caps && caps.focusMode) {
+                track.applyConstraints({
+                        advanced: [{
+                            focusMode: 'continuous'
+                        }]
+                    })
+                    .catch(function() {
+                        // alguns navegadores recusam foco automático; ignora
+                    });
+            }
+        }
+
         function processar(matricula, aoPausar, detalhe) {
             if (pausado) return;
             pausado = true;
@@ -96,31 +115,43 @@
                 Html5QrcodeSupportedFormats.EAN_8,
                 Html5QrcodeSupportedFormats.QR_CODE
             ],
-            verbose: false
+            verbose: false,
+            // Usa o detector nativo do navegador quando disponível (melhora leitura de 1D/2D em alguns dispositivos)
+            useBarCodeDetectorIfSupported: true
         });
 
         scanner.start({
                 facingMode: 'environment'
             }, {
-                fps: 25,
+                // fps mais baixo dá mais tempo de processamento e reduz chances de "pular" códigos
+                fps: 15,
+                // Área de leitura otimizada para barras longas (1D) — largura maior, altura menor
                 qrbox: function(w, h) {
-                    /* caixa moderada — lê a ~15-25cm, evita ter que aproximar demais */
+                    var boxW = Math.round(w * 0.9);
+                    var boxH = Math.round(Math.min(h * 0.2, 180));
+
+                    // Se a câmera for muito estreita (portrait), tenta manter um mínimo de altura
+                    if (h / w > 1.6) {
+                        boxH = Math.round(Math.min(h * 0.25, 220));
+                    }
+
                     return {
-                        width: Math.round(w * 0.55),
-                        height: Math.round(Math.min(h * 0.18, 100))
+                        width: boxW,
+                        height: boxH
                     };
                 },
+                aspectRatio: 16 / 9,
                 videoConstraints: {
                     facingMode: {
                         ideal: 'environment'
                     },
                     width: {
-                        min: 640,
+                        min: 1280,
                         ideal: 1920,
                         max: 3840
                     },
                     height: {
-                        min: 480,
+                        min: 720,
                         ideal: 1080,
                         max: 2160
                     },
@@ -143,6 +174,10 @@
             scannerAtivo = true;
             feedback.className = 'scanner-feedback';
             feedbackTxt.textContent = 'Câmera ativa — aponte para o código de barras';
+
+            // Tenta forçar foco automático (quando suportado) e permite "tap to focus".
+            tentarFocar();
+            document.getElementById('js-reader').addEventListener('click', tentarFocar);
         }).catch(function() {
             document.getElementById('js-reader').style.display = 'none';
             feedback.className = 'scanner-feedback scanner-feedback--erro';

@@ -138,8 +138,8 @@ body:has(.painel-dashboard) .container {
   max-width: 100%;
   padding-top: 8px;
   padding-bottom: 8px;
-  padding-left: 12px;
-  padding-right: 12px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 /* =========================================================
@@ -196,12 +196,24 @@ body:has(.painel-dashboard) .container {
 }
 
 /* =========================================================
-   Grid de cards (7 colunas)
+   Grid de cards
+   ========================================================= */
+/* =========================================================
+   Grid de cards
    ========================================================= */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
+  padding-left: 6px; /* Adiciona o recuo apenas para os cards */
+  padding-right: 6px; /* Adiciona o recuo apenas para os cards */
+}
+
+/* Monitores do hospital (telas a partir de 992px): Força exatamente 7 colunas */
+@media (min-width: 992px) {
+  .cards-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 /* =========================================================
@@ -227,10 +239,11 @@ body:has(.painel-dashboard) .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 8px; /* Redução leve no espaçamento interno para ganhar área útil */
   border-bottom: 1px solid rgba(91, 95, 44, 0.2);
   background: #f9f8f4;
   border-radius: 4px 4px 0 0;
+  gap: 6px; /* Mantém uma distância segura entre o dia e a data */
 }
 
 .card__header strong {
@@ -238,10 +251,17 @@ body:has(.painel-dashboard) .container {
   font-size: 1.1rem;
   color: var(--laranja);
   font-weight: 500;
+  white-space: nowrap; /* Impede que o nome do dia quebre em duas linhas */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Se a tela for muito pequena, adiciona "..." no nome do dia */
 }
+
 .card__data {
-  font-size: 1rem;
-  color: #606060;
+  font-size: 0.85rem; /* Tamanho reduzido (antes era 1rem) */
+  color: #000000; /* Alterado para preto para melhor contraste */
+  font-weight: 400; /* Deixa a data um pouco mais forte já que a fonte diminuiu */
+  white-space: nowrap; /* Garante que a data e o check fiquem grudados na mesma linha */
+  flex-shrink: 0; /* Impede que o navegador esmague a data por falta de espaço */
 }
 
 .card__body {
@@ -286,7 +306,8 @@ body:has(.painel-dashboard) .container {
 .card--agendado .card__data::after {
   content: " ✓";
   color: var(--verde);
-  font-weight: 700;
+  font-weight: 800; /* Check mais gordinho para compensar a redução de tamanho */
+  font-size: 0.9rem; /* Ajuste específico do tamanho do check */
 }
 
 /* -- Estado: sem cardápio -- */
@@ -535,51 +556,41 @@ body:has(.painel-dashboard) .container {
 }
 
 /* =========================================================
-   Painel dashboard — cabe na viewport sem scroll vertical
+   Painel dashboard — Permite scroll e quebra de linha
    ========================================================= */
-body:has(.painel-dashboard) {
-  overflow: hidden;
-}
 
 .painel-dashboard {
-  height: calc(100dvh - 72px); /* 56 navbar + 8 pad-top + 8 pad-bottom */
-  max-height: 630px;
+  min-height: calc(100dvh - 72px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  padding-bottom: 24px;
 }
 
 .painel-dashboard .refeicao-section {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  margin-bottom: 0;
 }
 
 .painel-dashboard .refeicao-title {
   flex-shrink: 0;
   margin-top: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .painel-dashboard .cards-grid {
-  flex: 1;
-  min-height: 0;
   grid-auto-rows: 1fr;
 }
 
 .painel-dashboard .card {
-  min-height: 0 !important;
-  height: 100%;
-  overflow: hidden; /* impede o card de crescer além da célula do grid */
+  min-height: 170px;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .painel-dashboard .card__body {
   flex: 1;
-  min-height: 0;
   overflow-y: auto;
 }
 
@@ -594,6 +605,7 @@ body:has(.painel-dashboard) {
   font-size: 0.8rem;
   padding: 5px 0;
 }
+
 .text-muted {
   color: #94a3b8;
   font-size: 0.88rem;
@@ -799,7 +811,7 @@ body:has(.painel-dashboard) {
 }
 
 /* =========================================================
-   Responsivo — escala maior em 1080px+
+   Responsivo — escala maior em 1440px+ (Monitores Full HD)
    ========================================================= */
 @media (min-width: 1440px) {
   .container {
@@ -808,11 +820,17 @@ body:has(.painel-dashboard) {
   .cards-grid {
     gap: 16px;
   }
+
+  /* Aumenta a altura dos cards para não ficarem achatados em 1080p */
+  .painel-dashboard .card {
+    min-height: 260px;
+  }
+
   .card__header strong {
     font-size: 1.1rem;
   }
   .card__body {
-    font-size: 0.85rem;
+    font-size: 0.95rem; /* Aumentei um pouco a fonte também para equilibrar */
   }
   .refeicao-title {
     font-size: 1.5rem;
@@ -1006,15 +1024,6 @@ body:has(.painel-dashboard) {
 }
 
 /* =========================================================
-   Responsivo — tablet (grid de 4 colunas)
-   ========================================================= */
-@media (max-width: 1100px) {
-  .cards-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* =========================================================
    Responsivo — celular
    ========================================================= */
 @media (max-width: 768px) {
@@ -1057,35 +1066,6 @@ body:has(.painel-dashboard) {
     padding: 8px 8px 16px;
   }
 
-  /* ----- Painel: desabilita altura fixa, permite scroll ----- */
-  body:has(.painel-dashboard) {
-    overflow: auto;
-  }
-  .painel-dashboard {
-    height: auto;
-    max-height: none;
-  }
-  .painel-dashboard .refeicao-section {
-    flex: none;
-    min-height: unset;
-  }
-  .painel-dashboard .cards-grid {
-    flex: none;
-    min-height: unset;
-    grid-auto-rows: auto;
-  }
-  .painel-dashboard .card {
-    height: auto;
-    min-height: 140px !important;
-    overflow: visible;
-  }
-
-  /* ----- Grid: 2 colunas no celular ----- */
-  .cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
   /* ----- Tabela: scroll horizontal ----- */
   .tabela {
     display: block;
@@ -1113,5 +1093,14 @@ body:has(.painel-dashboard) {
   .modal-box {
     max-width: calc(100vw - 32px);
     padding: 20px 16px;
+  }
+
+  /*--*/
+
+  @media (max-width: 768px) {
+    .cards-grid {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
   }
 }

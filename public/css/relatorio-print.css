@@ -1,0 +1,143 @@
+/* css/relatorio-print.css */
+
+@page {
+    /* Menor margem possível para as impressoras não cortarem */
+    margin: 1cm;
+    size: A4 portrait;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    /* Tamanho de fonte bem denso */
+    font-size: 8.5pt;
+    line-height: 1.2;
+}
+
+.print-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.logo-box {
+    width: 45px;
+    height: 45px;
+    background: #000;
+    color: #fff;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14pt;
+    margin-right: 15px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.print-header h1 {
+    margin: 0 0 3px 0;
+    font-size: 14pt;
+}
+
+.print-header p {
+    margin: 1px 0;
+    font-size: 9pt;
+    color: #000;
+}
+
+.resumo-box {
+    display: flex;
+    gap: 20px;
+    padding: 6px 10px;
+    border: 1px solid #000;
+    margin-bottom: 15px;
+    font-size: 9.5pt;
+}
+
+.empty {
+    font-style: italic;
+    color: #333;
+}
+
+.tabela-print {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+}
+
+.tabela-print th, .tabela-print td {
+    border: 1px solid #444;
+    padding: 3px 6px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tabela-print th {
+    background-color: #eee;
+    font-weight: bold;
+    font-size: 8pt;
+    text-transform: uppercase;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.tabela-print tbody tr:nth-child(even) {
+    background-color: #f7f7f7;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.col-data small {
+    color: #333;
+    font-size: 7.5pt;
+    margin-left: 2px;
+}
+
+/* Força cores preta/cinza para evitar o uso de tintas coloridas */
+.status-agendado,
+.status-concluido,
+.status-cancelado { 
+    color: #000; 
+    font-weight: bold; 
+}
+
+/* Estilo para cancelar com sublinhado/italico para demarcar em preto e branco */
+.status-cancelado {
+    text-decoration: line-through;
+    color: #555;
+}
+
+.print-footer {
+    text-align: center;
+    font-size: 7pt;
+    color: #333;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Simulador de impressão na tela */
+@media screen {
+    body {
+        background: #e5e7eb;
+        padding: 20px;
+    }
+    .print-header, .resumo-box, .tabela-print, .print-footer {
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #fff;
+    }
+    .print-header {
+        padding: 20px;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 0;
+    }
+}

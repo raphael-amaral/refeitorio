@@ -65,7 +65,13 @@ class CardapioController extends Controller
             'descricao' => $this->input('descricao'),
         ];
 
+        if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
+            $this->flash('Preencha todos os campos corretamente.', 'error');
+            $this->redirect('/cardapio');
+        }
+
         Cardapio::criar($dados);
+        $this->flash('Cardápio criado com sucesso.', 'success');
         $this->redirect('/cardapio');
     }
 
@@ -97,7 +103,13 @@ class CardapioController extends Controller
             'descricao' => $this->input('descricao'),
         ];
 
+        if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
+            $this->flash('Preencha todos os campos corretamente.', 'error');
+            $this->redirect('/cardapio');
+        }
+
         Cardapio::atualizar((int) $id, $dados);
+        $this->flash('Cardápio atualizado com sucesso.', 'success');
         $this->redirect('/cardapio');
     }
 
@@ -123,9 +135,6 @@ class CardapioController extends Controller
         $this->redirect('/cardapio');
     }
 
-    /**
-     * Formulário de edição de um dia/tipo a partir do painel (SND).
-     */
     /**
      * Salva (cria ou atualiza) o cardápio de um dia/tipo (SND).
      */

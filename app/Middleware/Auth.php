@@ -68,14 +68,12 @@ class Auth
      */
     public static function apiSnd(): void
     {
-        // Pega os cabeçalhos da requisição
-        $headers = apache_request_headers();
-        
-        // Busca o token enviado pelo app Kotlin
-        $tokenEnviado = $headers['Authorization'] ?? '';
+        $tokenEnviado = $_SERVER['HTTP_AUTHORIZATION']
+            ?? getallheaders()['Authorization']
+            ?? '';
 
         // Defina uma chave fixa para o seu aplicativo
-        $tokenEsperado = 'Bearer CHAVE_SECRETA_COPA_2026';
+        $tokenEsperado = 'Bearer ' . ($_ENV['SCANNER_TOKEN'] ?? '');
 
         if ($tokenEnviado !== $tokenEsperado) {
             header('Content-Type: application/json');

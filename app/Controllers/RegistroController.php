@@ -115,6 +115,6 @@ class RegistroController extends Controller
     public function concluir(string $id): void
     {
         Registro::concluir((int) $id);
-        $this->redirect('/registro');
+        $this->redirect('/painel');
     }
 }

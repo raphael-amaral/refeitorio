@@ -39,7 +39,7 @@ class ScannerController extends Controller
                 $this->json([
                     'ok'    => true,
                     'nome'  => $usuario['nome'],
-                    'token' => 'Bearer CHAVE_SECRETA_COPA_2026'
+                    'token' => 'Bearer ' . ($_ENV['SCANNER_TOKEN'] ?? '')
                 ]);
                 return;
             } else {

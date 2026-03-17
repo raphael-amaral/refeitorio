@@ -6,6 +6,18 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // Timezone do Brasil (UTC-3)
 date_default_timezone_set('America/Sao_Paulo');
 
+// Carrega variáveis do .env manualmente (já que não há vlucas/phpdotenv via composer)
+$envPath = __DIR__ . '/../.env';
+if (file_exists($envPath)) {
+    $envVars = parse_ini_file($envPath);
+    if ($envVars) {
+        foreach ($envVars as $k => $v) {
+            $_ENV[$k] = $v;
+            $_SERVER[$k] = $v;
+        }
+    }
+}
+
 // Define exibição de erros com base no ambiente (.env APP_ENV=development para ativar)
 $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'production';
 if ($appEnv === 'development') {

@@ -147,6 +147,50 @@ class Registro extends Model
         return $row ?: null;
     }
 
+    /**
+     * Retorna todos os registros para o relatório (visão SND/dev).
+     * Suporta filtro por status e intervalo de datas do cardápio.
+     */
+    public static function buscarParaRelatorio(
+        string $status = '',
+        string $dataInicio = '',
+        string $dataFim = '',
+        string $matricula = ''
+    ): array {
+        $sql = 'SELECT r.id, r.status, r.criado_em,
+                       u.matricula, u.nome AS nome_usuario,
+                       c.data AS data_cardapio, c.tipo AS tipo_refeicao, c.descricao
+                  FROM registros r
+                  JOIN usuarios  u ON r.matricula_usuario = u.matricula
+                  JOIN cardapios c ON r.id_cardapio       = c.id
+                 WHERE 1=1';
+
+        $params = [];
+
+        if ($status !== '') {
+            $sql .= ' AND r.status = :status';
+            $params['status'] = $status;
+        }
+        if ($dataInicio !== '') {
+            $sql .= ' AND c.data >= :data_inicio';
+            $params['data_inicio'] = $dataInicio;
+        }
+        if ($dataFim !== '') {
+            $sql .= ' AND c.data <= :data_fim';
+            $params['data_fim'] = $dataFim;
+        }
+        if ($matricula !== '') {
+            $sql .= ' AND r.matricula_usuario LIKE :matricula';
+            $params['matricula'] = '%' . $matricula . '%';
+        }
+
+        $sql .= ' ORDER BY c.data DESC, u.nome ASC';
+
+        $stmt = static::db()->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public static function buscarParaScannerHoje(string $matricula): ?array
     {
         // Se houver dois cardápios no mesmo dia (almoço e jantar),

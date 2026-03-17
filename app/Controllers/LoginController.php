@@ -8,13 +8,6 @@ use App\Models\Cardapio;
 
 class LoginController extends Controller
 {
-    public function __construct()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
-
     /**
      * Exibe a tela de login (GET /).
      */

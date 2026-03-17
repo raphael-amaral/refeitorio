@@ -20,12 +20,14 @@ $router->get('/painel', 'App\Controllers\PainelController', 'index', ['App\Middl
 // Cardápios
 // Rotas estáticas ANTES das dinâmicas para evitar conflito de padrão regex
 // ---------------------------------------------------------------------------
-$router->get('/cardapio',      'App\Controllers\CardapioController', 'index', ['App\Middleware\Auth']);
-$router->post('/cardapio',     'App\Controllers\CardapioController', 'criar', ['App\Middleware\Auth@dev']);
+$router->get('/cardapio',               'App\Controllers\CardapioController', 'index',    ['App\Middleware\Auth@snd']);
+$router->post('/cardapio',              'App\Controllers\CardapioController', 'criar',    ['App\Middleware\Auth@dev']);
+$router->get('/cardapio/{id}/editar',   'App\Controllers\CardapioController', 'editar',   ['App\Middleware\Auth@dev']);
+$router->post('/cardapio/{id}',         'App\Controllers\CardapioController', 'atualizar', ['App\Middleware\Auth@dev']);
+$router->post('/cardapio/{id}/excluir', 'App\Controllers\CardapioController', 'excluir',  ['App\Middleware\Auth@dev']);
 
-
-// Edição de cardápio por dia/tipo (snd)
-$router->post('/cardapio/{data}/{tipo}',        'App\Controllers\CardapioController', 'salvarDia',  ['App\Middleware\Auth@snd']);
+// Edição de cardápio por dia/tipo — painel da SND
+$router->post('/cardapio/{data}/{tipo}', 'App\Controllers\CardapioController', 'salvarDia', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
 // Agendamentos (apenas usuários comuns agendam; concluir é snd+)
@@ -40,6 +42,12 @@ $router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', '
 // ---------------------------------------------------------------------------
 $router->post('/api/login', 'App\Controllers\ScannerController', 'loginApp');
 $router->post('/scanner/processar', 'App\Controllers\ScannerController', 'processar', ['App\Middleware\Auth@apiSnd']);
+
+// ---------------------------------------------------------------------------
+// Relatórios (snd e dev)
+// ---------------------------------------------------------------------------
+$router->get('/relatorios/pdf', 'App\Controllers\RelatorioController', 'pdf',   ['App\Middleware\Auth@snd']);
+$router->get('/relatorios',     'App\Controllers\RelatorioController', 'index', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------
 // Usuários (apenas dev)

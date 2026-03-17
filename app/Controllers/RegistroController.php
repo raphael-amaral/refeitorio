@@ -55,18 +55,21 @@ class RegistroController extends Controller
             }
         }
 
-        // Prazo: até 09:30 do dia do cardápio
+        // Prazo: até hora limite do dia do cardápio
         if ($idCardapio > 0 && isset($cardapio)) {
+            $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
+            [$horaLimit, $minutoLimit] = explode(':', $limitTime);
             $agora        = new DateTime();
             $diaCardapio  = new DateTime($cardapio['data']);
             $hoje         = $agora->format('Y-m-d');
-            $fimPrazo     = (clone $diaCardapio)->setTime(9, 30);
+            $fimPrazo     = (clone $diaCardapio)->setTime((int)$horaLimit, (int)$minutoLimit);
 
             if (
                 $diaCardapio->format('Y-m-d') < $hoje ||
                 ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
             ) {
-                $this->flash('Agendamentos encerrados para este dia. Prazo: até 09h30.', 'warning');
+                $timeFormatted = str_replace(':', 'h', $limitTime);
+                $this->flash("Agendamentos encerrados para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect('/painel');
             }
         }
@@ -88,17 +91,20 @@ class RegistroController extends Controller
 
         if ($registro) {
             $cardapio    = Cardapio::buscarPorId($registro['id_cardapio']);
+            $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
+            [$horaLimit, $minutoLimit] = explode(':', $limitTime);
             $agora       = new DateTime();
             $diaCardapio = new DateTime($cardapio['data']);
             $hoje        = $agora->format('Y-m-d');
-            $fimPrazo    = (clone $diaCardapio)->setTime(9, 30);
+            $fimPrazo    = (clone $diaCardapio)->setTime((int)$horaLimit, (int)$minutoLimit);
 
             if (
                 $diaCardapio->format('Y-m-d') < $hoje ||
                 ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
             ) {
                 $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
-                $this->flash('Cancelamento encerrado para este dia. Prazo: até 09h30.', 'warning');
+                $timeFormatted = str_replace(':', 'h', $limitTime);
+                $this->flash("Cancelamento encerrado para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect($destino);
             }
         }

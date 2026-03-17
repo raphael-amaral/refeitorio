@@ -35,4 +35,4 @@ CREATE TABLE registros (
 INSERT INTO usuarios (matricula, nome, senha, tipo) VALUES
 ('snd',   'Equipe SND', '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'snd'),
 ('teste', 'Usuário Teste', '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),
-('dev',   'Desenvolvedor', '$2y$10$3FJuPha3dwDcBPs5MIQFLuMkPsGKByM4VKGEK9g3yOj6cBbYNq5tu', 'dev');
+('dev',   'Desenvolvedor', '$2y$10$MsojWKh9yCR36nheklmvxuBtbx.BAnOMka9kpwaOjYIgNY4lgumuC', 'dev');

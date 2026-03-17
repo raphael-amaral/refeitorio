@@ -20,7 +20,9 @@ class PainelController extends Controller
 
         $agora  = new DateTime();
         $hoje   = $agora->format('Y-m-d');
-        $antes930 = $agora < (clone $agora)->setTime(9, 30);
+        $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
+        [$horaLimit, $minutoLimit] = explode(':', $limitTime);
+        $antes930 = $agora < (clone $agora)->setTime((int)$horaLimit, (int)$minutoLimit);
         $ehComum  = $usuario['tipo'] === 'comum';
 
         // Monta a estrutura dos 7 dias com slots para almoço e jantar

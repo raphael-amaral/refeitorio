@@ -29,37 +29,42 @@ if ($modo === 'dia') {
 </head>
 <body>
 
-    <div class="print-header">
-        <div class="logo-box">SND</div>
-        <div>
-            <h1>Relatório Refeitório</h1>
-            <p><?= $subtitulo ?></p>
-            <p>Gerado em: <?= date('d/m/Y \à\s H:i') ?></p>
-        </div>
-    </div>
+    <table class="tabela-print">
+        <thead>
+            <tr>
+                <td colspan="5" style="border: none !important; background: transparent !important; padding: 0 !important; text-align: left;">
+                    <div class="print-header">
+                        <div class="logo-box">SND</div>
+                        <div>
+                            <h1>Relatório Refeitório</h1>
+                            <p><?= $subtitulo ?></p>
+                            <p>Gerado em: <?= date('d/m/Y \à\s H:i') ?></p>
+                        </div>
+                    </div>
 
-    <!-- Resumo -->
-    <div class="resumo-box">
-        <div><strong>Concluídos:</strong> <?= $totais['concluido'] ?></div>
-        <div><strong>Cancelados:</strong> <?= $totais['cancelado'] ?></div>
-        <div><strong>Não Concluídos:</strong> <?= $totais['agendado'] ?></div>
-        <div><strong>Total Geral:</strong> <?= count($registros) ?></div>
-    </div>
-
-    <?php if (empty($registros)): ?>
-        <p class="empty">Nenhum registro encontrado para este filtro.</p>
-    <?php else: ?>
-        <table class="tabela-print">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Refeição</th>
-                    <th>Matrícula</th>
-                    <th>Nome do Usuário</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
+                    <!-- Resumo -->
+                    <div class="resumo-box">
+                        <div><strong>Concluídos:</strong> <?= $totais['concluido'] ?></div>
+                        <div><strong>Cancelados:</strong> <?= $totais['cancelado'] ?></div>
+                        <div><strong>Não Concluídos:</strong> <?= $totais['agendado'] ?></div>
+                        <div><strong>Total Geral:</strong> <?= count($registros) ?></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th>Data</th>
+                <th>Refeição</th>
+                <th>Matrícula</th>
+                <th>Nome do Usuário</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($registros)): ?>
+            <tr>
+                <td colspan="5" class="empty" style="text-align: center; padding: 20px;">Nenhum registro encontrado para este filtro.</td>
+            </tr>
+            <?php else: ?>
                 <?php foreach ($registros as $r):
                     $ts = strtotime($r['data_cardapio']);
                 ?>
@@ -73,9 +78,9 @@ if ($modo === 'dia') {
                     <td class="status-<?= $r['status'] ?>"><?= $labelStatus[$r['status']] ?? $r['status'] ?></td>
                 </tr>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 
     <div class="print-footer">
         Sistema de Refeitório — Santa Casa

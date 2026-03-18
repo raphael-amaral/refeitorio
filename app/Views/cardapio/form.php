@@ -4,7 +4,6 @@ $editando = $cardapio !== null;
 $action   = $editando ? '/cardapio/' . (int) $cardapio['id'] : '/cardapio';
 ?>
 
-<h1><?= htmlspecialchars($titulo) ?></h1>
 
 <form method="POST" action="<?= $action ?>">
 

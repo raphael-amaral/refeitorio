@@ -21,17 +21,13 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 
 <!-- Estilos do Filtro Aba -->
 <style>
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; }
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; align-items: center; }
 .tab-btn { padding: 8px 16px; border: none; background: transparent; color: #6b7280; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
 .tab-btn.active { color: var(--verde); border-bottom-color: var(--verde); }
 .tab-pane { display: none; }
 .tab-pane.active { display: flex; }
 </style>
 
-<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-    <h1><?= htmlspecialchars($titulo) ?></h1>
-    <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" class="btn" style="background: var(--laranja); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600;">🖨️ Gerar PDF</a>
-</div>
 
 <!-- Filtros -->
 <div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.15);">
@@ -39,6 +35,7 @@ $anoFiltro = date('Y', strtotime($dataInicio));
         <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <button type="button" class="tab-btn <?= $modo === 'dia' ? 'active' : '' ?>" data-target="tab-dia">Dia Específico</button>
         <button type="button" class="tab-btn <?= $modo === 'periodo' ? 'active' : '' ?>" data-target="tab-periodo">Período</button>
+        <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" style="margin-left:auto; margin-bottom:6px; background:var(--laranja); color:white; padding:6px 14px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.88rem; white-space:nowrap;">🖨️ Gerar PDF</a>
     </div>
 
     <form method="get" action="/relatorios" style="display:flex; flex-direction:column; gap:16px;">

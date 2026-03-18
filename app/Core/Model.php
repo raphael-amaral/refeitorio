@@ -29,7 +29,11 @@ abstract class Model
     // Leitura
     // -------------------------------------------------------------------------
 
-    public static function buscarPorId(int|string $id): array|false
+    /**
+     * @param int|string $id
+     * @return array|false
+     */
+    public static function buscarPorId($id)
     {
         $sql  = 'SELECT * FROM ' . static::$tabela
             . ' WHERE ' . static::$chavePrimaria . ' = :id';
@@ -59,7 +63,10 @@ abstract class Model
      * Insere um novo registro e retorna o ID gerado (lastInsertId).
      * Para tabelas sem auto-increment, retorna '0' — use o valor que você inseriu.
      */
-    public static function criar(array $dados): string|false
+    /**
+     * @return string|false
+     */
+    public static function criar(array $dados)
     {
         $colunas    = implode(', ', array_keys($dados));
         $marcadores = ':' . implode(', :', array_keys($dados));
@@ -78,9 +85,12 @@ abstract class Model
     /**
      * Atualiza um registro pela chave primária.
      */
-    public static function atualizar(int|string $id, array $dados): bool
+    /**
+     * @param int|string $id
+     */
+    public static function atualizar($id, array $dados): bool
     {
-        $sets = implode(', ', array_map(fn($col) => "{$col} = :{$col}", array_keys($dados)));
+        $sets = implode(', ', array_map(fn($col) => (string)$col . ' = :' . (string)$col, array_keys($dados)));
 
         // Usa um placeholder exclusivo para a PK para evitar conflito com colunas do $dados
         $dados['__pk_val'] = $id;
@@ -96,7 +106,10 @@ abstract class Model
     /**
      * Remove um registro pela chave primária.
      */
-    public static function deletar(int|string $id): bool
+    /**
+     * @param int|string $id
+     */
+    public static function deletar($id): bool
     {
         $stmt = static::db()->prepare(
             'DELETE FROM ' . static::$tabela

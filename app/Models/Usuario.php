@@ -13,8 +13,10 @@ class Usuario extends Model
     /**
      * Busca um usuário ativo pela matrícula.
      * Retorna array associativo ou false se não encontrar / inativo.
+     *
+     * @return array|false
      */
-    public static function buscarPorMatricula(string $matricula): array|false
+    public static function buscarPorMatricula(string $matricula)
     {
         $stmt = static::db()->prepare(
             'SELECT matricula, nome, senha, tipo

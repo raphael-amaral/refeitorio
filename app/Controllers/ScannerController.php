@@ -97,4 +97,30 @@ class ScannerController extends Controller
             'refeicao' => $registro['tipo_refeicao'] === 'almoco' ? 'Almoço' : 'Jantar',
         ]);
     }
+
+    public function listaHoje(): void
+    {
+        $hoje = date('Y-m-d');
+        
+        // Utilizamos a mesma função do relatório web, fixando as datas para o dia atual.
+        // Os campos vazios ('') indicam que não estamos filtrando por status nem por matrícula.
+        $registros = Registro::buscarParaRelatorio('', $hoje, $hoje, '');
+
+        $listaFormatada = [];
+        
+        foreach ($registros as $r) {
+            $listaFormatada[] = [
+                // O aplicativo Kotlin espera exatamente estas três chaves
+                'matricula' => $r['matricula'] ?? '',
+                'nome_usuario'  => $r['nome_usuario'] ?? 'Desconhecido',
+                'tipo_refeicao' => ($r['tipo_refeicao'] ?? '') === 'almoco' ? 'Almoço' : 'Jantar',
+                'status'        => $r['status'] ?? 'agendado'
+            ];
+        }
+
+        $this->json([
+            'ok'    => true,
+            'lista' => $listaFormatada
+        ]);
+    }
 }

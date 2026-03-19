@@ -24,7 +24,7 @@ class ScannerController extends Controller
         }
 
         // Busca o usuário usando a função do seu Model (já filtra por ativo = 1)
-        $usuario = \App\Models\Usuario::buscarPorMatricula($matriculaForm);
+        $usuario = Usuario::buscarPorMatricula($matriculaForm);
 
         if (!$usuario) {
             $this->json(['ok' => false, 'erro' => 'Matrícula não encontrada ou inativa.'], 404);

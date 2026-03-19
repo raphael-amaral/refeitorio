@@ -188,7 +188,7 @@ class Registro extends Model
 
         $stmt = static::db()->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function buscarParaScannerHoje(string $matricula): ?array

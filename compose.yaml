@@ -10,6 +10,18 @@ services:
     depends_on:
       - db
 
+  python_app:
+    image: python:3.12-slim
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - db
+    env_file:
+      - .env
+    command: >
+      sh -c "pip install -r requirements.txt && python autoinsert.py"
+
   db:
     image: mysql:8.0
     ports:
@@ -22,6 +34,6 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      
+
 volumes:
   db_data:

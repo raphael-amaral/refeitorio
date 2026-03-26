@@ -4,6 +4,10 @@
 .env.local
 .env.backup
 
+#Arquivos para insert de usuarios
+*.xls
+*.csv
+
 # 2. Dependências do PHP (Composer)
 # A pasta vendor é gerada automaticamente pelo Composer e costuma ser pesada.
 # Apenas o arquivo composer.json e composer.lock devem ser versionados.

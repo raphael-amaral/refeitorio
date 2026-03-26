@@ -1,4 +1,5 @@
 <?php
+
 /** @var array[] $registros */
 /** @var array   $totais */
 /** @var string  $modo */
@@ -21,19 +22,45 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 
 <!-- Estilos do Filtro Aba -->
 <style>
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; align-items: center; }
-.tab-btn { padding: 8px 16px; border: none; background: transparent; color: #6b7280; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-.tab-btn.active { color: var(--verde); border-bottom-color: var(--verde); }
-.tab-pane { display: none; }
-.tab-pane.active { display: flex; }
+    .tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+    }
+
+    .tab-btn.active {
+        color: var(--verde);
+        border-bottom-color: var(--verde);
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: flex;
+    }
 </style>
 
 
 <!-- Filtros -->
 <div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.15);">
     <div class="tabs">
-        <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <button type="button" class="tab-btn <?= $modo === 'dia' ? 'active' : '' ?>" data-target="tab-dia">Dia Específico</button>
+        <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <button type="button" class="tab-btn <?= $modo === 'periodo' ? 'active' : '' ?>" data-target="tab-periodo">Período</button>
         <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" style="margin-left:auto; margin-bottom:6px; background:var(--laranja); color:white; padding:6px 14px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.88rem; white-space:nowrap;">🖨️ Gerar PDF</a>
     </div>
@@ -42,6 +69,13 @@ $anoFiltro = date('Y', strtotime($dataInicio));
         <input type="hidden" name="modo" id="modo" value="<?= htmlspecialchars($modo) ?>">
 
         <!-- Painéis de Data -->
+        <div id="tab-dia" class="tab-pane <?= $modo === 'dia' ? 'active' : '' ?>" style="gap:16px;">
+            <div>
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Data</label>
+                <input type="date" name="data_dia" value="<?= $modo === 'dia' ? $dataInicio : date('Y-m-d') ?>" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
+            </div>
+        </div>
+
         <div id="tab-mes" class="tab-pane <?= $modo === 'mes' ? 'active' : '' ?>" style="gap:16px;">
             <div>
                 <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Mês</label>
@@ -54,17 +88,10 @@ $anoFiltro = date('Y', strtotime($dataInicio));
             <div>
                 <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Ano</label>
                 <select name="ano" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
-                    <?php for($a=date('Y'); $a>=2024; $a--): ?>
+                    <?php for ($a = date('Y'); $a >= 2024; $a--): ?>
                         <option value="<?= $a ?>" <?= $anoFiltro === (string)$a ? 'selected' : '' ?>><?= $a ?></option>
                     <?php endfor; ?>
                 </select>
-            </div>
-        </div>
-
-        <div id="tab-dia" class="tab-pane <?= $modo === 'dia' ? 'active' : '' ?>" style="gap:16px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Data</label>
-                <input type="date" name="data_dia" value="<?= $modo === 'dia' ? $dataInicio : date('Y-m-d') ?>" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
             </div>
         </div>
 
@@ -143,19 +170,19 @@ $anoFiltro = date('Y', strtotime($dataInicio));
                     $ts  = strtotime($r['data_cardapio']);
                     $cls = 'badge--' . $r['status'];
                 ?>
-                <tr>
-                    <td style="white-space:nowrap;"><?= date('d/m/Y', $ts) ?></td>
-                    <td><?= $diasSemana[(int) date('w', $ts)] ?></td>
-                    <td>
-                        <span class="badge <?= $r['tipo_refeicao'] === 'almoco' ? 'badge--agendado' : 'badge--concluido' ?>">
-                            <?= $r['tipo_refeicao'] === 'almoco' ? 'Almoço' : 'Jantar' ?>
-                        </span>
-                    </td>
-                    <td><?= htmlspecialchars($r['matricula']) ?></td>
-                    <td><?= htmlspecialchars($r['nome_usuario']) ?></td>
-                    <td><?= htmlspecialchars($r['descricao']) ?></td>
-                    <td><span class="badge <?= $cls ?>"><?= $labelStatus[$r['status']] ?? $r['status'] ?></span></td>
-                </tr>
+                    <tr>
+                        <td style="white-space:nowrap;"><?= date('d/m/Y', $ts) ?></td>
+                        <td><?= $diasSemana[(int) date('w', $ts)] ?></td>
+                        <td>
+                            <span class="badge <?= $r['tipo_refeicao'] === 'almoco' ? 'badge--agendado' : 'badge--concluido' ?>">
+                                <?= $r['tipo_refeicao'] === 'almoco' ? 'Almoço' : 'Jantar' ?>
+                            </span>
+                        </td>
+                        <td><?= htmlspecialchars($r['matricula']) ?></td>
+                        <td><?= htmlspecialchars($r['nome_usuario']) ?></td>
+                        <td><?= htmlspecialchars($r['descricao']) ?></td>
+                        <td><span class="badge <?= $cls ?>"><?= $labelStatus[$r['status']] ?? $r['status'] ?></span></td>
+                    </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
@@ -163,16 +190,20 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 <?php endif; ?>
 
 <script>
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        // Remove active
-        document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'));
-        // Add active
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.target).classList.add('active');
-        // Update hidden input
-        const map = {'tab-mes':'mes','tab-dia':'dia','tab-periodo':'periodo'};
-        document.getElementById('modo').value = map[btn.dataset.target];
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active
+            document.querySelectorAll('.tab-btn, .tab-pane').forEach(el => el.classList.remove('active'));
+            // Add active
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.target).classList.add('active');
+            // Update hidden input
+            const map = {
+                'tab-mes': 'mes',
+                'tab-dia': 'dia',
+                'tab-periodo': 'periodo'
+            };
+            document.getElementById('modo').value = map[btn.dataset.target];
+        });
     });
-});
 </script>

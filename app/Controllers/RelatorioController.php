@@ -39,7 +39,7 @@ class RelatorioController extends Controller
      */
     private function prepararDadosRelatorio(): array
     {
-        $modo = $_GET['modo'] ?? 'mes'; // dia, periodo, mes
+        $modo = $_GET['modo'] ?? 'dia'; // dia, periodo, mes
 
         $dataInicio = '';
         $dataFim    = '';
@@ -59,7 +59,7 @@ class RelatorioController extends Controller
             $dataFim    = date('Y-m-t', strtotime($dataInicio));
         }
 
-        $status    = $_GET['status']    ?? '';
+        $status    = $_GET['status'] ?? 'concluido';
         $matricula = trim($_GET['matricula'] ?? '');
 
         $registros = Registro::buscarParaRelatorio($status, $dataInicio, $dataFim, $matricula);

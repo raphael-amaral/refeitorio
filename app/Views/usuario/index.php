@@ -120,6 +120,7 @@ use App\Models\Usuario; ?>
 
 <script>
     (function() {
+        // Lógica do formulário (mantida como a sua original)
         var form = document.getElementById('form-usuario');
         var titulo = document.getElementById('form-titulo');
         var campoMat = document.getElementById('campo-matricula');
@@ -166,19 +167,100 @@ use App\Models\Usuario; ?>
             btnCancel.style.display = 'none';
         });
 
-        // Na criação, senha é obrigatória
         inputMat.setAttribute('required', '');
         inputSenha.setAttribute('required', '');
 
-        // Busca em tempo real por nome ou matrícula
+        // -----------------------------------------------------------------
+        // NOVA LÓGICA DE PAGINAÇÃO E BUSCA
+        // -----------------------------------------------------------------
+
+        var linhasPorPagina = 10; // Defina quantos usuários aparecerão por tela
+        var paginaAtual = 1;
+        var tbody = document.querySelector('.tabela-usuarios tbody');
+        var todasAsLinhas = Array.from(tbody.querySelectorAll('tr'));
+        var linhasFiltradas = todasAsLinhas;
+
+        // Cria o contêiner para os botões de paginação via JS
+        var paginacaoContainer = document.createElement('div');
+        paginacaoContainer.style.display = 'flex';
+        paginacaoContainer.style.justifyContent = 'center';
+        paginacaoContainer.style.gap = '8px';
+        paginacaoContainer.style.marginTop = '20px';
+        paginacaoContainer.style.flexWrap = 'wrap';
+        document.querySelector('.usuarios-lista .card__body').appendChild(paginacaoContainer);
+
+        function renderizarPagina(pagina) {
+            // Oculta todas as linhas primeiro
+            todasAsLinhas.forEach(function(linha) {
+                linha.style.display = 'none';
+            });
+
+            // Calcula o início e o fim para exibir apenas a página atual
+            var inicio = (pagina - 1) * linhasPorPagina;
+            var fim = inicio + linhasPorPagina;
+
+            linhasFiltradas.slice(inicio, fim).forEach(function(linha) {
+                linha.style.display = '';
+            });
+
+            atualizarBotoesPaginacao();
+        }
+
+        function atualizarBotoesPaginacao() {
+            paginacaoContainer.innerHTML = '';
+            var totalPaginas = Math.ceil(linhasFiltradas.length / linhasPorPagina);
+
+            // Não mostra paginação se couber tudo em uma tela só
+            if (totalPaginas <= 1) return;
+
+            // Lógica simples para criar os botões (limitado para não criar 50 botões se a busca for vazia)
+            // Aqui criamos botões para as primeiras, a página atual e as últimas
+            for (let i = 1; i <= totalPaginas; i++) {
+                // Mostra a primeira, a última, e as duas antes e depois da página atual
+                if (i === 1 || i === totalPaginas || (i >= paginaAtual - 2 && i <= paginaAtual + 2)) {
+                    let btn = document.createElement('button');
+                    btn.textContent = i;
+                    btn.style.padding = '5px 10px';
+                    btn.style.border = '1px solid #ccc';
+                    btn.style.borderRadius = '4px';
+                    btn.style.cursor = 'pointer';
+                    btn.style.backgroundColor = (i === paginaAtual) ? '#0056b3' : '#fff';
+                    btn.style.color = (i === paginaAtual) ? '#fff' : '#333';
+
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        paginaAtual = i;
+                        renderizarPagina(paginaAtual);
+                    });
+
+                    paginacaoContainer.appendChild(btn);
+                } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
+                    // Adiciona reticências "..." para saltos grandes
+                    let reticencias = document.createElement('span');
+                    reticencias.textContent = '...';
+                    reticencias.style.padding = '5px';
+                    paginacaoContainer.appendChild(reticencias);
+                }
+            }
+        }
+
+        // Integração do campo de busca existente com a nova paginação
         document.getElementById('busca-usuario').addEventListener('input', function() {
             var termo = this.value.trim().toLowerCase();
-            document.querySelectorAll('.tabela-usuarios tbody tr').forEach(function(tr) {
-                var mat = tr.cells[0] ? tr.cells[0].textContent.toLowerCase() : '';
-                var nome = tr.cells[1] ? tr.cells[1].textContent.toLowerCase() : '';
-                tr.style.display = (!termo || mat.includes(termo) || nome.includes(termo)) ? '' : 'none';
+
+            linhasFiltradas = todasAsLinhas.filter(function(linha) {
+                var mat = linha.cells[0] ? linha.cells[0].textContent.toLowerCase() : '';
+                var nome = linha.cells[1] ? linha.cells[1].textContent.toLowerCase() : '';
+                return !termo || mat.includes(termo) || nome.includes(termo);
             });
+
+            // Sempre volta para a primeira página ao fazer uma nova busca
+            paginaAtual = 1;
+            renderizarPagina(paginaAtual);
         });
+
+        // Inicializa a primeira página ao carregar a tela
+        renderizarPagina(paginaAtual);
     }());
 </script>
 

@@ -44,6 +44,33 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (empty($_SESSION['_csrf_token'])) {
+    $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+}
+
+function csrf_token(): string
+{
+    return $_SESSION['_csrf_token'] ?? '';
+}
+
+function csrf_field(): string
+{
+    $token = htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8');
+    return '<input type="hidden" name="_csrf" value="' . $token . '">';
+}
+
+function csrf_validate_or_fail(): void
+{
+    $tokenEnviado = $_POST['_csrf'] ?? '';
+    $tokenSessao = $_SESSION['_csrf_token'] ?? '';
+
+    if (!is_string($tokenEnviado) || !is_string($tokenSessao) || !hash_equals($tokenSessao, $tokenEnviado)) {
+        http_response_code(403);
+        echo 'CSRF inválido.';
+        exit;
+    }
+}
+
 // Captura a URI e o método HTTP da requisição
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];

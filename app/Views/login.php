@@ -46,6 +46,7 @@
             <?php endif; ?>
 
             <form action="/login" method="POST">
+                <?= csrf_field() ?>
                 <div class="form-group">
                     <label for="matricula">Matrícula</label>
                     <input type="text" id="matricula" name="matricula" required autofocus>

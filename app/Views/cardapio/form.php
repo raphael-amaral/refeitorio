@@ -6,7 +6,7 @@ $action   = $editando ? '/cardapio/' . (int) $cardapio['id'] : '/cardapio';
 
 
 <form method="POST" action="<?= $action ?>">
-
+    <?= csrf_field() ?>
     <div class="form-group">
         <label for="data">Data</label>
         <input type="date" id="data" name="data" required

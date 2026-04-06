@@ -60,6 +60,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                             <?php elseif ($agendado): ?>
                                 <?php if ($podeAgendar): ?>
                                     <form method="POST" action="/registro/<?= (int) $registroId ?>/cancelar">
+                                        <?= csrf_field() ?>
                                         <button class="btn btn-cancelar">Cancelar</button>
                                     </form>
                                 <?php else: ?>
@@ -71,6 +72,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                             <?php elseif ($statusReg === 'cancelado'): ?>
                                 <?php if ($cardapio && $podeAgendar): ?>
                                     <form method="POST" action="/registro">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="id_cardapio" value="<?= (int) $cardapio['id'] ?>">
                                         <button class="btn btn-agendar">Agendar</button>
                                     </form>
@@ -87,6 +89,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                                 <?php endif; ?>
                             <?php elseif ($cardapio && $podeAgendar): ?>
                                 <form method="POST" action="/registro">
+                                    <?= csrf_field() ?>
                                     <input type="hidden" name="id_cardapio" value="<?= (int) $cardapio['id'] ?>">
                                     <button class="btn btn-agendar">Agendar</button>
                                 </form>
@@ -120,6 +123,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
             <button type="button" class="modal-fechar" id="modal-fechar">&times;</button>
         </div>
         <form id="modal-form" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="redirect" value="/painel">
             <div id="modal-erro" style="display:none;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:0.88rem;"></div>
             <div class="form-group" style="margin-bottom:16px;">

@@ -50,6 +50,13 @@ class Router
                 continue;
             }
 
+            if ($method === 'POST') {
+                $isApi = ($uri === '/api/login') || str_starts_with($uri, '/scanner/');
+                if (!$isApi) {
+                    csrf_validate_or_fail();
+                }
+            }
+
             // Parâmetros de URL capturados pela regex (ex: ['id' => '42'])
             $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
 

@@ -51,16 +51,19 @@ use App\Models\Usuario; ?>
                                         </button>
                                         <?php if ($u['ativo'] && !$proprio): ?>
                                             <form method="POST" action="/usuario/<?= urlencode($u['matricula']) ?>/inativar">
+                                                <?= csrf_field() ?>
                                                 <button class="btn-acao btn-inativar">Inativar</button>
                                             </form>
                                         <?php elseif (!$u['ativo']): ?>
                                             <form method="POST" action="/usuario/<?= urlencode($u['matricula']) ?>/ativar">
+                                                <?= csrf_field() ?>
                                                 <button class="btn-acao btn-ativar">Reativar</button>
                                             </form>
                                         <?php endif; ?>
                                         <?php if (!$proprio && !$temRegistros): ?>
                                             <form method="POST" action="/usuario/<?= urlencode($u['matricula']) ?>/excluir"
                                                 onsubmit="return confirm('Excluir permanentemente <?= htmlspecialchars($u['nome'], ENT_QUOTES) ?>?')">
+                                                <?= csrf_field() ?>
                                                 <button class="btn-acao btn-excluir">Excluir</button>
                                             </form>
                                         <?php endif; ?>
@@ -80,6 +83,7 @@ use App\Models\Usuario; ?>
             </div>
             <div class="card__body">
                 <form method="POST" id="form-usuario" action="/usuario" class="form-usuario">
+                    <?= csrf_field() ?>
                     <div class="form-group" id="campo-matricula">
                         <label for="matricula">Matrícula</label>
                         <input type="text" id="matricula" name="matricula" maxlength="12"

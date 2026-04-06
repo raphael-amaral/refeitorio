@@ -41,11 +41,15 @@ class LoginController extends Controller
         $usuario = Usuario::buscarPorMatricula($matricula);
 
         if ($usuario && password_verify($senha, $usuario['senha'])) {
+            session_regenerate_id(true);
+
             $_SESSION['usuario'] = [
                 'matricula' => $usuario['matricula'],
                 'nome'      => $usuario['nome'],
                 'tipo'      => $usuario['tipo'],
             ];
+            $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+            $_SESSION['_last_activity'] = time();
 
             $this->redirect('/painel');
         }
@@ -59,6 +63,13 @@ class LoginController extends Controller
      */
     public function logout(): void
     {
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], (bool) $params['secure'], (bool) $params['httponly']);
+        }
+
         session_destroy();
         $this->redirect('/');
     }

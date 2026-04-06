@@ -39,10 +39,38 @@ set_exception_handler(function (Throwable $e) use ($appEnv): void {
     error_log($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 });
 
+// Endurecimento de sessão
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', $_ENV['SESSION_SAMESITE'] ?? 'Lax');
+ini_set('session.cookie_secure', $isHttps ? '1' : '0');
+
 // Inicia a sessão uma única vez para toda a aplicação
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+$sessionIdleTimeout = (int) ($_ENV['SESSION_IDLE_TIMEOUT'] ?? 1800);
+if (isset($_SESSION['usuario'], $_SESSION['_last_activity'])) {
+    $inativoPor = time() - (int) $_SESSION['_last_activity'];
+    if ($inativoPor > $sessionIdleTimeout) {
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], (bool) $params['secure'], (bool) $params['httponly']);
+        }
+        session_destroy();
+        session_start();
+        session_regenerate_id(true);
+        $_SESSION['erro_login'] = 'Sessao expirada por inatividade. Faca login novamente.';
+    }
+}
+
+$_SESSION['_last_activity'] = time();
 
 if (empty($_SESSION['_csrf_token'])) {
     $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));

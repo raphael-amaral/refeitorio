@@ -1,12 +1,18 @@
+#Arquivos para insert de usuarios
+*.xls
+*.csv
+
+#Scripts de backup e configuracao
+*.sh
+*.bat
+*.py
+
 # 1. Credenciais e Variáveis de Ambiente
 # Nunca suba senhas ou configurações específicas do servidor/máquina local
 .env
 .env.local
 .env.backup
 
-#Arquivos para insert de usuarios
-*.xls
-*.csv
 
 # 2. Dependências do PHP (Composer)
 # A pasta vendor é gerada automaticamente pelo Composer e costuma ser pesada.

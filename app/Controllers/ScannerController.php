@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
 use App\Models\Registro;
 use App\Models\Usuario;
 
@@ -18,6 +19,22 @@ class ScannerController extends Controller
         $matriculaForm = trim($_POST['usuario'] ?? '');
         $senhaForm = trim($_POST['senha'] ?? '');
 
+        $maxAttempts   = (int) ($_ENV['API_LOGIN_MAX_ATTEMPTS'] ?? 5);
+        $windowSeconds = (int) ($_ENV['API_LOGIN_WINDOW_SECONDS'] ?? 300);
+        $lockSeconds   = (int) ($_ENV['API_LOGIN_LOCKOUT_SECONDS'] ?? 300);
+
+        $ipKey   = Security::clientIp();
+        $userKey = strtolower($matriculaForm !== '' ? $matriculaForm : '_empty_');
+
+        $retryIp = Security::isBlocked('api_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        $retryUser = Security::isBlocked('api_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        $retryAfter = max($retryIp, $retryUser);
+
+        if ($retryAfter > 0) {
+            $this->json(['ok' => false, 'erro' => 'Muitas tentativas. Tente novamente mais tarde.'], 429);
+            return;
+        }
+
         if ($matriculaForm === '' || $senhaForm === '') {
             $this->json(['ok' => false, 'erro' => 'Preencha matrícula e senha.'], 400);
             return;
@@ -26,29 +43,23 @@ class ScannerController extends Controller
         // Busca o usuário usando a função do seu Model (já filtra por ativo = 1)
         $usuario = Usuario::buscarPorMatricula($matriculaForm);
 
-        if (!$usuario) {
-            $this->json(['ok' => false, 'erro' => 'Matrícula não encontrada ou inativa.'], 404);
+        if ($usuario && password_verify($senhaForm, $usuario['senha']) && in_array($usuario['tipo'], ['snd', 'dev'], true)) {
+            Security::clear('api_login_ip', $ipKey);
+            Security::clear('api_login_user', $userKey);
+
+            $this->json([
+                'ok'    => true,
+                'nome'  => $usuario['nome'],
+                'token' => 'Bearer ' . ($_ENV['SCANNER_TOKEN'] ?? '')
+            ]);
             return;
         }
 
-        // Valida a senha usando BCRYPT (padrão do seu novoUsuario)
-        if (password_verify($senhaForm, $usuario['senha'])) {
+        Security::registerFailure('api_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        Security::registerFailure('api_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        usleep(random_int(150000, 350000));
 
-            // Confere se o tipo de usuário é snd ou dev
-            if (in_array($usuario['tipo'], ['snd', 'dev'], true)) {
-                $this->json([
-                    'ok'    => true,
-                    'nome'  => $usuario['nome'],
-                    'token' => 'Bearer ' . ($_ENV['SCANNER_TOKEN'] ?? '')
-                ]);
-                return;
-            } else {
-                $this->json(['ok' => false, 'erro' => 'Sem permissão para usar o aplicativo.'], 403);
-                return;
-            }
-        }
-
-        $this->json(['ok' => false, 'erro' => 'Senha incorreta.'], 401);
+        $this->json(['ok' => false, 'erro' => 'Credenciais inválidas.'], 401);
     }
 
     /**
@@ -101,13 +112,13 @@ class ScannerController extends Controller
     public function listaHoje(): void
     {
         $hoje = date('Y-m-d');
-        
+
         // Utilizamos a mesma função do relatório web, fixando as datas para o dia atual.
         // Os campos vazios ('') indicam que não estamos filtrando por status nem por matrícula.
         $registros = Registro::buscarParaRelatorio('', $hoje, $hoje, '');
 
         $listaFormatada = [];
-        
+
         foreach ($registros as $r) {
             $listaFormatada[] = [
                 // O aplicativo Kotlin espera exatamente estas três chaves

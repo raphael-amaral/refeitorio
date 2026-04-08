@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Cardapio;
 
@@ -66,11 +67,20 @@ class CardapioController extends Controller
         ];
 
         if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
+            Audit::write('cardapio.criar', 'blocked', null, [
+                'motivo' => 'validacao',
+                'data' => $dados['data'],
+                'tipo' => $dados['tipo'],
+            ]);
             $this->flash('Preencha todos os campos corretamente.', 'error');
             $this->redirect('/cardapio');
         }
 
         Cardapio::criar($dados);
+        Audit::write('cardapio.criar', 'success', null, [
+            'data' => $dados['data'],
+            'tipo' => $dados['tipo'],
+        ]);
         $this->flash('Cardápio criado com sucesso.', 'success');
         $this->redirect('/cardapio');
     }
@@ -104,11 +114,20 @@ class CardapioController extends Controller
         ];
 
         if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
+            Audit::write('cardapio.atualizar', 'blocked', (string) $id, [
+                'motivo' => 'validacao',
+                'data' => $dados['data'],
+                'tipo' => $dados['tipo'],
+            ]);
             $this->flash('Preencha todos os campos corretamente.', 'error');
             $this->redirect('/cardapio');
         }
 
         Cardapio::atualizar((int) $id, $dados);
+        Audit::write('cardapio.atualizar', 'success', (string) $id, [
+            'data' => $dados['data'],
+            'tipo' => $dados['tipo'],
+        ]);
         $this->flash('Cardápio atualizado com sucesso.', 'success');
         $this->redirect('/cardapio');
     }
@@ -122,13 +141,16 @@ class CardapioController extends Controller
         $idInt = (int) $id;
 
         if (\App\Models\Registro::contarPorCardapio($idInt) > 0) {
+            Audit::write('cardapio.excluir', 'blocked', (string) $idInt, ['motivo' => 'possui_registros']);
             $this->flash('Não é possível excluir: este cardápio possui agendamentos vinculados.', 'error');
             $this->redirect('/cardapio');
         }
 
         try {
             Cardapio::deletar($idInt);
+            Audit::write('cardapio.excluir', 'success', (string) $idInt);
         } catch (\PDOException $e) {
+            Audit::write('cardapio.excluir', 'error', (string) $idInt, ['erro' => $e->getCode()]);
             $this->flash('Erro ao excluir o cardápio. Verifique se há dados vinculados.', 'error');
         }
 
@@ -141,6 +163,7 @@ class CardapioController extends Controller
     public function salvarDia(string $data, string $tipo): void
     {
         if (!in_array($tipo, ['almoco', 'jantar'], true) || !$this->dataNaSemanaAtual($data)) {
+            Audit::write('cardapio.salvar_dia', 'blocked', $data . ':' . $tipo, ['motivo' => 'fora_intervalo_ou_tipo']);
             $this->redirect('/painel');
         }
 
@@ -149,11 +172,13 @@ class CardapioController extends Controller
         $descricao = trim($this->input('descricao') ?? '');
 
         if ($descricao === '') {
+            Audit::write('cardapio.salvar_dia', 'blocked', $data . ':' . $tipo, ['motivo' => 'descricao_vazia']);
             $_SESSION['flash'] = ['tipo' => 'error', 'mensagem' => 'A descrição do cardápio não pode ser vazia.'];
             $this->redirect('/painel');
         }
 
         Cardapio::salvarDia($data, $tipo, $descricao);
+        Audit::write('cardapio.salvar_dia', 'success', $data . ':' . $tipo);
         $this->redirect($destino);
     }
 

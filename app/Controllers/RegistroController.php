@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Cardapio;
 use App\Models\Registro;
@@ -44,6 +45,7 @@ class RegistroController extends Controller
 
         // Apenas usuários comuns podem agendar
         if ($usuario['tipo'] !== 'comum') {
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'tipo_nao_permitido']);
             $this->redirect('/painel');
         }
 
@@ -51,6 +53,7 @@ class RegistroController extends Controller
         if ($idCardapio > 0) {
             $cardapio = Cardapio::buscarPorId($idCardapio);
             if ($cardapio && $cardapio['tipo'] === 'jantar') {
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'jantar_nao_agendavel']);
                 $this->redirect('/painel');
             }
         }
@@ -68,6 +71,7 @@ class RegistroController extends Controller
                 $diaCardapio->format('Y-m-d') < $hoje ||
                 ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
             ) {
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fora_prazo']);
                 $timeFormatted = str_replace(':', 'h', $limitTime);
                 $this->flash("Agendamentos encerrados para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect('/painel');
@@ -76,6 +80,9 @@ class RegistroController extends Controller
 
         if ($idCardapio > 0 && !Registro::jaAgendado($usuario['matricula'], $idCardapio)) {
             Registro::upsertAgendado($usuario['matricula'], $idCardapio);
+            Audit::write('registro.criar', 'success', (string) $idCardapio, ['matricula_usuario' => $usuario['matricula']]);
+        } else {
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'ja_agendado_ou_invalido']);
         }
 
         $this->redirect('/painel');
@@ -109,7 +116,10 @@ class RegistroController extends Controller
             }
         }
 
-        Registro::cancelarDoUsuario((int) $id, $usuario['matricula']);
+        $cancelado = Registro::cancelarDoUsuario((int) $id, $usuario['matricula']);
+        Audit::write('registro.cancelar', $cancelado ? 'success' : 'blocked', (string) $id, [
+            'matricula_usuario' => $usuario['matricula'],
+        ]);
 
         $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
         $this->redirect($destino);
@@ -120,7 +130,8 @@ class RegistroController extends Controller
      */
     public function concluir(string $id): void
     {
-        Registro::concluir((int) $id);
+        $ok = Registro::concluir((int) $id);
+        Audit::write('registro.concluir', $ok ? 'success' : 'error', (string) $id);
         $this->redirect('/painel');
     }
 }

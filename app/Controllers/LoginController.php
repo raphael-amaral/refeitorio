@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
 use App\Models\Usuario;
 use App\Models\Cardapio;
 
@@ -38,9 +39,28 @@ class LoginController extends Controller
         $matricula = trim($_POST['matricula'] ?? '');
         $senha     = $_POST['senha'] ?? '';
 
+        $maxAttempts   = (int) ($_ENV['LOGIN_MAX_ATTEMPTS'] ?? 5);
+        $windowSeconds = (int) ($_ENV['LOGIN_WINDOW_SECONDS'] ?? 300);
+        $lockSeconds   = (int) ($_ENV['LOGIN_LOCKOUT_SECONDS'] ?? 300);
+
+        $ipKey   = Security::clientIp();
+        $userKey = strtolower($matricula !== '' ? $matricula : '_empty_');
+
+        $retryIp = Security::isBlocked('web_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        $retryUser = Security::isBlocked('web_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        $retryAfter = max($retryIp, $retryUser);
+
+        if ($retryAfter > 0) {
+            $_SESSION['erro_login'] = 'Muitas tentativas. Tente novamente em ' . $retryAfter . ' segundos.';
+            $this->redirect('/');
+        }
+
         $usuario = Usuario::buscarPorMatricula($matricula);
 
         if ($usuario && password_verify($senha, $usuario['senha'])) {
+            Security::clear('web_login_ip', $ipKey);
+            Security::clear('web_login_user', $userKey);
+
             session_regenerate_id(true);
 
             $_SESSION['usuario'] = [
@@ -54,7 +74,11 @@ class LoginController extends Controller
             $this->redirect('/painel');
         }
 
-        $_SESSION['erro_login'] = 'Matrícula ou senha inválidos, ou usuário inativo.';
+        Security::registerFailure('web_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        Security::registerFailure('web_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
+        usleep(random_int(150000, 350000));
+
+        $_SESSION['erro_login'] = 'Credenciais inválidas.';
         $this->redirect('/');
     }
 

@@ -18,6 +18,7 @@
             <div class="login-cardapios__cabecalho">
                 <p class="login-cardapios__titulo">Cardápio de hoje</p>
                 <p class="login-cardapios__data"><?= date('d/m/Y') ?></p>
+                <small class="login-cardapios__nota">* Faça login para agendar o almoço</small>
             </div>
             <div class="login-cardapios__cards">
                 <?php foreach (['almoco' => 'Almoço', 'jantar' => 'Jantar'] as $chave => $label): ?>

@@ -2,9 +2,10 @@
 $domingo = array_values(array_slice($semana, -1))[0]['data'];
 
 // Helper para gerar o botão Editar com data-* attributes (seguro contra qualquer descrição)
-function btnEditar(string $chave, string $tipo, string $label, string $dataFormatada, ?string $descricao): string
+function btnEditar(string $chave, string $tipo, string $label, string $dataFormatada, ?string $descricao, string $diaNome = ''): string
 {
-    $titulo = htmlspecialchars($label . ' — ' . $dataFormatada, ENT_QUOTES);
+    $prefixo = $diaNome !== '' ? $diaNome . '(' . $label . ')' : $label;
+    $titulo = htmlspecialchars($prefixo . ' — ' . $dataFormatada, ENT_QUOTES);
     $desc   = htmlspecialchars($descricao ?? '', ENT_QUOTES);
     $action = htmlspecialchars('/cardapio/' . $chave . '/' . $tipo, ENT_QUOTES);
     return '<button class="btn-editar js-editar" '
@@ -53,7 +54,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                         <div class="card__footer">
                             <?php if ($tipo === 'jantar'): ?>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php else: ?>
                                     <span class="badge badge--vazio">Indisponível</span>
                                 <?php endif; ?>
@@ -67,7 +68,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                                     <span class="badge badge--agendado">Agendado</span>
                                 <?php endif; ?>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php endif; ?>
                             <?php elseif ($statusReg === 'cancelado'): ?>
                                 <?php if ($cardapio && $podeAgendar): ?>
@@ -80,12 +81,12 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                                     <span class="badge badge--cancelado">Cancelado</span>
                                 <?php endif; ?>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php endif; ?>
                             <?php elseif ($statusReg === 'concluido'): ?>
                                 <span class="badge badge--concluido">Concluído</span>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php endif; ?>
                             <?php elseif ($cardapio && $podeAgendar): ?>
                                 <form method="POST" action="/registro">
@@ -94,16 +95,16 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                                     <button class="btn btn-agendar">Agendar</button>
                                 </form>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php endif; ?>
                             <?php elseif (!$cardapio): ?>
                                 <?php if ($editavel): ?>
-                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                    <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                                 <?php else: ?>
                                     <span class="badge badge--vazio">Indisponível</span>
                                 <?php endif; ?>
                             <?php elseif ($editavel): ?>
-                                <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual) ?>
+                                <?= btnEditar($chave, $tipo, $label, $dataFmt, $descAtual, $dia['label']) ?>
                             <?php else: ?>
                                 <span class="badge badge--vazio">Indisponível</span>
                             <?php endif; ?>

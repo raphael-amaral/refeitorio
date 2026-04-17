@@ -9,6 +9,7 @@ services:
       - .env
     depends_on:
       - db
+    restart: unless-stopped
 
   python_app:
     image: python:3.12-slim
@@ -30,6 +31,7 @@ services:
       - "3101:3306"
     env_file:
       - .env
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}

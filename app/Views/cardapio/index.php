@@ -8,25 +8,105 @@ $diaNum    = (int) date('N'); // 1=Seg…7=Dom
 $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
 ?>
 
+<style>
+    .filtro-cardapio {
+        background: #fff;
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin-bottom: 18px;
+        box-shadow: 1px 5px 12px rgba(0,0,0,0.25);
+    }
+
+    .filtro-cardapio__titulo {
+        font-family: var(--font-principal);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--verde);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 14px;
+    }
+
+    .filtro-cardapio form {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .filtro-cardapio .filtro-campo {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .filtro-cardapio label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .filtro-cardapio input[type="date"] {
+        padding: 7px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        background: #fafafa;
+        color: #333;
+        min-width: 150px;
+    }
+
+    .filtro-cardapio .filtro-acoes {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    @media (max-width: 768px) {
+        .filtro-cardapio {
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .filtro-cardapio form {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .filtro-cardapio input[type="date"] {
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .filtro-cardapio .filtro-acoes {
+            width: 100%;
+        }
+
+        .filtro-cardapio .filtro-acoes button,
+        .filtro-cardapio .filtro-acoes a {
+            flex: 1;
+            text-align: center;
+        }
+    }
+</style>
+
 <!-- Filtro por data -->
-<div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.25);">
-    <p style="font-family:var(--font-principal);font-size:0.85rem;font-weight:600;color:var(--verde);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px;">
-        Filtrar por período
-    </p>
-    <form method="GET" action="/cardapio" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label for="data_inicio" style="font-size:0.78rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.04em;">De</label>
-            <input type="date" id="data_inicio" name="data_inicio"
-                value="<?= htmlspecialchars($dataInicio ?? '') ?>"
-                style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:0.9rem;background:#fafafa;color:#333;min-width:160px;">
+<div class="filtro-cardapio">
+    <p class="filtro-cardapio__titulo">Filtrar por período</p>
+    <form method="GET" action="/cardapio">
+        <div class="filtro-campo">
+            <label for="data_inicio">De</label>
+            <input type="date" id="data_inicio" name="data_inicio" value="<?= htmlspecialchars($dataInicio ?? '') ?>">
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-            <label for="data_fim" style="font-size:0.78rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.04em;">Até</label>
-            <input type="date" id="data_fim" name="data_fim"
-                value="<?= htmlspecialchars($dataFim ?? '') ?>"
-                style="padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:0.9rem;background:#fafafa;color:#333;min-width:160px;">
+        <div class="filtro-campo">
+            <label for="data_fim">Até</label>
+            <input type="date" id="data_fim" name="data_fim" value="<?= htmlspecialchars($dataFim ?? '') ?>">
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-end;">
+        <div class="filtro-acoes">
             <button type="submit" style="background:var(--verde);color:#fff;border:none;border-radius:4px;padding:8px 20px;font-size:0.88rem;cursor:pointer;font-family:var(--font-cards);">Filtrar</button>
             <?php if (!empty($dataInicio) || !empty($dataFim)): ?>
                 <a href="/cardapio" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:8px 14px;font-size:0.88rem;text-decoration:none;font-family:var(--font-cards);">Limpar</a>

@@ -22,12 +22,22 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 
 <!-- Estilos do Filtro Aba -->
 <style>
+    .filtro-relatorio {
+        background: #fff;
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin-bottom: 18px;
+        box-shadow: 1px 5px 12px rgba(0,0,0,0.15);
+    }
+
     .tabs {
         display: flex;
         gap: 4px;
         border-bottom: 2px solid #e5e7eb;
         margin-bottom: 16px;
         align-items: center;
+        flex-wrap: wrap;
+        row-gap: 0;
     }
 
     .tab-btn {
@@ -39,6 +49,8 @@ $anoFiltro = date('Y', strtotime($dataInicio));
         cursor: pointer;
         border-bottom: 2px solid transparent;
         margin-bottom: -2px;
+        white-space: nowrap;
+        font-size: 0.9rem;
     }
 
     .tab-btn.active {
@@ -52,42 +64,170 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 
     .tab-pane.active {
         display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .filtro-campo {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .filtro-campo label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #555;
+    }
+
+    .filtro-campo input,
+    .filtro-campo select {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        background: #fafafa;
+        color: #333;
+    }
+
+    .filtro-campo input[type="date"] { min-width: 150px; }
+    .filtro-campo select             { min-width: 130px; }
+    .filtro-campo input[type="text"] { max-width: 140px; }
+
+    .btn-gerar-pdf {
+        margin-left: auto;
+        margin-bottom: 6px;
+        background: var(--laranja);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.88rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .filtro-comuns {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+        align-items: flex-end;
+    }
+
+    .filtro-comuns-acoes {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .filtro-relatorio {
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+
+        /* Tabs + PDF button ficam todos na mesma linha */
+        .tabs {
+            flex-wrap: nowrap;
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            font-size: 0.78rem;
+            padding: 5px 7px;
+        }
+
+        /* PDF: compacto, na mesma linha das tabs */
+        .btn-gerar-pdf {
+            order: 0;
+            width: auto;
+            margin-top: 0;
+            margin-bottom: 6px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Campos do painel de data ficam lado a lado (De/Até, Mês/Ano) */
+        .tab-pane.active {
+            flex-direction: row;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab-pane.active .filtro-campo {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .filtro-campo input,
+        .filtro-campo select {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            box-sizing: border-box;
+        }
+
+        /* Matrícula + Status lado a lado em grid 2 colunas */
+        .filtro-comuns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 10px;
+            padding-top: 10px;
+        }
+
+        .filtro-comuns-acoes {
+            grid-column: 1 / -1;
+            width: auto;
+        }
+
+        .filtro-comuns-acoes button,
+        .filtro-comuns-acoes a {
+            flex: 1;
+            text-align: center;
+        }
     }
 </style>
 
 
 <!-- Filtros -->
-<div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.15);">
+<div class="filtro-relatorio">
     <div class="tabs">
         <button type="button" class="tab-btn <?= $modo === 'dia' ? 'active' : '' ?>" data-target="tab-dia">Dia Específico</button>
         <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <button type="button" class="tab-btn <?= $modo === 'periodo' ? 'active' : '' ?>" data-target="tab-periodo">Período</button>
-        <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" style="margin-left:auto; margin-bottom:6px; background:var(--laranja); color:white; padding:6px 14px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.88rem; white-space:nowrap;">🖨️ Gerar PDF</a>
+        <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" class="btn-gerar-pdf">🖨️ Gerar PDF</a>
     </div>
 
     <form method="get" action="/relatorios" style="display:flex; flex-direction:column; gap:16px;">
         <input type="hidden" name="modo" id="modo" value="<?= htmlspecialchars($modo) ?>">
 
         <!-- Painéis de Data -->
-        <div id="tab-dia" class="tab-pane <?= $modo === 'dia' ? 'active' : '' ?>" style="gap:16px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Data</label>
-                <input type="date" name="data_dia" value="<?= $modo === 'dia' ? $dataInicio : date('Y-m-d') ?>" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
+        <div id="tab-dia" class="tab-pane <?= $modo === 'dia' ? 'active' : '' ?>">
+            <div class="filtro-campo">
+                <label>Data</label>
+                <input type="date" name="data_dia" value="<?= $modo === 'dia' ? $dataInicio : date('Y-m-d') ?>">
             </div>
         </div>
 
-        <div id="tab-mes" class="tab-pane <?= $modo === 'mes' ? 'active' : '' ?>" style="gap:16px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Mês</label>
-                <select name="mes" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px; min-width:120px;">
+        <div id="tab-mes" class="tab-pane <?= $modo === 'mes' ? 'active' : '' ?>">
+            <div class="filtro-campo">
+                <label>Mês</label>
+                <select name="mes">
                     <?php foreach ($mesesPtBr as $m => $nomeMes): $mStr = str_pad((string)$m, 2, '0', STR_PAD_LEFT); ?>
                         <option value="<?= $mStr ?>" <?= $mesFiltro === $mStr ? 'selected' : '' ?>><?= $nomeMes ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Ano</label>
-                <select name="ano" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
+            <div class="filtro-campo">
+                <label>Ano</label>
+                <select name="ano">
                     <?php for ($a = date('Y'); $a >= 2024; $a--): ?>
                         <option value="<?= $a ?>" <?= $anoFiltro === (string)$a ? 'selected' : '' ?>><?= $a ?></option>
                     <?php endfor; ?>
@@ -95,36 +235,36 @@ $anoFiltro = date('Y', strtotime($dataInicio));
             </div>
         </div>
 
-        <div id="tab-periodo" class="tab-pane <?= $modo === 'periodo' ? 'active' : '' ?>" style="gap:16px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">De</label>
-                <input type="date" name="data_inicio" value="<?= $modo === 'periodo' ? $dataInicio : date('Y-m-01') ?>" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
+        <div id="tab-periodo" class="tab-pane <?= $modo === 'periodo' ? 'active' : '' ?>">
+            <div class="filtro-campo">
+                <label>De</label>
+                <input type="date" name="data_inicio" value="<?= $modo === 'periodo' ? $dataInicio : date('Y-m-01') ?>">
             </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Até</label>
-                <input type="date" name="data_fim" value="<?= $modo === 'periodo' ? $dataFim : date('Y-m-t') ?>" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px;">
+            <div class="filtro-campo">
+                <label>Até</label>
+                <input type="date" name="data_fim" value="<?= $modo === 'periodo' ? $dataFim : date('Y-m-t') ?>">
             </div>
         </div>
 
         <!-- Filtros Comuns -->
-        <div style="display:flex; gap:16px; flex-wrap:wrap; padding-top:12px; border-top:1px solid #eee;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Matrícula</label>
-                <input type="text" name="matricula" value="<?= htmlspecialchars($matricula) ?>" placeholder="Ex: 123456" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px; max-width:140px;">
+        <div class="filtro-comuns">
+            <div class="filtro-campo">
+                <label>Matrícula</label>
+                <input type="text" name="matricula" value="<?= htmlspecialchars($matricula) ?>" placeholder="Ex: 123456">
             </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#555; margin-bottom:4px;">Status</label>
-                <select name="status" style="padding:8px 12px; border:1px solid #ccc; border-radius:4px; min-width:140px;">
+            <div class="filtro-campo">
+                <label>Status</label>
+                <select name="status">
                     <option value="">Todos</option>
                     <?php foreach ($labelStatus as $val => $label): ?>
                         <option value="<?= $val ?>" <?= $status === $val ? 'selected' : '' ?>><?= $label ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div style="display:flex; align-items:flex-end; gap:8px;">
-                <button type="submit" style="background:var(--verde); color:white; padding:8px 20px; border:none; border-radius:4px; font-weight:600; cursor:pointer;">Filtrar</button>
+            <div class="filtro-comuns-acoes">
+                <button type="submit" style="background:var(--verde);color:white;padding:8px 20px;border:none;border-radius:4px;font-weight:600;cursor:pointer;">Filtrar</button>
                 <?php if (!empty($_GET)): ?>
-                    <a href="/relatorios" style="padding:8px 16px; border:1px solid #ccc; color:#555; border-radius:4px; text-decoration:none; font-size:0.9rem;">Limpar</a>
+                    <a href="/relatorios" style="padding:8px 16px;border:1px solid #ccc;color:#555;border-radius:4px;text-decoration:none;font-size:0.9rem;">Limpar</a>
                 <?php endif; ?>
             </div>
         </div>

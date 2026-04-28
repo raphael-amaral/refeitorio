@@ -1,5 +1,14 @@
 FROM php:8.2-apache
 
+# Esconde o header X-Powered-By (PHP)
+RUN echo "expose_php = Off" > /usr/local/etc/php/conf.d/security.ini
+
+# Esconde a versão do Apache e o SO (Server: Apache em vez de Apache/2.4.66 Debian)
+RUN sed -i 's/ServerTokens OS/ServerTokens Prod/' /etc/apache2/conf-available/security.conf && \
+    sed -i 's/ServerSignature On/ServerSignature Off/' /etc/apache2/conf-available/security.conf
+
+RUN echo "session.cookie_httponly = 1" >> /usr/local/etc/php/conf.d/security.ini
+
 # Instala as extensões do banco de dados
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 

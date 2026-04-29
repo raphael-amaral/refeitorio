@@ -24,22 +24,22 @@ class CardapioController extends Controller
         $fimOk    = $dataFim    !== '' && preg_match($reData, $dataFim);
 
         if (in_array($tipo, ['snd', 'dev'], true)) {
+            $filtroExplicito = isset($_GET['data_inicio']) || isset($_GET['data_fim']);
+
             if ($inicioOk && $fimOk && $dataInicio <= $dataFim) {
-                // Ambas válidas e coerentes
                 $cardapios = Cardapio::buscarPorPeriodo($dataInicio, $dataFim);
             } elseif ($inicioOk && !$fimOk) {
-                // Só data início: a partir dessa data
                 $cardapios = Cardapio::buscarPorPeriodo($dataInicio, '9999-12-31');
                 $dataFim   = '';
             } elseif (!$inicioOk && $fimOk) {
-                // Só data fim: até essa data
                 $cardapios  = Cardapio::buscarPorPeriodo('0001-01-01', $dataFim);
                 $dataInicio = '';
             } else {
-                // Sem filtro válido: lista tudo
-                $cardapios  = Cardapio::todos('data DESC, tipo ASC');
-                $dataInicio = '';
-                $dataFim    = '';
+                // Padrão: mês corrente
+                $dataInicio      = date('Y-m-01');
+                $dataFim         = date('Y-m-t');
+                $filtroExplicito = false;
+                $cardapios       = Cardapio::buscarPorPeriodo($dataInicio, $dataFim);
             }
         } else {
             $cardapios  = Cardapio::proximosDias(14);
@@ -48,10 +48,11 @@ class CardapioController extends Controller
         }
 
         $this->render('cardapio/index', [
-            'titulo'     => 'Cardápios',
-            'cardapios'  => $cardapios,
-            'dataInicio' => $dataInicio,
-            'dataFim'    => $dataFim,
+            'titulo'          => 'Cardápios',
+            'cardapios'       => $cardapios,
+            'dataInicio'      => $dataInicio,
+            'dataFim'         => $dataFim,
+            'filtroExplicito' => $filtroExplicito ?? false,
         ]);
     }
 

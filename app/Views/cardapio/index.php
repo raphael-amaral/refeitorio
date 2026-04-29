@@ -96,7 +96,12 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
 
 <!-- Filtro por data -->
 <div class="filtro-cardapio">
-    <p class="filtro-cardapio__titulo">Filtrar por período</p>
+    <p class="filtro-cardapio__titulo">
+        Filtrar por período
+        <?php if (empty($filtroExplicito)): ?>
+            <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#888;font-size:0.78rem;margin-left:6px;">— exibindo o mês atual</span>
+        <?php endif; ?>
+    </p>
     <form method="GET" action="/cardapio">
         <div class="filtro-campo">
             <label for="data_inicio">De</label>
@@ -108,7 +113,7 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
         </div>
         <div class="filtro-acoes">
             <button type="submit" style="background:var(--verde);color:#fff;border:none;border-radius:4px;padding:8px 20px;font-size:0.88rem;cursor:pointer;font-family:var(--font-cards);">Filtrar</button>
-            <?php if (!empty($dataInicio) || !empty($dataFim)): ?>
+            <?php if (!empty($filtroExplicito)): ?>
                 <a href="/cardapio" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:8px 14px;font-size:0.88rem;text-decoration:none;font-family:var(--font-cards);">Limpar</a>
             <?php endif; ?>
         </div>

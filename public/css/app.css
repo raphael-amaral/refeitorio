@@ -454,6 +454,59 @@ body:has(.painel-dashboard) .container {
 }
 
 /* =========================================================
+   Paginação server-side (cardápios e usuários)
+   ========================================================= */
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.paginacao__btn,
+.paginacao__atual,
+.paginacao__reticencias {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--font-cards);
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.paginacao__btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.paginacao__btn:hover {
+  background: #f0f0f0;
+  border-color: #aaa;
+}
+
+.paginacao__atual {
+  border: 1px solid var(--verde);
+  background: var(--verde);
+  color: #fff;
+  font-weight: 600;
+  cursor: default;
+}
+
+.paginacao__reticencias {
+  color: #aaa;
+  cursor: default;
+  border: none;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* =========================================================
    Filtro de datas (página cardápios)
    ========================================================= */
 .filtro-card {

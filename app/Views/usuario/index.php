@@ -7,14 +7,20 @@ use App\Models\Usuario; ?>
 
         <!-- Tabela de usuários -->
         <section class="usuarios-lista card">
-            <div class="card__header" style="gap:12px;">
+            <div class="card__header" style="gap:12px;flex-wrap:wrap;">
                 <strong>Usuários cadastrados</strong>
-                <input type="search" id="busca-usuario"
-                    placeholder="Buscar por nome ou matrícula…"
-                    style="margin-left:auto;padding:4px 10px;border:1px solid #ccc;border-radius:4px;font-size:0.85rem;font-family:var(--font-cards);width:220px;">
+                <form method="GET" action="/usuario" style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+                    <input type="search" name="busca" value="<?= htmlspecialchars($busca ?? '') ?>"
+                        placeholder="Buscar por nome ou matrícula…"
+                        style="padding:4px 10px;border:1px solid #ccc;border-radius:4px;font-size:0.85rem;font-family:var(--font-cards);width:220px;">
+                    <button type="submit" style="padding:4px 12px;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:0.85rem;font-family:var(--font-cards);cursor:pointer;">Buscar</button>
+                    <?php if (!empty($busca)): ?>
+                        <a href="/usuario" style="padding:4px 10px;border:1px solid #fca5a5;border-radius:4px;background:#fee2e2;color:#991b1b;font-size:0.85rem;font-family:var(--font-cards);text-decoration:none;">Limpar</a>
+                    <?php endif; ?>
+                </form>
             </div>
             <div class="card__body" style="overflow-y: auto;">
-                <table class="tabela-usuarios">
+                <table class="tabela-usuarios" id="tabela-usuarios">
                     <thead>
                         <tr>
                             <th>Matrícula</th>
@@ -73,6 +79,34 @@ use App\Models\Usuario; ?>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <?php if (($totalPaginas ?? 1) > 1): ?>
+                    <?php
+                    function urlPaginaUsuario(int $p, string $busca): string {
+                        $q = array_filter(['busca' => $busca, 'pagina' => $p], fn($v) => $v !== '' && $v !== 0);
+                        return '/usuario' . ($q ? '?' . http_build_query($q) : '');
+                    }
+                    ?>
+                    <nav class="paginacao" aria-label="Paginação de usuários" style="margin-bottom:8px;">
+                        <?php if ($pagina > 1): ?>
+                            <a href="<?= htmlspecialchars(urlPaginaUsuario($pagina - 1, $busca ?? '')) ?>" class="paginacao__btn">← Anterior</a>
+                        <?php endif; ?>
+
+                        <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                            <?php if ($i === $pagina): ?>
+                                <span class="paginacao__atual"><?= $i ?></span>
+                            <?php elseif ($i === 1 || $i === $totalPaginas || ($i >= $pagina - 2 && $i <= $pagina + 2)): ?>
+                                <a href="<?= htmlspecialchars(urlPaginaUsuario($i, $busca ?? '')) ?>" class="paginacao__btn"><?= $i ?></a>
+                            <?php elseif ($i === $pagina - 3 || $i === $pagina + 3): ?>
+                                <span class="paginacao__reticencias">…</span>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($pagina < $totalPaginas): ?>
+                            <a href="<?= htmlspecialchars(urlPaginaUsuario($pagina + 1, $busca ?? '')) ?>" class="paginacao__btn">Próximo →</a>
+                        <?php endif; ?>
+                    </nav>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -174,97 +208,17 @@ use App\Models\Usuario; ?>
         inputMat.setAttribute('required', '');
         inputSenha.setAttribute('required', '');
 
-        // -----------------------------------------------------------------
-        // NOVA LÓGICA DE PAGINAÇÃO E BUSCA
-        // -----------------------------------------------------------------
-
-        var linhasPorPagina = 10; // Defina quantos usuários aparecerão por tela
-        var paginaAtual = 1;
-        var tbody = document.querySelector('.tabela-usuarios tbody');
-        var todasAsLinhas = Array.from(tbody.querySelectorAll('tr'));
-        var linhasFiltradas = todasAsLinhas;
-
-        // Cria o contêiner para os botões de paginação via JS
-        var paginacaoContainer = document.createElement('div');
-        paginacaoContainer.style.display = 'flex';
-        paginacaoContainer.style.justifyContent = 'center';
-        paginacaoContainer.style.gap = '8px';
-        paginacaoContainer.style.marginTop = '20px';
-        paginacaoContainer.style.flexWrap = 'wrap';
-        document.querySelector('.usuarios-lista .card__body').appendChild(paginacaoContainer);
-
-        function renderizarPagina(pagina) {
-            // Oculta todas as linhas primeiro
-            todasAsLinhas.forEach(function(linha) {
-                linha.style.display = 'none';
+        // Submete o form de busca automaticamente após o usuário parar de digitar
+        var inputBusca = document.querySelector('input[name="busca"]');
+        if (inputBusca) {
+            var debounceTimer;
+            inputBusca.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    inputBusca.closest('form').submit();
+                }, 800);
             });
-
-            // Calcula o início e o fim para exibir apenas a página atual
-            var inicio = (pagina - 1) * linhasPorPagina;
-            var fim = inicio + linhasPorPagina;
-
-            linhasFiltradas.slice(inicio, fim).forEach(function(linha) {
-                linha.style.display = '';
-            });
-
-            atualizarBotoesPaginacao();
         }
-
-        function atualizarBotoesPaginacao() {
-            paginacaoContainer.innerHTML = '';
-            var totalPaginas = Math.ceil(linhasFiltradas.length / linhasPorPagina);
-
-            // Não mostra paginação se couber tudo em uma tela só
-            if (totalPaginas <= 1) return;
-
-            // Lógica simples para criar os botões (limitado para não criar 50 botões se a busca for vazia)
-            // Aqui criamos botões para as primeiras, a página atual e as últimas
-            for (let i = 1; i <= totalPaginas; i++) {
-                // Mostra a primeira, a última, e as duas antes e depois da página atual
-                if (i === 1 || i === totalPaginas || (i >= paginaAtual - 2 && i <= paginaAtual + 2)) {
-                    let btn = document.createElement('button');
-                    btn.textContent = i;
-                    btn.style.padding = '5px 10px';
-                    btn.style.border = '1px solid #ccc';
-                    btn.style.borderRadius = '4px';
-                    btn.style.cursor = 'pointer';
-                    btn.style.backgroundColor = (i === paginaAtual) ? '#0056b3' : '#fff';
-                    btn.style.color = (i === paginaAtual) ? '#fff' : '#333';
-
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        paginaAtual = i;
-                        renderizarPagina(paginaAtual);
-                    });
-
-                    paginacaoContainer.appendChild(btn);
-                } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
-                    // Adiciona reticências "..." para saltos grandes
-                    let reticencias = document.createElement('span');
-                    reticencias.textContent = '...';
-                    reticencias.style.padding = '5px';
-                    paginacaoContainer.appendChild(reticencias);
-                }
-            }
-        }
-
-        // Integração do campo de busca existente com a nova paginação
-        document.getElementById('busca-usuario').addEventListener('input', function() {
-            var termo = this.value.trim().toLowerCase();
-
-            linhasFiltradas = todasAsLinhas.filter(function(linha) {
-                var mat = linha.cells[0] ? linha.cells[0].textContent.toLowerCase() : '';
-                var nome = linha.cells[1] ? linha.cells[1].textContent.toLowerCase() : '';
-                return !termo || mat.includes(termo) || nome.includes(termo);
-            });
-
-            // Sempre volta para a primeira página ao fazer uma nova busca
-            paginaAtual = 1;
-            renderizarPagina(paginaAtual);
-        });
-
-        // Inicializa a primeira página ao carregar a tela
-        renderizarPagina(paginaAtual);
     }());
 </script>
 

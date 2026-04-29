@@ -126,7 +126,7 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
         Nenhum cardápio encontrado<?= (!empty($dataInicio) || !empty($dataFim)) ? ' para o período selecionado' : '' ?>.
     </p>
 <?php else: ?>
-    <table class="tabela">
+    <table class="tabela" id="tabela-cardapios">
         <thead>
             <tr>
                 <th>Data</th>
@@ -167,4 +167,34 @@ $domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
                 <?php endforeach; ?>
         </tbody>
     </table>
+    <?php if ($totalPaginas > 1): ?>
+        <?php
+        $qBase = array_filter([
+            'data_inicio' => $dataInicio,
+            'data_fim'    => $dataFim,
+        ], fn($v) => $v !== '');
+        function urlPaginaCardapio(int $p, array $base): string {
+            return '/cardapio?' . http_build_query($base + ['pagina' => $p]);
+        }
+        ?>
+        <nav class="paginacao" aria-label="Paginação de cardápios">
+            <?php if ($pagina > 1): ?>
+                <a href="<?= htmlspecialchars(urlPaginaCardapio($pagina - 1, $qBase)) ?>" class="paginacao__btn">← Anterior</a>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                <?php if ($i === $pagina): ?>
+                    <span class="paginacao__atual"><?= $i ?></span>
+                <?php elseif ($i === 1 || $i === $totalPaginas || ($i >= $pagina - 2 && $i <= $pagina + 2)): ?>
+                    <a href="<?= htmlspecialchars(urlPaginaCardapio($i, $qBase)) ?>" class="paginacao__btn"><?= $i ?></a>
+                <?php elseif ($i === $pagina - 3 || $i === $pagina + 3): ?>
+                    <span class="paginacao__reticencias">…</span>
+                <?php endif; ?>
+            <?php endfor; ?>
+
+            <?php if ($pagina < $totalPaginas): ?>
+                <a href="<?= htmlspecialchars(urlPaginaCardapio($pagina + 1, $qBase)) ?>" class="paginacao__btn">Próximo →</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
 <?php endif; ?>

@@ -42,6 +42,53 @@ class Usuario extends Model
     }
 
     /**
+     * Versão paginada com busca opcional por nome ou matrícula.
+     */
+    public static function listarPaginado(string $busca, int $offset, int $limite): array
+    {
+        if ($busca !== '') {
+            $stmt = static::db()->prepare(
+                "SELECT matricula, nome, tipo, ativo, criado_em
+                   FROM usuarios
+                  WHERE nome LIKE :busca OR matricula LIKE :busca2
+                  ORDER BY nome ASC
+                  LIMIT :limite OFFSET :offset"
+            );
+            $like = '%' . $busca . '%';
+            $stmt->bindValue('busca',  $like);
+            $stmt->bindValue('busca2', $like);
+        } else {
+            $stmt = static::db()->prepare(
+                "SELECT matricula, nome, tipo, ativo, criado_em
+                   FROM usuarios
+                  ORDER BY nome ASC
+                  LIMIT :limite OFFSET :offset"
+            );
+        }
+        $stmt->bindValue('limite', $limite, PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Conta usuários, com busca opcional por nome ou matrícula.
+     */
+    public static function contarTotal(string $busca = ''): int
+    {
+        if ($busca !== '') {
+            $like = '%' . $busca . '%';
+            $stmt = static::db()->prepare(
+                "SELECT COUNT(*) FROM usuarios WHERE nome LIKE :busca OR matricula LIKE :busca2"
+            );
+            $stmt->execute(['busca' => $like, 'busca2' => $like]);
+        } else {
+            $stmt = static::db()->query("SELECT COUNT(*) FROM usuarios");
+        }
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Cria um novo usuário.
      */
     public static function novoUsuario(string $matricula, string $nome, string $senha, string $tipo): void

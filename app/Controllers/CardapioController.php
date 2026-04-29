@@ -13,13 +13,14 @@ class CardapioController extends Controller
      */
     public function index(): void
     {
-        $tipo = $_SESSION['usuario']['tipo'];
+        $tipo      = $_SESSION['usuario']['tipo'];
+        $porPagina = 14;
+        $pagina    = max(1, (int) ($_GET['pagina'] ?? 1));
 
         $dataInicio = trim($_GET['data_inicio'] ?? '');
         $dataFim    = trim($_GET['data_fim']    ?? '');
 
-        // Valida formato Y-m-d para cada campo preenchido
-        $reData = '/^\d{4}-\d{2}-\d{2}$/';
+        $reData   = '/^\d{4}-\d{2}-\d{2}$/';
         $inicioOk = $dataInicio !== '' && preg_match($reData, $dataInicio);
         $fimOk    = $dataFim    !== '' && preg_match($reData, $dataFim);
 
@@ -27,24 +28,37 @@ class CardapioController extends Controller
             $filtroExplicito = isset($_GET['data_inicio']) || isset($_GET['data_fim']);
 
             if ($inicioOk && $fimOk && $dataInicio <= $dataFim) {
-                $cardapios = Cardapio::buscarPorPeriodo($dataInicio, $dataFim);
+                $qInicio = $dataInicio;
+                $qFim    = $dataFim;
             } elseif ($inicioOk && !$fimOk) {
-                $cardapios = Cardapio::buscarPorPeriodo($dataInicio, '9999-12-31');
-                $dataFim   = '';
+                $qInicio = $dataInicio;
+                $qFim    = '9999-12-31';
+                $dataFim = '';
             } elseif (!$inicioOk && $fimOk) {
-                $cardapios  = Cardapio::buscarPorPeriodo('0001-01-01', $dataFim);
+                $qInicio    = '0001-01-01';
+                $qFim       = $dataFim;
                 $dataInicio = '';
             } else {
-                // Padrão: mês corrente
                 $dataInicio      = date('Y-m-01');
                 $dataFim         = date('Y-m-t');
+                $qInicio         = $dataInicio;
+                $qFim            = $dataFim;
                 $filtroExplicito = false;
-                $cardapios       = Cardapio::buscarPorPeriodo($dataInicio, $dataFim);
             }
+
+            $total        = Cardapio::contarPorPeriodo($qInicio, $qFim);
+            $totalPaginas = max(1, (int) ceil($total / $porPagina));
+            $pagina       = min($pagina, $totalPaginas);
+            $offset       = ($pagina - 1) * $porPagina;
+            $cardapios    = Cardapio::buscarPorPeriodoPaginado($qInicio, $qFim, $offset, $porPagina);
         } else {
-            $cardapios  = Cardapio::proximosDias(14);
-            $dataInicio = '';
-            $dataFim    = '';
+            $cardapios       = Cardapio::proximosDias(14);
+            $dataInicio      = '';
+            $dataFim         = '';
+            $filtroExplicito = false;
+            $total           = count($cardapios);
+            $totalPaginas    = 1;
+            $pagina          = 1;
         }
 
         $this->render('cardapio/index', [
@@ -52,7 +66,11 @@ class CardapioController extends Controller
             'cardapios'       => $cardapios,
             'dataInicio'      => $dataInicio,
             'dataFim'         => $dataFim,
-            'filtroExplicito' => $filtroExplicito ?? false,
+            'filtroExplicito' => $filtroExplicito,
+            'pagina'          => $pagina,
+            'totalPaginas'    => $totalPaginas,
+            'total'           => $total,
+            'porPagina'       => $porPagina,
         ]);
     }
 

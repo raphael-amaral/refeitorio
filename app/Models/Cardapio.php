@@ -51,6 +51,37 @@ class Cardapio extends Model
     }
 
     /**
+     * Versão paginada de buscarPorPeriodo.
+     */
+    public static function buscarPorPeriodoPaginado(string $inicio, string $fim, int $offset, int $limite): array
+    {
+        $stmt = static::db()->prepare(
+            'SELECT * FROM cardapios
+              WHERE data BETWEEN :inicio AND :fim
+              ORDER BY data DESC, tipo ASC
+              LIMIT :limite OFFSET :offset'
+        );
+        $stmt->bindValue('inicio', $inicio);
+        $stmt->bindValue('fim',    $fim);
+        $stmt->bindValue('limite', $limite, PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Conta os cardápios de um intervalo de datas.
+     */
+    public static function contarPorPeriodo(string $inicio, string $fim): int
+    {
+        $stmt = static::db()->prepare(
+            'SELECT COUNT(*) FROM cardapios WHERE data BETWEEN :inicio AND :fim'
+        );
+        $stmt->execute(['inicio' => $inicio, 'fim' => $fim]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
      * Retorna os cardápios da semana começando em $segunda (7 dias).
      * Usado pela dashboard para montar o grid seg–dom.
      */

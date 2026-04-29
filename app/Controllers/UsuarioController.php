@@ -13,9 +13,22 @@ class UsuarioController extends Controller
      */
     public function index(): void
     {
+        $busca     = trim($_GET['busca'] ?? '');
+        $porPagina = 10;
+        $pagina    = max(1, (int) ($_GET['pagina'] ?? 1));
+
+        $total        = Usuario::contarTotal($busca);
+        $totalPaginas = max(1, (int) ceil($total / $porPagina));
+        $pagina       = min($pagina, $totalPaginas);
+        $offset       = ($pagina - 1) * $porPagina;
+
         $this->render('usuario/index', [
-            'titulo'   => 'Usuários',
-            'usuarios' => Usuario::listar(),
+            'titulo'       => 'Usuários',
+            'usuarios'     => Usuario::listarPaginado($busca, $offset, $porPagina),
+            'busca'        => $busca,
+            'pagina'       => $pagina,
+            'totalPaginas' => $totalPaginas,
+            'total'        => $total,
         ]);
     }
 

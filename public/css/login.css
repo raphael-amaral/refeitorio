@@ -33,7 +33,7 @@ body {
   flex-direction: column;
   gap: 0;
   width: 300px;
-  background: rgba(255, 255, 255, 0.93);
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 6px;
   box-shadow: 2px 8px 24px rgba(0, 0, 0, 0.28);
   overflow: hidden;

@@ -79,4 +79,37 @@ $labelStatus = ['agendado' => 'Agendado', 'cancelado' => 'Cancelado', 'concluido
                 <?php endforeach; ?>
         </tbody>
     </table>
+
+    <?php if (($totalPaginas ?? 1) > 1): ?>
+        <?php
+        function urlPaginaRegistro(int $p, string $status, string $dataInicio, string $dataFim): string {
+            $q = array_filter([
+                'status'      => $status,
+                'data_inicio' => $dataInicio,
+                'data_fim'    => $dataFim,
+                'pagina'      => $p,
+            ], fn($v) => $v !== '' && $v !== 0);
+            return '/registro' . ($q ? '?' . http_build_query($q) : '');
+        }
+        ?>
+        <nav class="paginacao" aria-label="Paginação de agendamentos" style="margin-top:12px;">
+            <?php if ($pagina > 1): ?>
+                <a href="<?= htmlspecialchars(urlPaginaRegistro($pagina - 1, $status ?? '', $dataInicio ?? '', $dataFim ?? '')) ?>" class="paginacao__btn">← Anterior</a>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                <?php if ($i === $pagina): ?>
+                    <span class="paginacao__atual"><?= $i ?></span>
+                <?php elseif ($i === 1 || $i === $totalPaginas || ($i >= $pagina - 2 && $i <= $pagina + 2)): ?>
+                    <a href="<?= htmlspecialchars(urlPaginaRegistro($i, $status ?? '', $dataInicio ?? '', $dataFim ?? '')) ?>" class="paginacao__btn"><?= $i ?></a>
+                <?php elseif ($i === $pagina - 3 || $i === $pagina + 3): ?>
+                    <span class="paginacao__reticencias">…</span>
+                <?php endif; ?>
+            <?php endfor; ?>
+
+            <?php if ($pagina < $totalPaginas): ?>
+                <a href="<?= htmlspecialchars(urlPaginaRegistro($pagina + 1, $status ?? '', $dataInicio ?? '', $dataFim ?? '')) ?>" class="paginacao__btn">Próximo →</a>
+            <?php endif; ?>
+        </nav>
+    <?php endif; ?>
 <?php endif; ?>

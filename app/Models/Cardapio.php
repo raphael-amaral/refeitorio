@@ -101,19 +101,6 @@ class Cardapio extends Model
     }
 
     /**
-     * Retorna o cardápio de uma data e tipo específicos.
-     */
-    public static function buscarPorDataETipo(string $data, string $tipo): ?array
-    {
-        $stmt = static::db()->prepare(
-            'SELECT * FROM cardapios WHERE data = :data AND tipo = :tipo LIMIT 1'
-        );
-        $stmt->execute(['data' => $data, 'tipo' => $tipo]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ?: null;
-    }
-
-    /**
      * Cria ou atualiza o cardápio de uma data/tipo (upsert).
      */
     public static function salvarDia(string $data, string $tipo, string $descricao): void

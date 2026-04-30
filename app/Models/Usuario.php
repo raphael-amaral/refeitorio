@@ -29,29 +29,18 @@ class Usuario extends Model
     }
 
     /**
-     * Retorna todos os usuários (ativos e inativos), ordenados por nome.
-     */
-    public static function listar(): array
-    {
-        $stmt = static::db()->query(
-            "SELECT matricula, nome, tipo, ativo, criado_em
-               FROM usuarios
-              ORDER BY nome ASC"
-        );
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
      * Versão paginada com busca opcional por nome ou matrícula.
      */
-    public static function listarPaginado(string $busca, int $offset, int $limite): array
+    public static function listarPaginado(string $busca, int $offset, int $limite, string $ordenarPor = 'nome'): array
     {
+        $ordem = $ordenarPor === 'matricula' ? 'CAST(matricula AS UNSIGNED) ASC' : 'nome ASC';
+
         if ($busca !== '') {
             $stmt = static::db()->prepare(
                 "SELECT matricula, nome, tipo, ativo, criado_em
                    FROM usuarios
                   WHERE nome LIKE :busca OR matricula LIKE :busca2
-                  ORDER BY nome ASC
+                  ORDER BY {$ordem}
                   LIMIT :limite OFFSET :offset"
             );
             $like = '%' . $busca . '%';
@@ -61,7 +50,7 @@ class Usuario extends Model
             $stmt = static::db()->prepare(
                 "SELECT matricula, nome, tipo, ativo, criado_em
                    FROM usuarios
-                  ORDER BY nome ASC
+                  ORDER BY {$ordem}
                   LIMIT :limite OFFSET :offset"
             );
         }

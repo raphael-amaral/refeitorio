@@ -39,27 +39,36 @@ class RelatorioController extends Controller
      */
     private function prepararDadosRelatorio(): array
     {
-        $modo = $_GET['modo'] ?? 'dia'; // dia, periodo, mes
+        $reData = '/^\d{4}-\d{2}-\d{2}$/';
 
-        $dataInicio = '';
-        $dataFim    = '';
+        $modo = in_array($_GET['modo'] ?? '', ['dia', 'periodo', 'mes'], true)
+            ? $_GET['modo']
+            : 'dia';
 
         if ($modo === 'dia') {
-            $dataInicio = $_GET['data_dia'] ?? date('Y-m-d');
+            $dataDia    = $_GET['data_dia'] ?? '';
+            $dataInicio = preg_match($reData, $dataDia) ? $dataDia : date('Y-m-d');
             $dataFim    = $dataInicio;
         } elseif ($modo === 'periodo') {
-            $dataInicio = $_GET['data_inicio'] ?? date('Y-m-01');
-            $dataFim    = $_GET['data_fim']    ?? date('Y-m-t');
-        } else { // mes
-            $ano = (int) ($_GET['ano'] ?? date('Y'));
-            $mes = (int) ($_GET['mes'] ?? date('m'));
-            // Padroniza com zeros à esquerda
-            $mesStr = str_pad((string)$mes, 2, '0', STR_PAD_LEFT);
+            $di         = $_GET['data_inicio'] ?? '';
+            $df         = $_GET['data_fim']    ?? '';
+            $dataInicio = preg_match($reData, $di) ? $di : date('Y-m-01');
+            $dataFim    = preg_match($reData, $df) ? $df : date('Y-m-t');
+        } else {
+            $ano        = (int) ($_GET['ano'] ?? date('Y'));
+            $mes        = (int) ($_GET['mes'] ?? date('m'));
+            $ano        = ($ano >= 2024 && $ano <= ((int) date('Y') + 1)) ? $ano : (int) date('Y');
+            $mes        = ($mes >= 1   && $mes <= 12)                     ? $mes : (int) date('m');
+            $mesStr     = str_pad((string) $mes, 2, '0', STR_PAD_LEFT);
             $dataInicio = "{$ano}-{$mesStr}-01";
             $dataFim    = date('Y-m-t', strtotime($dataInicio));
         }
 
-        $status    = $_GET['status'] ?? 'concluido';
+        $statusRaw = $_GET['status'] ?? 'concluido';
+        $status    = in_array($statusRaw, ['', 'agendado', 'cancelado', 'concluido'], true)
+            ? $statusRaw
+            : 'concluido';
+
         $matricula = trim($_GET['matricula'] ?? '');
 
         $registros = Registro::buscarParaRelatorio($status, $dataInicio, $dataFim, $matricula);

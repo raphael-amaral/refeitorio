@@ -50,22 +50,6 @@ class Registro extends Model
     }
 
     /**
-     * Retorna todos os agendamentos de um cardápio (visão da SND).
-     */
-    public static function buscarPorCardapio(int $idCardapio): array
-    {
-        $stmt = static::db()->prepare(
-            'SELECT r.*, u.nome AS nome_usuario
-               FROM registros r
-               JOIN usuarios u ON r.matricula_usuario = u.matricula
-              WHERE r.id_cardapio = :id_cardapio
-              ORDER BY u.nome ASC'
-        );
-        $stmt->execute(['id_cardapio' => $idCardapio]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
      * Retorna a quantidade de registros vinculados a um cardápio (qualquer status).
      */
     public static function contarPorCardapio(int $idCardapio): int
@@ -127,24 +111,74 @@ class Registro extends Model
         return static::atualizar($id, ['status' => 'concluido']);
     }
 
-    /**
-     * Busca o agendamento ativo de hoje para uma matrícula (usado pelo scanner).
-     */
-    public static function buscarAgendadoHoje(string $matricula): ?array
-    {
-        $stmt = static::db()->prepare(
-            "SELECT r.*, c.tipo AS tipo_refeicao, c.descricao, u.nome AS nome_usuario
-               FROM registros r
-               JOIN cardapios c ON r.id_cardapio = c.id
-               JOIN usuarios  u ON r.matricula_usuario = u.matricula
-              WHERE r.matricula_usuario = :matricula
-                AND c.data             = CURDATE()
-                AND r.status           = 'agendado'
-              LIMIT 1"
-        );
-        $stmt->execute(['matricula' => $matricula]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ?: null;
+    public static function buscarPorUsuarioPaginado(
+        string $matricula,
+        string $status,
+        string $dataInicio,
+        string $dataFim,
+        int $offset,
+        int $limite
+    ): array {
+        $sql = 'SELECT r.*, c.data, c.tipo AS tipo_refeicao, c.descricao
+                  FROM registros r
+                  JOIN cardapios c ON r.id_cardapio = c.id
+                 WHERE r.matricula_usuario = :matricula';
+
+        $params = ['matricula' => $matricula];
+
+        if ($status !== '') {
+            $sql .= ' AND r.status = :status';
+            $params['status'] = $status;
+        }
+        if ($dataInicio !== '') {
+            $sql .= ' AND c.data >= :data_inicio';
+            $params['data_inicio'] = $dataInicio;
+        }
+        if ($dataFim !== '') {
+            $sql .= ' AND c.data <= :data_fim';
+            $params['data_fim'] = $dataFim;
+        }
+
+        $sql .= ' ORDER BY c.data DESC, c.tipo ASC LIMIT :limite OFFSET :offset';
+
+        $stmt = static::db()->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->bindValue('limite', $limite, PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public static function contarPorUsuario(
+        string $matricula,
+        string $status = '',
+        string $dataInicio = '',
+        string $dataFim = ''
+    ): int {
+        $sql    = 'SELECT COUNT(*)
+                     FROM registros r
+                     JOIN cardapios c ON r.id_cardapio = c.id
+                    WHERE r.matricula_usuario = :matricula';
+        $params = ['matricula' => $matricula];
+
+        if ($status !== '') {
+            $sql .= ' AND r.status = :status';
+            $params['status'] = $status;
+        }
+        if ($dataInicio !== '') {
+            $sql .= ' AND c.data >= :data_inicio';
+            $params['data_inicio'] = $dataInicio;
+        }
+        if ($dataFim !== '') {
+            $sql .= ' AND c.data <= :data_fim';
+            $params['data_fim'] = $dataFim;
+        }
+
+        $stmt = static::db()->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     /**

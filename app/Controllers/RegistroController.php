@@ -24,14 +24,22 @@ class RegistroController extends Controller
         $dataInicio = preg_match($reData, $_GET['data_inicio'] ?? '') ? $_GET['data_inicio'] : '';
         $dataFim    = preg_match($reData, $_GET['data_fim']    ?? '') ? $_GET['data_fim']    : '';
 
-        $registros = Registro::buscarPorUsuario($usuario['matricula'], $status, $dataInicio, $dataFim);
+        $porPagina    = 30;
+        $pagina       = max(1, (int) ($_GET['pagina'] ?? 1));
+        $total        = Registro::contarPorUsuario($usuario['matricula'], $status, $dataInicio, $dataFim);
+        $totalPaginas = max(1, (int) ceil($total / $porPagina));
+        $pagina       = min($pagina, $totalPaginas);
+        $offset       = ($pagina - 1) * $porPagina;
 
         $this->render('registro/index', [
-            'titulo'     => 'Meus Agendamentos',
-            'registros'  => $registros,
-            'status'     => $status,
-            'dataInicio' => $dataInicio,
-            'dataFim'    => $dataFim,
+            'titulo'       => 'Meus Agendamentos',
+            'registros'    => Registro::buscarPorUsuarioPaginado($usuario['matricula'], $status, $dataInicio, $dataFim, $offset, $porPagina),
+            'status'       => $status,
+            'dataInicio'   => $dataInicio,
+            'dataFim'      => $dataFim,
+            'pagina'       => $pagina,
+            'totalPaginas' => $totalPaginas,
+            'total'        => $total,
         ]);
     }
 

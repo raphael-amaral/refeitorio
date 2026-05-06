@@ -20,18 +20,19 @@ body {
   overflow-x: hidden;
 }
 
-/* Wrapper removido — card de cardápios é overlay fixo */
+/* Wrapper — ancora o cardápio em relação ao card de login */
+.login-wrapper {
+  position: relative;
+}
 
-/* Painel esquerdo — cardápios do dia (overlay fixo) */
+/* Painel esquerdo — cardápios do dia, ancorado na borda esquerda do login */
 .login-cardapios {
-  position: fixed;
-  top: 50%;
-  left: 30px;
-  transform: translateY(-50%);
-  z-index: 10;
+  position: absolute;
+  right: calc(100% + 50px);
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
   width: 300px;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 6px;
@@ -78,6 +79,9 @@ body {
 .login-card {
   border-bottom: 1px solid #e5e5e5;
   overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .login-card:last-child {
@@ -101,6 +105,7 @@ body {
   color: #000000;
   line-height: 1.5;
   min-height: 56px;
+  flex: 1;
 }
 
 .login-card__vazio {
@@ -194,6 +199,9 @@ button:hover {
    Responsivo — esconde cardápio lateral quando não há espaço
    ========================================================= */
 @media (max-width: 1100px) {
+  .login-wrapper {
+    gap: 0;
+  }
   .login-cardapios {
     display: none;
   }

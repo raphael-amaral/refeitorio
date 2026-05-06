@@ -37,21 +37,6 @@ class Cardapio extends Model
     }
 
     /**
-     * Retorna os cardápios de um intervalo de datas, mais recentes primeiro.
-     */
-    public static function buscarPorPeriodo(string $inicio, string $fim): array
-    {
-        $stmt = static::db()->prepare(
-            'SELECT * FROM cardapios
-              WHERE data BETWEEN :inicio AND :fim
-              ORDER BY data DESC, tipo ASC'
-        );
-        $stmt->execute(['inicio' => $inicio, 'fim' => $fim]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Versão paginada de buscarPorPeriodo.
      */
     public static function buscarPorPeriodoPaginado(string $inicio, string $fim, int $offset, int $limite): array
     {

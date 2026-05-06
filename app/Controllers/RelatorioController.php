@@ -64,10 +64,10 @@ class RelatorioController extends Controller
             $dataFim    = date('Y-m-t', strtotime($dataInicio));
         }
 
-        $statusRaw = $_GET['status'] ?? 'concluido';
+        $statusRaw = $_GET['status'] ?? '';
         $status    = in_array($statusRaw, ['', 'agendado', 'cancelado', 'concluido'], true)
             ? $statusRaw
-            : 'concluido';
+            : '';
 
         $matricula = trim($_GET['matricula'] ?? '');
 

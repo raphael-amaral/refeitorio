@@ -599,6 +599,33 @@ body:has(.painel-dashboard) .container {
   border: 1px solid #fef08a;
 }
 
+.alert-senha-padrao {
+  background: #fff7ed;
+  color: #9a3412;
+  border-bottom: 1px solid #fed7aa;
+  padding: 10px 24px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-cards);
+}
+
+.btn-trocar-senha {
+  background: #ea580c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  font-family: var(--font-cards);
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn-trocar-senha:hover {
+  filter: brightness(0.88);
+}
+
 /* =========================================================
    Painel dashboard — Permite scroll e quebra de linha
    ========================================================= */

@@ -112,44 +112,126 @@ use App\Models\Usuario; ?>
 
         <!-- Formulário novo / editar -->
         <section class="usuarios-form card">
-            <div class="card__header">
+            <div class="card__header" style="gap:12px;flex-wrap:wrap;align-items:center;">
                 <strong id="form-titulo">Novo usuário</strong>
+                <div style="margin-left:auto;display:flex;gap:6px;">
+                    <button type="button" id="btn-aba-unico" class="btn-acao btn-salvar btn-aba--ativo" style="font-size:.8rem;padding:4px 12px;">Individual</button>
+                    <button type="button" id="btn-aba-lote" class="btn-acao" style="font-size:.8rem;padding:4px 12px;">Importar em lote</button>
+                </div>
             </div>
             <div class="card__body">
-                <form method="POST" id="form-usuario" action="/usuario" class="form-usuario">
-                    <?= csrf_field() ?>
-                    <div class="form-group" id="campo-matricula">
-                        <label for="matricula">Matrícula</label>
-                        <input type="text" id="matricula" name="matricula" maxlength="12"
-                            placeholder="Ex: 00123">
+
+                <!-- Formulário individual -->
+                <div id="painel-unico">
+                    <form method="POST" id="form-usuario" action="/usuario" class="form-usuario">
+                        <?= csrf_field() ?>
+                        <div class="form-group" id="campo-matricula">
+                            <label for="matricula">Matrícula</label>
+                            <input type="text" id="matricula" name="matricula" maxlength="12"
+                                placeholder="Ex: 00123">
+                        </div>
+                        <div class="form-group">
+                            <label for="nome">Nome</label>
+                            <input type="text" id="nome" name="nome" required maxlength="100"
+                                placeholder="Nome completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="senha" id="label-senha">Senha</label>
+                            <input type="password" id="senha" name="senha" minlength="6"
+                                placeholder="Deixe vazio para usar senha padrão">
+                            <small id="hint-senha-padrao" style="color:#888;font-size:.78rem">
+                                Se vazio, a senha será <strong>stcasa</strong> + matrícula
+                            </small>
+                            <small id="hint-senha-edicao" style="display:none;color:#888;font-size:.78rem">
+                                Deixe em branco para não alterar
+                            </small>
+                        </div>
+                        <div class="form-group" id="campo-confirmar-senha" style="display:none;">
+                            <label for="confirmar_senha">Confirmar senha</label>
+                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="6"
+                                placeholder="Repita a senha">
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo">Perfil</label>
+                            <select id="tipo" name="tipo">
+                                <option value="comum">Comum</option>
+                                <option value="snd">SND</option>
+                                <option value="dp">Dep. Pessoal</option>
+                                <option value="dev">Dev</option>
+                            </select>
+                        </div>
+                        <div class="form-actions" style="gap:8px;display:flex;justify-content:flex-end">
+                            <button type="button" id="btn-cancelar-edicao" class="btn-acao btn-inativar"
+                                style="display:none;padding:6px 14px">Cancelar</button>
+                            <button type="submit" id="btn-submit" class="btn-salvar">Criar usuário</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Formulário importação em lote -->
+                <div id="painel-lote" style="display:none;">
+
+                <?php
+                    $errosImport = array_merge(
+                        $_SESSION['import_invalidas'] ?? [],
+                        $_SESSION['import_duplicadas'] ?? []
+                    );
+                    unset($_SESSION['import_invalidas'], $_SESSION['import_duplicadas']);
+                ?>
+                <?php if (!empty($errosImport)): ?>
+                    <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-family:var(--font-cards);font-size:.83rem;color:#991b1b;">
+                        <strong>Problemas encontrados — corrija e tente novamente:</strong>
+                        <ul style="margin:6px 0 0 16px;line-height:1.8;">
+                            <?php foreach ($errosImport as $erro): ?>
+                                <li><?= htmlspecialchars($erro) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
                     </div>
-                    <div class="form-group">
-                        <label for="nome">Nome</label>
-                        <input type="text" id="nome" name="nome" required maxlength="100"
-                            placeholder="Nome completo">
+                <?php endif; ?>
+
+                    <div id="overlay-importando" style="display:none;text-align:center;padding:32px 0;">
+                        <p style="font-family:var(--font-cards);font-size:.95rem;color:#555;margin-bottom:6px;">
+                            Importando usuários, aguarde…
+                        </p>
+                        <p style="font-family:var(--font-cards);font-size:.8rem;color:#999;">
+                            Isso pode levar alguns segundos dependendo da quantidade.
+                        </p>
                     </div>
-                    <div class="form-group">
-                        <label for="senha" id="label-senha">Senha</label>
-                        <input type="password" id="senha" name="senha"
-                            placeholder="Senha inicial">
-                        <small id="hint-senha" style="display:none;color:#888;font-size:.78rem">
-                            Deixe em branco para não alterar
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label for="tipo">Perfil</label>
-                        <select id="tipo" name="tipo">
-                            <option value="comum">Comum</option>
-                            <option value="snd">SND</option>
-                            <option value="dev">Dev</option>
-                        </select>
-                    </div>
-                    <div class="form-actions" style="gap:8px;display:flex;justify-content:flex-end">
-                        <button type="button" id="btn-cancelar-edicao" class="btn-acao btn-inativar"
-                            style="display:none;padding:6px 14px">Cancelar</button>
-                        <button type="submit" id="btn-submit" class="btn-salvar">Criar usuário</button>
-                    </div>
-                </form>
+                    <form id="form-importar-lote" method="POST" action="/usuario/importar"
+                          class="form-usuario" enctype="multipart/form-data">
+                        <?= csrf_field() ?>
+                        <div class="form-group">
+                            <label for="arquivo">Arquivo CSV</label>
+                            <input type="file" id="arquivo" name="arquivo" accept=".csv,.txt"
+                                style="display:block;font-family:var(--font-cards);font-size:.85rem;">
+                            <small style="color:#888;font-size:.78rem;">
+                                Aceita <strong>.csv</strong> com separador <strong>;</strong> ou <strong>,</strong>
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="lista" id="label-lista-lote">ou cole a lista diretamente</label>
+                            <textarea id="lista" name="lista" rows="7"
+                                style="width:100%;font-family:monospace;font-size:.85rem;padding:8px;border:1px solid #ccc;border-radius:4px;resize:vertical;"
+                                placeholder="matricula;Nome Completo&#10;1234;João da Silva&#10;5678;Maria Souza"></textarea>
+                            <small style="color:#888;font-size:.78rem;">
+                                Formato: <strong>matrícula;Nome Completo</strong> — senha padrão <strong>stcasa</strong> + matrícula para todos
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_importacao">Perfil de todos</label>
+                            <select id="tipo_importacao" name="tipo_importacao">
+                                <option value="comum">Comum</option>
+                                <option value="snd">SND</option>
+                                <option value="dp">Dep. Pessoal</option>
+                                <option value="dev">Dev</option>
+                            </select>
+                        </div>
+                        <div class="form-actions" style="gap:8px;display:flex;justify-content:flex-end">
+                            <button type="submit" id="btn-importar" class="btn-salvar">Importar usuários</button>
+                        </div>
+                    </form>
+                </div>
+
             </div>
         </section>
 
@@ -158,21 +240,48 @@ use App\Models\Usuario; ?>
 
 <script>
     (function() {
-        // Lógica do formulário (mantida como a sua original)
-        var form = document.getElementById('form-usuario');
-        var titulo = document.getElementById('form-titulo');
-        var campoMat = document.getElementById('campo-matricula');
-        var inputMat = document.getElementById('matricula');
+        var form      = document.getElementById('form-usuario');
+        var titulo    = document.getElementById('form-titulo');
+        var campoMat  = document.getElementById('campo-matricula');
+        var inputMat  = document.getElementById('matricula');
         var inputNome = document.getElementById('nome');
-        var inputSenha = document.getElementById('senha');
-        var hintSenha = document.getElementById('hint-senha');
+        var inputSenha          = document.getElementById('senha');
+        var campoConfirmar      = document.getElementById('campo-confirmar-senha');
+        var inputConfirmar      = document.getElementById('confirmar_senha');
+        var hintSenhaPadrao     = document.getElementById('hint-senha-padrao');
+        var hintSenhaEdicao     = document.getElementById('hint-senha-edicao');
         var selectTipo = document.getElementById('tipo');
-        var btnSubmit = document.getElementById('btn-submit');
-        var btnCancel = document.getElementById('btn-cancelar-edicao');
+        var btnSubmit  = document.getElementById('btn-submit');
+        var btnCancel  = document.getElementById('btn-cancelar-edicao');
+
+        // Exibe/oculta campo de confirmação conforme o usuário digita a senha
+        var modoEdicao = false;
+        inputSenha.addEventListener('input', function () {
+            var preenchida = inputSenha.value !== '';
+            if (!modoEdicao) {
+                campoConfirmar.style.display = preenchida ? '' : 'none';
+                if (preenchida) {
+                    inputConfirmar.setAttribute('required', '');
+                } else {
+                    inputConfirmar.removeAttribute('required');
+                    inputConfirmar.value = '';
+                }
+            } else {
+                // Na edição, confirmação só aparece se digitar algo
+                campoConfirmar.style.display = preenchida ? '' : 'none';
+                if (preenchida) {
+                    inputConfirmar.setAttribute('required', '');
+                } else {
+                    inputConfirmar.removeAttribute('required');
+                    inputConfirmar.value = '';
+                }
+            }
+        });
 
         document.querySelectorAll('.btn-editar-u').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                var mat = btn.dataset.matricula;
+                modoEdicao = true;
+                var mat  = btn.dataset.matricula;
                 var nome = btn.dataset.nome;
                 var tipo = btn.dataset.tipo;
 
@@ -180,12 +289,15 @@ use App\Models\Usuario; ?>
                 titulo.textContent = 'Editar usuário';
                 campoMat.style.display = 'none';
                 inputMat.removeAttribute('required');
-                inputSenha.removeAttribute('required');
-                hintSenha.style.display = 'block';
+                hintSenhaPadrao.style.display = 'none';
+                hintSenhaEdicao.style.display = 'block';
 
-                inputNome.value = nome;
+                inputNome.value  = nome;
                 selectTipo.value = tipo;
                 inputSenha.value = '';
+                campoConfirmar.style.display = 'none';
+                inputConfirmar.value = '';
+                inputConfirmar.removeAttribute('required');
 
                 btnSubmit.textContent = 'Salvar alterações';
                 btnCancel.style.display = 'inline-block';
@@ -194,19 +306,81 @@ use App\Models\Usuario; ?>
         });
 
         btnCancel.addEventListener('click', function() {
+            modoEdicao = false;
             form.action = '/usuario';
             titulo.textContent = 'Novo usuário';
             campoMat.style.display = '';
             inputMat.setAttribute('required', '');
-            inputSenha.setAttribute('required', '');
-            hintSenha.style.display = 'none';
+            hintSenhaPadrao.style.display = 'block';
+            hintSenhaEdicao.style.display = 'none';
+            campoConfirmar.style.display = 'none';
+            inputConfirmar.removeAttribute('required');
             form.reset();
             btnSubmit.textContent = 'Criar usuário';
             btnCancel.style.display = 'none';
         });
 
         inputMat.setAttribute('required', '');
-        inputSenha.setAttribute('required', '');
+
+        // Alternância entre abas Individual / Lote
+        var btnAbaUnico = document.getElementById('btn-aba-unico');
+        var btnAbaLote  = document.getElementById('btn-aba-lote');
+        var painelUnico = document.getElementById('painel-unico');
+        var painelLote  = document.getElementById('painel-lote');
+
+        btnAbaUnico.addEventListener('click', function () {
+            painelUnico.style.display = '';
+            painelLote.style.display  = 'none';
+            btnAbaUnico.classList.add('btn-aba--ativo');
+            btnAbaLote.classList.remove('btn-aba--ativo');
+            titulo.textContent = modoEdicao ? 'Editar usuário' : 'Novo usuário';
+        });
+
+        btnAbaLote.addEventListener('click', function () {
+            painelUnico.style.display = 'none';
+            painelLote.style.display  = '';
+            btnAbaLote.classList.add('btn-aba--ativo');
+            btnAbaUnico.classList.remove('btn-aba--ativo');
+            titulo.textContent = 'Importar em lote';
+        });
+
+        // Abre aba de lote automaticamente se houver erros a exibir
+        if (document.querySelector('#painel-lote [style*="fee2e2"]')) {
+            painelUnico.style.display = 'none';
+            painelLote.style.display  = '';
+            btnAbaLote.classList.add('btn-aba--ativo');
+            btnAbaUnico.classList.remove('btn-aba--ativo');
+            titulo.textContent = 'Importar em lote';
+        }
+
+        // Mostra nome do arquivo selecionado e limpa o textarea
+        var inputArquivo = document.getElementById('arquivo');
+        var labelLista   = document.getElementById('label-lista-lote');
+        var textareaLista = document.getElementById('lista');
+
+        inputArquivo.addEventListener('change', function () {
+            if (inputArquivo.files.length > 0) {
+                labelLista.textContent = 'ou cole a lista diretamente (arquivo selecionado será usado)';
+                textareaLista.placeholder = 'O arquivo CSV será usado. Você pode deixar isso em branco.';
+            } else {
+                labelLista.textContent = 'ou cole a lista diretamente';
+                textareaLista.placeholder = 'matricula;Nome Completo\n1234;João da Silva\n5678;Maria Souza';
+            }
+        });
+
+        // Overlay de aguarde na importação em lote
+        var formLote    = document.getElementById('form-importar-lote');
+        var overlayLote = document.getElementById('overlay-importando');
+        var btnImportar = document.getElementById('btn-importar');
+
+        formLote.addEventListener('submit', function () {
+            var temArquivo  = inputArquivo.files.length > 0;
+            var temTexto    = textareaLista.value.trim() !== '';
+            if (!temArquivo && !temTexto) return; // validação nativa cobre isso
+            formLote.style.display    = 'none';
+            overlayLote.style.display = 'block';
+            btnImportar.disabled      = true;
+        });
 
         // Submete o form de busca automaticamente após o usuário parar de digitar
         var inputBusca = document.querySelector('input[name="busca"]');

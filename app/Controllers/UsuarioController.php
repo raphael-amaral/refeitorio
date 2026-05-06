@@ -38,20 +38,34 @@ class UsuarioController extends Controller
      */
     public function criar(): void
     {
-        $matricula = trim($_POST['matricula'] ?? '');
-        $nome      = trim($_POST['nome'] ?? '');
-        $senha     = $_POST['senha'] ?? '';
-        $tipo      = $_POST['tipo'] ?? 'comum';
+        $matricula      = trim($_POST['matricula'] ?? '');
+        $nome           = mb_strtoupper(trim($_POST['nome'] ?? ''));
+        $senha          = $_POST['senha'] ?? '';
+        $confirmarSenha = $_POST['confirmar_senha'] ?? '';
+        $tipo           = $_POST['tipo'] ?? 'comum';
 
-        $tiposPermitidos = ['comum', 'snd', 'dev'];
+        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
 
-        if (!$matricula || !$nome || !$senha || !in_array($tipo, $tiposPermitidos, true)) {
+        if (!$matricula || !$nome || !in_array($tipo, $tiposPermitidos, true)) {
             Audit::write('usuario.criar', 'blocked', $matricula !== '' ? $matricula : null, [
                 'motivo' => 'validacao',
                 'tipo' => $tipo,
             ]);
             $this->flash('Preencha todos os campos corretamente.', 'error');
             $this->redirect('/usuario');
+        }
+
+        if ($senha === '') {
+            $senha = 'stcasa' . $matricula;
+        } else {
+            if (strlen($senha) < 6) {
+                $this->flash('A senha deve ter pelo menos 6 caracteres.', 'error');
+                $this->redirect('/usuario');
+            }
+            if ($senha !== $confirmarSenha) {
+                $this->flash('As senhas não coincidem.', 'error');
+                $this->redirect('/usuario');
+            }
         }
 
         try {
@@ -74,15 +88,105 @@ class UsuarioController extends Controller
     }
 
     /**
+     * Importa múltiplos usuários em lote (POST /usuario/importar).
+     * Formato esperado: uma linha por usuário → "matricula;nome"
+     */
+    public function importar(): void
+    {
+        $tipo = $_POST['tipo_importacao'] ?? 'comum';
+
+        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
+        if (!in_array($tipo, $tiposPermitidos, true)) {
+            $tipo = 'comum';
+        }
+
+        // Arquivo CSV tem prioridade sobre o textarea
+        $arquivo = $_FILES['arquivo'] ?? null;
+        if (!empty($arquivo['tmp_name']) && is_uploaded_file($arquivo['tmp_name'])) {
+            $conteudo = file_get_contents($arquivo['tmp_name']);
+            $conteudo = ltrim($conteudo, "\xEF\xBB\xBF"); // remove BOM UTF-8
+            $lista    = str_replace(["\r\n", "\r"], "\n", $conteudo);
+        } else {
+            $lista = trim($_POST['lista'] ?? '');
+        }
+
+        if ($lista === '') {
+            $this->flash('Nenhum dado para importar.', 'error');
+            $this->redirect('/usuario');
+        }
+
+        set_time_limit(300);
+
+        $linhas   = array_values(array_filter(array_map('trim', explode("\n", $lista))));
+        $invalidas = [];
+        $entradas  = [];
+        $vistos    = [];
+
+        foreach ($linhas as $linha) {
+            // Detecta separador: ; , ou espaço
+            if (str_contains($linha, ';')) {
+                [$matricula, $nome] = array_map('trim', explode(';', $linha, 2));
+            } elseif (str_contains($linha, ',')) {
+                [$matricula, $nome] = array_map('trim', explode(',', $linha, 2));
+            } else {
+                $partes    = preg_split('/\s+/', $linha, 2);
+                $matricula = trim($partes[0] ?? '');
+                $nome      = trim($partes[1] ?? '');
+            }
+
+            if ($matricula === '' || $nome === '') {
+                $invalidas[] = mb_strimwidth($linha, 0, 40, '…');
+                continue;
+            }
+
+            // Duplicata dentro do próprio arquivo
+            if (isset($vistos[$matricula])) {
+                $invalidas[] = "Matrícula {$matricula} repetida no arquivo";
+                continue;
+            }
+
+            $vistos[$matricula] = true;
+            $entradas[] = ['matricula' => $matricula, 'nome' => mb_strtoupper($nome)];
+        }
+
+        if ($invalidas) {
+            $_SESSION['import_invalidas'] = $invalidas;
+            $this->flash(count($invalidas) . ' problema(s) encontrado(s) no arquivo. Corrija e tente novamente.', 'error');
+            $this->redirect('/usuario');
+        }
+
+        // Verifica duplicatas no banco antes de inserir qualquer usuário
+        $matriculas = array_column($entradas, 'matricula');
+        $duplicadas = Usuario::matriculasExistentes($matriculas);
+
+        if (!empty($duplicadas)) {
+            $_SESSION['import_duplicadas'] = $duplicadas;
+            $this->flash(count($duplicadas) . ' matrícula(s) já cadastrada(s) no sistema. Corrija a lista e tente novamente.', 'error');
+            $this->redirect('/usuario');
+        }
+
+        $criados = 0;
+        foreach ($entradas as $entrada) {
+            // Custo 8 (vs padrão 10) para viabilizar importação em lote sem travar o servidor
+            Usuario::novoUsuario($entrada['matricula'], $entrada['nome'], 'stcasa' . $entrada['matricula'], $tipo, 8);
+            Audit::write('usuario.criar', 'success', $entrada['matricula'], ['tipo' => $tipo, 'lote' => true]);
+            $criados++;
+        }
+
+        $this->flash("{$criados} usuário(s) importado(s) com sucesso.", 'success');
+        $this->redirect('/usuario');
+    }
+
+    /**
      * Atualiza nome, tipo e senha de um usuário (POST /usuario/{matricula}/editar).
      */
     public function editar(string $matricula): void
     {
-        $nome  = trim($_POST['nome'] ?? '');
+        $nome  = mb_strtoupper(trim($_POST['nome'] ?? ''));
         $tipo  = $_POST['tipo'] ?? 'comum';
         $senha = $_POST['senha'] ?? '';
 
-        $tiposPermitidos = ['comum', 'snd', 'dev'];
+        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
 
         if (!$nome || !in_array($tipo, $tiposPermitidos, true)) {
             Audit::write('usuario.editar', 'blocked', $matricula, [

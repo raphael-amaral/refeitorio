@@ -80,7 +80,7 @@ class Usuario extends Model
     /**
      * Cria um novo usuário.
      */
-    public static function novoUsuario(string $matricula, string $nome, string $senha, string $tipo): void
+    public static function novoUsuario(string $matricula, string $nome, string $senha, string $tipo, int $custo = 10): void
     {
         $stmt = static::db()->prepare(
             'INSERT INTO usuarios (matricula, nome, senha, tipo)
@@ -89,9 +89,25 @@ class Usuario extends Model
         $stmt->execute([
             'matricula' => $matricula,
             'nome'      => $nome,
-            'senha'     => password_hash($senha, PASSWORD_BCRYPT),
+            'senha'     => password_hash($senha, PASSWORD_BCRYPT, ['cost' => $custo]),
             'tipo'      => $tipo,
         ]);
+    }
+
+    /**
+     * Retorna quais matrículas do array já existem no banco.
+     */
+    public static function matriculasExistentes(array $matriculas): array
+    {
+        if (empty($matriculas)) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($matriculas), '?'));
+        $stmt = static::db()->prepare(
+            "SELECT matricula FROM usuarios WHERE matricula IN ({$placeholders})"
+        );
+        $stmt->execute($matriculas);
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
     /**

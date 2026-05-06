@@ -47,7 +47,7 @@ class QuestorController extends Controller
             $funcionarios[$mat]['count']++;
         }
 
-        $nomeArquivo = 'questor_' . str_replace('-', '', $dataInicio) . '_' . str_replace('-', '', $dataFim) . '.csv';
+        $nomeArquivo = 'questor_vale_refeicao_' . str_replace('-', '', $dataInicio) . '_' . str_replace('-', '', $dataFim) . '.csv';
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $nomeArquivo . '"');

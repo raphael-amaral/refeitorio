@@ -82,7 +82,7 @@ class CardapioController extends Controller
         $dados = [
             'data'      => $this->input('data'),
             'tipo'      => $this->input('tipo'),
-            'descricao' => $this->input('descricao'),
+            'descricao' => mb_strtoupper(trim($this->input('descricao') ?? '')),
         ];
 
         if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
@@ -129,7 +129,7 @@ class CardapioController extends Controller
         $dados = [
             'data'      => $this->input('data'),
             'tipo'      => $this->input('tipo'),
-            'descricao' => $this->input('descricao'),
+            'descricao' => mb_strtoupper(trim($this->input('descricao') ?? '')),
         ];
 
         if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
@@ -188,7 +188,7 @@ class CardapioController extends Controller
 
         $destino = $this->input('redirect') === '/cardapio' ? '/cardapio' : '/painel';
 
-        $descricao = trim($this->input('descricao') ?? '');
+        $descricao = mb_strtoupper(trim($this->input('descricao') ?? ''));
 
         if ($descricao === '') {
             Audit::write('cardapio.salvar_dia', 'blocked', $data . ':' . $tipo, ['motivo' => 'descricao_vazia']);

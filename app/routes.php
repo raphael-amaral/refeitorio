@@ -19,7 +19,7 @@ $router->get('/painel', 'App\Controllers\PainelController', 'index', ['App\Middl
 // ---------------------------------------------------------------------------
 // Conta (qualquer usuário autenticado)
 // ---------------------------------------------------------------------------
-$router->post('/conta/senha', 'App\Controllers\ContaController', 'alterarSenha', ['App\Middleware\Auth']);
+$router->post('/conta/senha', 'App\Controllers\ContaController', 'alterarSenha', ['App\Middleware\Auth@comum']);
 
 // ---------------------------------------------------------------------------
 // Cardápios
@@ -52,8 +52,8 @@ $router->get('/scanner/lista-hoje', 'App\Controllers\ScannerController', 'listaH
 // ---------------------------------------------------------------------------
 // Relatórios (snd, dp e dev)
 // ---------------------------------------------------------------------------
-$router->get('/relatorios/pdf', 'App\Controllers\RelatorioController', 'pdf',   ['App\Middleware\Auth@snd']);
-$router->get('/relatorios',     'App\Controllers\RelatorioController', 'index', ['App\Middleware\Auth@snd']);
+$router->get('/relatorios/pdf', 'App\Controllers\RelatorioController', 'pdf',   ['App\Middleware\Auth@relatorio']);
+$router->get('/relatorios',     'App\Controllers\RelatorioController', 'index', ['App\Middleware\Auth@relatorio']);
 
 // ---------------------------------------------------------------------------
 // Exportação Questor (dp e dev)

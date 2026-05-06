@@ -186,6 +186,10 @@ class UsuarioController extends Controller
         $tipo  = $_POST['tipo'] ?? 'comum';
         $senha = $_POST['senha'] ?? '';
 
+        if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
+            $tipo = $_SESSION['usuario']['tipo'];
+        }
+
         $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
 
         if (!$nome || !in_array($tipo, $tiposPermitidos, true)) {

@@ -31,11 +31,11 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <?php if (in_array($u['tipo'] ?? '', ['snd', 'dev'], true)): ?>
                 <li><a href="/cardapio" <?= $navAtivo('/cardapio') ?>>Cardápios</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['snd', 'dp', 'dev'], true)): ?>
-                <li><a href="/relatorios" <?= $navAtivo('/relatorios') ?>>Relatórios</a></li>
-            <?php endif; ?>
             <?php if (in_array($u['tipo'] ?? '', ['dp', 'dev'], true)): ?>
                 <li><a href="/questor" <?= $navAtivo('/questor') ?>>Exportação (Questor)</a></li>
+            <?php endif; ?>
+            <?php if (in_array($u['tipo'] ?? '', ['snd', 'dp', 'dev'], true)): ?>
+                <li><a href="/relatorios" <?= $navAtivo('/relatorios') ?>>Relatórios</a></li>
             <?php endif; ?>
             <?php if (($u['tipo'] ?? '') === 'dev'): ?>
                 <li><a href="/usuario" <?= $navAtivo('/usuario') ?>>Usuários</a></li>
@@ -44,7 +44,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
         <div class="navbar-user">
             <span class="navbar-nome"><?= htmlspecialchars($u['nome'] ?? '') ?></span>
             <span class="badge badge--tipo"><?= htmlspecialchars($u['tipo'] ?? '') ?></span>
-            <?php if (!empty($u)): ?>
+            <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
                     class="btn-logout" style="background:none;border:none;cursor:pointer;">Trocar senha</button>
             <?php endif; ?>
@@ -52,7 +52,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
         </div>
     </nav>
 
-    <?php if (!empty($_SESSION['usuario']['senha_padrao'])): ?>
+    <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
     <div class="alert-senha-padrao">
         Você está usando a senha padrão. Recomendamos trocar para maior segurança.
         <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
@@ -71,8 +71,8 @@ $navAtivo = function (string $href) use ($urlAtual): string {
         <?= $conteudo ?>
     </main>
 
-    <?php if (!empty($u)): ?>
-    <!-- Modal troca de senha (disponível para todos os usuários autenticados) -->
+    <?php if (($u['tipo'] ?? '') === 'comum'): ?>
+    <!-- Modal troca de senha (apenas usuários comuns) -->
     <div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:8px;padding:28px 32px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
             <strong style="display:block;margin-bottom:18px;font-size:1rem;font-family:var(--font-principal);color:#333;">Trocar senha</strong>

@@ -6,20 +6,28 @@ namespace App\Middleware;
  * Middleware de autenticação e controle de acesso por tipo de usuário.
  *
  * Uso nas rotas:
- *   'App\Middleware\Auth'         → handle() — apenas usuário logado
- *   'App\Middleware\Auth@dev'     → apenas dev
- *   'App\Middleware\Auth@snd'     → snd / dev
- *   'App\Middleware\Auth@comum'   → apenas comum
+ *   'App\Middleware\Auth'           → handle() — apenas usuário logado
+ *   'App\Middleware\Auth@dev'       → apenas dev
+ *   'App\Middleware\Auth@snd'       → snd / dev
+ *   'App\Middleware\Auth@dp'        → dp / dev
+ *   'App\Middleware\Auth@relatorio' → snd / dp / dev
+ *   'App\Middleware\Auth@comum'     → apenas comum
  */
 class Auth
 {
     /**
      * Exige apenas que o usuário esteja logado.
+     * dp é redirecionado para /questor — suas únicas rotas são @dp e @relatorio.
      */
     public static function handle(): void
     {
         if (!isset($_SESSION['usuario'])) {
             header('Location: /');
+            exit;
+        }
+
+        if ($_SESSION['usuario']['tipo'] === 'dp') {
+            header('Location: /questor');
             exit;
         }
     }
@@ -44,6 +52,23 @@ class Auth
     {
         self::handle();
 
+        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true)) {
+            header('Location: /painel');
+            exit;
+        }
+    }
+
+    /**
+     * Exige perfil snd, dp ou dev (ex: relatórios).
+     * Não chama handle() para não redirecionar dp antes de checar o perfil.
+     */
+    public static function relatorio(): void
+    {
+        if (!isset($_SESSION['usuario'])) {
+            header('Location: /');
+            exit;
+        }
+
         if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dp', 'dev'], true)) {
             header('Location: /painel');
             exit;
@@ -52,10 +77,14 @@ class Auth
 
     /**
      * Exige perfil dp ou dev.
+     * Não chama handle() para não redirecionar dp antes de checar o perfil.
      */
     public static function dp(): void
     {
-        self::handle();
+        if (!isset($_SESSION['usuario'])) {
+            header('Location: /');
+            exit;
+        }
 
         if (!in_array($_SESSION['usuario']['tipo'], ['dp', 'dev'], true)) {
             header('Location: /painel');

@@ -17,6 +17,11 @@ $router->get('/logout', 'App\Controllers\LoginController', 'logout');
 $router->get('/painel', 'App\Controllers\PainelController', 'index', ['App\Middleware\Auth']);
 
 // ---------------------------------------------------------------------------
+// Conta (qualquer usuário autenticado)
+// ---------------------------------------------------------------------------
+$router->post('/conta/senha', 'App\Controllers\ContaController', 'alterarSenha', ['App\Middleware\Auth']);
+
+// ---------------------------------------------------------------------------
 // Cardápios
 // Rotas estáticas ANTES das dinâmicas para evitar conflito de padrão regex
 // ---------------------------------------------------------------------------
@@ -45,16 +50,23 @@ $router->post('/scanner/processar', 'App\Controllers\ScannerController', 'proces
 $router->get('/scanner/lista-hoje', 'App\Controllers\ScannerController', 'listaHoje', ['App\Middleware\Auth@apiSnd']);
 
 // ---------------------------------------------------------------------------
-// Relatórios (snd e dev)
+// Relatórios (snd, dp e dev)
 // ---------------------------------------------------------------------------
 $router->get('/relatorios/pdf', 'App\Controllers\RelatorioController', 'pdf',   ['App\Middleware\Auth@snd']);
 $router->get('/relatorios',     'App\Controllers\RelatorioController', 'index', ['App\Middleware\Auth@snd']);
+
+// ---------------------------------------------------------------------------
+// Exportação Questor (dp e dev)
+// ---------------------------------------------------------------------------
+$router->get('/questor',          'App\Controllers\QuestorController', 'index',    ['App\Middleware\Auth@dp']);
+$router->get('/questor/exportar', 'App\Controllers\QuestorController', 'exportar', ['App\Middleware\Auth@dp']);
 
 // ---------------------------------------------------------------------------
 // Usuários (apenas dev)
 // ---------------------------------------------------------------------------
 $router->get('/usuario',                          'App\Controllers\UsuarioController', 'index',    ['App\Middleware\Auth@dev']);
 $router->post('/usuario',                         'App\Controllers\UsuarioController', 'criar',    ['App\Middleware\Auth@dev']);
+$router->post('/usuario/importar',                'App\Controllers\UsuarioController', 'importar', ['App\Middleware\Auth@dev']);
 $router->post('/usuario/{matricula}/inativar',    'App\Controllers\UsuarioController', 'inativar', ['App\Middleware\Auth@dev']);
 $router->post('/usuario/{matricula}/ativar',      'App\Controllers\UsuarioController', 'ativar',   ['App\Middleware\Auth@dev']);
 $router->post('/usuario/{matricula}/editar',      'App\Controllers\UsuarioController', 'editar',   ['App\Middleware\Auth@dev']);

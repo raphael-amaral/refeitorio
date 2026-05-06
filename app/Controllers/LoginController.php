@@ -64,14 +64,16 @@ class LoginController extends Controller
             session_regenerate_id(true);
 
             $_SESSION['usuario'] = [
-                'matricula' => $usuario['matricula'],
-                'nome'      => $usuario['nome'],
-                'tipo'      => $usuario['tipo'],
+                'matricula'    => $usuario['matricula'],
+                'nome'         => $usuario['nome'],
+                'tipo'         => $usuario['tipo'],
+                'senha_padrao' => password_verify('stcasa' . $usuario['matricula'], $usuario['senha']),
             ];
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
             $_SESSION['_last_activity'] = time();
 
-            $this->redirect('/painel');
+            $destino = $usuario['tipo'] === 'dp' ? '/questor' : '/painel';
+            $this->redirect($destino);
         }
 
         Security::registerFailure('web_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);

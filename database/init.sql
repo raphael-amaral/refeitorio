@@ -4,7 +4,7 @@ CREATE TABLE usuarios (
     matricula VARCHAR(12) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('comum', 'snd', 'dev') NOT NULL DEFAULT 'comum',
+    tipo ENUM('comum', 'snd', 'dp', 'dev') NOT NULL DEFAULT 'comum',
     ativo TINYINT(1) NOT NULL DEFAULT 1,
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -35,4 +35,5 @@ CREATE TABLE registros (
 INSERT INTO usuarios (matricula, nome, senha, tipo) VALUES
 ('snd',   'Equipe SND', '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'snd'),
 ('teste', 'Usuário Teste', '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),
-('dev',   'Desenvolvedor', '$2y$10$MsojWKh9yCR36nheklmvxuBtbx.BAnOMka9kpwaOjYIgNY4lgumuC', 'dev');
+('dev',   'Desenvolvedor', '$2y$10$MsojWKh9yCR36nheklmvxuBtbx.BAnOMka9kpwaOjYIgNY4lgumuC', 'dev'),
+('dp', 'Departamento Pessoal', '$2y$10$0k63E/0520b5w/UqLG/WR.XY9i1hz.yCuyThfXoSJ9dXU2cyD/MWu', 'dp');

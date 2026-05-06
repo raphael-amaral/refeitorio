@@ -44,7 +44,20 @@ class Auth
     {
         self::handle();
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true)) {
+        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dp', 'dev'], true)) {
+            header('Location: /painel');
+            exit;
+        }
+    }
+
+    /**
+     * Exige perfil dp ou dev.
+     */
+    public static function dp(): void
+    {
+        self::handle();
+
+        if (!in_array($_SESSION['usuario']['tipo'], ['dp', 'dev'], true)) {
             header('Location: /painel');
             exit;
         }

@@ -42,8 +42,9 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <?php endif; ?>
         </ul>
         <div class="navbar-user">
-            <span class="navbar-nome"><?= htmlspecialchars($u['nome'] ?? '') ?></span>
-            <span class="badge badge--tipo"><?= htmlspecialchars($u['tipo'] ?? '') ?></span>
+            <span class="navbar-nome navbar-nome--full"><?= htmlspecialchars($u['nome'] ?? '') ?></span>
+            <span class="navbar-nome navbar-nome--short"><?= htmlspecialchars(explode(' ', $u['nome'] ?? '')[0]) ?></span>
+            <span class="badge badge--tipo"><?= htmlspecialchars(($u['tipo'] ?? '') === 'comum' ? 'Colaborador' : ($u['tipo'] ?? '')) ?></span>
             <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
                     class="btn-logout" style="background:none;border:none;cursor:pointer;">Trocar senha</button>
@@ -53,11 +54,13 @@ $navAtivo = function (string $href) use ($urlAtual): string {
     </nav>
 
     <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
-    <div class="alert-senha-padrao">
-        Você está usando a senha padrão. Recomendamos trocar para maior segurança.
-        <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
-            class="btn-trocar-senha">Trocar agora</button>
-    </div>
+        <div class="alert-senha-padrao">
+            Sistema ainda em desenvolvimento com dados fictícios. Se acostume com a nova interface =)
+            <!--
+            Você está usando a senha provisória. Recomendamos trocar para maior segurança.
+            <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
+                class="btn-trocar-senha">Trocar agora</button> !-->
+        </div>
     <?php endif; ?>
 
     <main class="container">
@@ -72,75 +75,75 @@ $navAtivo = function (string $href) use ($urlAtual): string {
     </main>
 
     <?php if (($u['tipo'] ?? '') === 'comum'): ?>
-    <!-- Modal troca de senha (apenas usuários comuns) -->
-    <div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:8px;padding:28px 32px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
-            <strong style="display:block;margin-bottom:18px;font-size:1rem;font-family:var(--font-principal);color:#333;">Trocar senha</strong>
-            <p id="erro-modal-senha" style="display:none;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:4px;padding:8px 12px;font-size:.83rem;font-family:var(--font-cards);margin-bottom:14px;"></p>
-            <form id="form-trocar-senha" method="POST" action="/conta/senha" class="form-usuario">
-                <?= csrf_field() ?>
-                <div class="form-group">
-                    <label for="senha_atual">Senha atual</label>
-                    <input type="password" id="senha_atual" name="senha_atual" required placeholder="Sua senha atual">
-                </div>
-                <div class="form-group">
-                    <label for="nova_senha">Nova senha</label>
-                    <input type="password" id="nova_senha" name="nova_senha" required placeholder="Mínimo 6 caracteres">
-                </div>
-                <div class="form-group">
-                    <label for="confirmar_nova_senha">Confirmar nova senha</label>
-                    <input type="password" id="confirmar_nova_senha" name="confirmar_nova_senha" required placeholder="Repita a nova senha">
-                </div>
-                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-                    <button type="button" id="btn-fechar-modal-senha" class="btn-acao btn-inativar" style="padding:6px 14px;">Cancelar</button>
-                    <button type="submit" class="btn-salvar">Salvar</button>
-                </div>
-            </form>
+        <!-- Modal troca de senha (apenas usuários comuns) -->
+        <div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:8px;padding:28px 32px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+                <strong style="display:block;margin-bottom:18px;font-size:1rem;font-family:var(--font-principal);color:#333;">Trocar senha</strong>
+                <p id="erro-modal-senha" style="display:none;background:#fee2e2;color:#991b1b;border:1px solid #fecaca;border-radius:4px;padding:8px 12px;font-size:.83rem;font-family:var(--font-cards);margin-bottom:14px;"></p>
+                <form id="form-trocar-senha" method="POST" action="/conta/senha" class="form-usuario">
+                    <?= csrf_field() ?>
+                    <div class="form-group">
+                        <label for="senha_atual">Senha atual</label>
+                        <input type="password" id="senha_atual" name="senha_atual" required placeholder="Sua senha atual">
+                    </div>
+                    <div class="form-group">
+                        <label for="nova_senha">Nova senha</label>
+                        <input type="password" id="nova_senha" name="nova_senha" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmar_nova_senha">Confirmar nova senha</label>
+                        <input type="password" id="confirmar_nova_senha" name="confirmar_nova_senha" required placeholder="Repita a nova senha">
+                    </div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+                        <button type="button" id="btn-fechar-modal-senha" class="btn-acao btn-inativar" style="padding:6px 14px;">Cancelar</button>
+                        <button type="submit" class="btn-salvar">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
-    <script>
-        (function () {
-            var modal      = document.getElementById('modal-trocar-senha');
-            var form       = document.getElementById('form-trocar-senha');
-            var erroBox    = document.getElementById('erro-modal-senha');
-            var btnFechar  = document.getElementById('btn-fechar-modal-senha');
+        <script>
+            (function() {
+                var modal = document.getElementById('modal-trocar-senha');
+                var form = document.getElementById('form-trocar-senha');
+                var erroBox = document.getElementById('erro-modal-senha');
+                var btnFechar = document.getElementById('btn-fechar-modal-senha');
 
-            function fecharModal() {
-                modal.style.display = 'none';
-                form.reset();
-                erroBox.style.display = 'none';
-                erroBox.textContent = '';
-            }
-
-            function mostrarErro(msg) {
-                erroBox.textContent = msg;
-                erroBox.style.display = 'block';
-            }
-
-            btnFechar.addEventListener('click', fecharModal);
-            modal.addEventListener('click', function (e) {
-                if (e.target === modal) fecharModal();
-            });
-
-            form.addEventListener('submit', function (e) {
-                var nova       = document.getElementById('nova_senha').value;
-                var confirmar  = document.getElementById('confirmar_nova_senha').value;
-
-                erroBox.style.display = 'none';
-
-                if (nova.length < 6) {
-                    e.preventDefault();
-                    mostrarErro('A nova senha deve ter pelo menos 6 caracteres.');
-                    return;
+                function fecharModal() {
+                    modal.style.display = 'none';
+                    form.reset();
+                    erroBox.style.display = 'none';
+                    erroBox.textContent = '';
                 }
-                if (nova !== confirmar) {
-                    e.preventDefault();
-                    mostrarErro('As senhas não coincidem.');
-                    return;
+
+                function mostrarErro(msg) {
+                    erroBox.textContent = msg;
+                    erroBox.style.display = 'block';
                 }
-            });
-        }());
-    </script>
+
+                btnFechar.addEventListener('click', fecharModal);
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) fecharModal();
+                });
+
+                form.addEventListener('submit', function(e) {
+                    var nova = document.getElementById('nova_senha').value;
+                    var confirmar = document.getElementById('confirmar_nova_senha').value;
+
+                    erroBox.style.display = 'none';
+
+                    if (nova.length < 6) {
+                        e.preventDefault();
+                        mostrarErro('A nova senha deve ter pelo menos 6 caracteres.');
+                        return;
+                    }
+                    if (nova !== confirmar) {
+                        e.preventDefault();
+                        mostrarErro('As senhas não coincidem.');
+                        return;
+                    }
+                });
+            }());
+        </script>
     <?php endif; ?>
 
 </body>

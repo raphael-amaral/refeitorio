@@ -97,6 +97,9 @@ body {
 .navbar-nome {
   font-weight: 500;
 }
+.navbar-nome--short {
+  display: none;
+}
 
 .badge--tipo {
   background: var(--laranja);
@@ -1105,6 +1108,18 @@ body:has(.painel-dashboard) .container {
 /* =========================================================
    Responsivo — celular
    ========================================================= */
+@media (max-width: 920px) {
+  .navbar-nome--full {
+    display: none;
+  }
+  .navbar-nome--short {
+    display: revert;
+  }
+  .navbar-user .badge--tipo {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   /* ----- Navbar: grid garante ordem fixa brand/user na linha 1, nav na linha 2 ----- */
   .navbar {
@@ -1132,7 +1147,7 @@ body:has(.painel-dashboard) .container {
     padding: 4px 0;
     margin-left: 0;
   }
-  .navbar-nome {
+  .navbar-user .badge--tipo {
     display: none;
   }
   .navbar-nav {

@@ -54,9 +54,6 @@ class QuestorController extends Controller
 
         $out = fopen('php://output', 'w');
 
-        // BOM para Excel reconhecer UTF-8
-        fwrite($out, "\xEF\xBB\xBF");
-
         // Linhas de cabeçalho do layout Questor
         fwrite($out, ";;767\r\n");
         fwrite($out, ";;V\r\n");

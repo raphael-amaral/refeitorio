@@ -11,7 +11,8 @@ class Audit
             return $customPath;
         }
 
-        return __DIR__ . '/../../storage/logs/audit.log';
+        $mes = date('Y-m');
+        return __DIR__ . "/../../storage/logs/audit-{$mes}.log";
     }
 
     private static function ensureDir(string $filePath): void

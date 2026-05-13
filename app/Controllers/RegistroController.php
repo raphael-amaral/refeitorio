@@ -88,7 +88,11 @@ class RegistroController extends Controller
 
         if ($idCardapio > 0 && !Registro::jaAgendado($usuario['matricula'], $idCardapio)) {
             Registro::upsertAgendado($usuario['matricula'], $idCardapio);
-            Audit::write('registro.criar', 'success', (string) $idCardapio, ['matricula_usuario' => $usuario['matricula']]);
+            Audit::write('registro.criar', 'success', (string) $idCardapio, [
+                'matricula_usuario' => $usuario['matricula'],
+                'data_cardapio'     => $cardapio['data'] ?? null,
+                'tipo_refeicao'     => $cardapio['tipo'] ?? null,
+            ]);
         } else {
             Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'ja_agendado_ou_invalido']);
         }
@@ -127,6 +131,8 @@ class RegistroController extends Controller
         $cancelado = Registro::cancelarDoUsuario((int) $id, $usuario['matricula']);
         Audit::write('registro.cancelar', $cancelado ? 'success' : 'blocked', (string) $id, [
             'matricula_usuario' => $usuario['matricula'],
+            'data_cardapio'     => $cardapio['data'] ?? null,
+            'tipo_refeicao'     => $cardapio['tipo'] ?? null,
         ]);
 
         $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
@@ -138,8 +144,15 @@ class RegistroController extends Controller
      */
     public function concluir(string $id): void
     {
+        $registro = Registro::buscarPorId((int) $id);
+        $cardapio = $registro ? Cardapio::buscarPorId($registro['id_cardapio']) : null;
+
         $ok = Registro::concluir((int) $id);
-        Audit::write('registro.concluir', $ok ? 'success' : 'error', (string) $id);
+        Audit::write('registro.concluir', $ok ? 'success' : 'error', (string) $id, [
+            'matricula_usuario' => $registro['matricula_usuario'] ?? null,
+            'data_cardapio'     => $cardapio['data'] ?? null,
+            'tipo_refeicao'     => $cardapio['tipo'] ?? null,
+        ]);
         $this->redirect('/painel');
     }
 }

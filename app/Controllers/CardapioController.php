@@ -197,7 +197,9 @@ class CardapioController extends Controller
         }
 
         Cardapio::salvarDia($data, $tipo, $descricao);
-        Audit::write('cardapio.salvar_dia', 'success', $data . ':' . $tipo);
+        Audit::write('cardapio.salvar_dia', 'success', $data . ':' . $tipo, [
+            'descricao' => $descricao,
+        ]);
         $this->redirect($destino);
     }
 

@@ -163,7 +163,8 @@ A exceção é **sempre vinculada ao almoço do dia** e só pode ser usada até 
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `matricula` | string | Matrícula do funcionário |
+| `matricula` | string | Matrícula do funcionário que vai receber a exceção |
+| `senha` | string | Senha do funcionário (mesmas credenciais do sistema web) |
 
 #### Responses
 
@@ -181,9 +182,15 @@ A exceção é **sempre vinculada ao almoço do dia** e só pode ser usada até 
 { "ok": false, "erro": "Refeição já registrada hoje." }
 ```
 
-**401 Unauthorized — token ausente ou inválido**
+**401 Unauthorized — token Bearer ausente/inválido ou credenciais do funcionário inválidas**
 ```json
 { "ok": false, "erro": "Acesso negado pelo aplicativo." }
+{ "ok": false, "erro": "Credenciais inválidas." }
+```
+
+**403 Forbidden — funcionário não é do tipo comum (snd, dp ou dev)**
+```json
+{ "ok": false, "erro": "Exceção disponível apenas para funcionários comuns." }
 ```
 
 **404 Not Found — funcionário não cadastrado**
@@ -196,10 +203,10 @@ A exceção é **sempre vinculada ao almoço do dia** e só pode ser usada até 
 { "ok": false, "erro": "Nenhum cardápio de almoço cadastrado para hoje." }
 ```
 
-**422 Unprocessable — fora do horário ou matrícula vazia**
+**422 Unprocessable — fora do horário ou campos vazios**
 ```json
 { "ok": false, "erro": "Exceções encerradas após 13:30." }
-{ "ok": false, "erro": "Matrícula não informada." }
+{ "ok": false, "erro": "Matrícula e senha são obrigatórias." }
 ```
 
 #### Diferenças em relação ao `/scanner/processar`

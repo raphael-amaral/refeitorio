@@ -118,9 +118,10 @@ class ScannerController extends Controller
     public function excecao(): void
     {
         $matricula = trim($_POST['matricula'] ?? '');
+        $senha     = trim($_POST['senha']     ?? '');
 
-        if ($matricula === '') {
-            $this->json(['ok' => false, 'erro' => 'Matrícula não informada.'], 422);
+        if ($matricula === '' || $senha === '') {
+            $this->json(['ok' => false, 'erro' => 'Matrícula e senha são obrigatórias.'], 422);
             return;
         }
 
@@ -133,6 +134,16 @@ class ScannerController extends Controller
         $usuario = Usuario::buscarPorMatricula($matricula);
         if (!$usuario) {
             $this->json(['ok' => false, 'erro' => 'Funcionário não encontrado.'], 404);
+            return;
+        }
+
+        if (!password_verify($senha, $usuario['senha'])) {
+            $this->json(['ok' => false, 'erro' => 'Credenciais inválidas.'], 401);
+            return;
+        }
+
+        if ($usuario['tipo'] !== 'comum') {
+            $this->json(['ok' => false, 'erro' => 'Exceção disponível apenas para funcionários comuns.'], 403);
             return;
         }
 

@@ -68,7 +68,7 @@ class RegistroController extends Controller
 
         // Prazo: até hora limite do dia do cardápio
         if ($idCardapio > 0 && isset($cardapio)) {
-            $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
+            $limitTime = $_ENV['LIMIT_TIME'] ?? '10:00';
             [$horaLimit, $minutoLimit] = explode(':', $limitTime);
             $agora        = new DateTime();
             $diaCardapio  = new DateTime($cardapio['data']);

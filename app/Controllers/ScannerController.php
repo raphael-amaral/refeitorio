@@ -2,8 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Core\Security;
+use App\Models\Cardapio;
 use App\Models\Registro;
 use App\Models\Usuario;
 
@@ -106,6 +108,57 @@ class ScannerController extends Controller
             'ok'       => true,
             'nome'     => $registro['nome_usuario'],
             'refeicao' => $registro['tipo_refeicao'] === 'almoco' ? 'Almoço' : 'Jantar',
+        ]);
+    }
+
+    /**
+     * Registra uma exceção para um funcionário sem agendamento (POST /scanner/excecao).
+     * Vincula sempre ao almoço do dia. Bloqueado após EXCECAO_LIMIT_TIME (padrão 13:30).
+     */
+    public function excecao(): void
+    {
+        $matricula = trim($_POST['matricula'] ?? '');
+
+        if ($matricula === '') {
+            $this->json(['ok' => false, 'erro' => 'Matrícula não informada.'], 422);
+            return;
+        }
+
+        $limiteHora = $_ENV['EXCECAO_LIMIT_TIME'] ?? '13:30';
+        if (date('H:i') > $limiteHora) {
+            $this->json(['ok' => false, 'erro' => "Exceções encerradas após {$limiteHora}."], 422);
+            return;
+        }
+
+        $usuario = Usuario::buscarPorMatricula($matricula);
+        if (!$usuario) {
+            $this->json(['ok' => false, 'erro' => 'Funcionário não encontrado.'], 404);
+            return;
+        }
+
+        $cardapio = Cardapio::almocoDaData(date('Y-m-d'));
+        if (!$cardapio) {
+            $this->json(['ok' => false, 'erro' => 'Nenhum cardápio de almoço cadastrado para hoje.'], 404);
+            return;
+        }
+
+        if (Registro::jaConcluidoPorCardapio($matricula, (int) $cardapio['id'])) {
+            $this->json(['ok' => false, 'erro' => 'Refeição já registrada hoje.'], 400);
+            return;
+        }
+
+        Registro::concluirExcecao($matricula, (int) $cardapio['id']);
+
+        Audit::write('scanner.excecao', 'success', null, [
+            'matricula_funcionario' => $matricula,
+            'nome_funcionario'      => $usuario['nome'],
+            'id_cardapio'           => $cardapio['id'],
+        ]);
+
+        $this->json([
+            'ok'      => true,
+            'nome'    => $usuario['nome'],
+            'refeicao' => 'Almoço',
         ]);
     }
 

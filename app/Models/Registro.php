@@ -111,6 +111,34 @@ class Registro extends Model
         return static::atualizar($id, ['status' => 'concluido']);
     }
 
+    /**
+     * Verifica se o usuário já tem refeição concluída para o cardápio informado.
+     */
+    public static function jaConcluidoPorCardapio(string $matricula, int $idCardapio): bool
+    {
+        $stmt = static::db()->prepare(
+            "SELECT COUNT(*) FROM registros
+              WHERE matricula_usuario = :matricula
+                AND id_cardapio       = :id_cardapio
+                AND status            = 'concluido'"
+        );
+        $stmt->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Cria ou sobrescreve um registro diretamente como concluído (exceção SND).
+     * Ignora regras de agendamento e horário limite.
+     */
+    public static function concluirExcecao(string $matricula, int $idCardapio): void
+    {
+        static::db()->prepare(
+            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
+             VALUES (:matricula, :id_cardapio, 'concluido')
+             ON DUPLICATE KEY UPDATE status = 'concluido', atualizado_em = NOW()"
+        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+    }
+
     public static function buscarPorUsuarioPaginado(
         string $matricula,
         string $status,

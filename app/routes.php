@@ -47,6 +47,7 @@ $router->post('/registro/{id}/concluir', 'App\Controllers\RegistroController', '
 // ---------------------------------------------------------------------------
 $router->post('/api/login', 'App\Controllers\ScannerController', 'loginApp');
 $router->post('/scanner/processar', 'App\Controllers\ScannerController', 'processar', ['App\Middleware\Auth@apiSnd']);
+$router->post('/scanner/excecao',   'App\Controllers\ScannerController', 'excecao',   ['App\Middleware\Auth@apiSnd']);
 $router->get('/scanner/lista-hoje', 'App\Controllers\ScannerController', 'listaHoje', ['App\Middleware\Auth@apiSnd']);
 
 // ---------------------------------------------------------------------------

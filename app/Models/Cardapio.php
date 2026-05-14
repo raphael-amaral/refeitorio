@@ -86,6 +86,19 @@ class Cardapio extends Model
     }
 
     /**
+     * Retorna o cardápio de almoço de uma data específica, ou null se não existir.
+     */
+    public static function almocoDaData(string $data): ?array
+    {
+        $stmt = static::db()->prepare(
+            "SELECT * FROM cardapios WHERE data = :data AND tipo = 'almoco' LIMIT 1"
+        );
+        $stmt->execute(['data' => $data]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
      * Cria ou atualiza o cardápio de uma data/tipo (upsert).
      */
     public static function salvarDia(string $data, string $tipo, string $descricao): void

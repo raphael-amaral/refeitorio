@@ -17,7 +17,7 @@
             <div class="form-group">
                 <label for="valor_refeicao">Valor por refeição (R$)</label>
                 <input type="number" id="valor_refeicao" name="valor_refeicao"
-                    value="15" min="0.01" step="0.01" required
+                    value="15" min="1" step=".50" required
                     style="max-width:120px;">
             </div>
             <p style="font-size:.82rem;color:#888;font-family:var(--font-cards);margin-bottom:14px;">

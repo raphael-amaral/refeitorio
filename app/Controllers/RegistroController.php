@@ -51,6 +51,12 @@ class RegistroController extends Controller
         $usuario    = $_SESSION['usuario'];
         $idCardapio = (int) ($_POST['id_cardapio'] ?? 0);
 
+        if (!filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN)) {
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'agendamento_desabilitado']);
+            $this->flash('Agendamentos estão desabilitados no momento.', 'warning');
+            $this->redirect('/painel');
+        }
+
         // Apenas usuários comuns podem agendar
         if ($usuario['tipo'] !== 'comum') {
             Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'tipo_nao_permitido']);
@@ -106,6 +112,13 @@ class RegistroController extends Controller
     public function cancelar(string $id): void
     {
         $usuario = $_SESSION['usuario'];
+
+        if (!filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN)) {
+            Audit::write('registro.cancelar', 'blocked', $id, ['motivo' => 'agendamento_desabilitado']);
+            $this->flash('Cancelamentos estão desabilitados no momento.', 'warning');
+            $this->redirect('/painel');
+        }
+
         $registro = Registro::buscarPorId((int) $id);
 
         if ($registro) {

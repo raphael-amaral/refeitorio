@@ -47,7 +47,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <span class="badge badge--tipo"><?= htmlspecialchars(($u['tipo'] ?? '') === 'comum' ? 'Colaborador' : ($u['tipo'] ?? '')) ?></span>
             <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
-                    class="btn-logout" style="background:none;border:none;cursor:pointer;">Trocar senha</button>
+                    class="btn-logout" style="background:none;border:none;cursor:pointer;display:none;">Trocar senha</button>
             <?php endif; ?>
             <a href="/logout" class="btn-logout">Sair</a>
         </div>
@@ -55,7 +55,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
 
     <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
         <div class="alert-senha-padrao">
-            Sistema ainda em desenvolvimento com dados fictícios. Se acostume com a nova interface =)
+            Agendamentos temporariamente desabilitados. Você pode visualizar o cardápio da semana normalmente.
             <!--
             Você está usando a senha provisória. Recomendamos trocar para maior segurança.
             <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"

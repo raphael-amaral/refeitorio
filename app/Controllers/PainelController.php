@@ -24,6 +24,7 @@ class PainelController extends Controller
         [$horaLimit, $minutoLimit] = explode(':', $limitTime);
         $antes930 = $agora < (clone $agora)->setTime((int)$horaLimit, (int)$minutoLimit);
         $ehComum  = $usuario['tipo'] === 'comum';
+        $agendamentoHabilitado = filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
 
         // Monta a estrutura dos 7 dias com slots para almoço e jantar
         $labels = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -32,8 +33,8 @@ class PainelController extends Controller
             $dia   = (clone $segunda)->modify("+{$i} days");
             $chave = $dia->format('Y-m-d');
 
-            // Pode agendar: usuário comum + (dia futuro OU hoje antes das 09:30)
-            $podeAgendarDia = $ehComum && (
+            // Pode agendar: agendamento habilitado + usuário comum + (dia futuro OU hoje antes do horário limite)
+            $podeAgendarDia = $agendamentoHabilitado && $ehComum && (
                 $chave > $hoje || ($chave === $hoje && $antes930)
             );
 
@@ -68,12 +69,13 @@ class PainelController extends Controller
         }
 
         $this->render('painel/index', [
-            'titulo'          => 'Painel',
-            'usuario'         => $usuario,
-            'semana'          => $semana,
-            'registrosSemana' => $registrosSemana,
-            'segunda'         => $segunda,
-            'hoje'            => $hoje,
+            'titulo'                => 'Painel',
+            'usuario'               => $usuario,
+            'semana'                => $semana,
+            'registrosSemana'       => $registrosSemana,
+            'segunda'               => $segunda,
+            'hoje'                  => $hoje,
+            'agendamentoHabilitado' => $agendamentoHabilitado,
         ]);
     }
 }

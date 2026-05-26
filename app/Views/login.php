@@ -18,7 +18,8 @@
             <div class="login-cardapios__cabecalho">
                 <p class="login-cardapios__titulo">Cardápio de hoje</p>
                 <p class="login-cardapios__data"><?= date('d/m/Y') ?></p>
-                <small class="login-cardapios__nota">* Faça login para agendar o almoço</small>
+                <p class="login-cardapios__nota">* Agendamentos encerram às <?= htmlspecialchars($_ENV['LIMIT_TIME'] ?? '10:00') ?>h</p>
+                <p class="login-cardapios__nota">* Lembre-se de trazer o crachá</p>
             </div>
             <div class="login-cardapios__cards">
                 <?php foreach (['almoco' => 'Almoço', 'jantar' => 'Jantar'] as $chave => $label): ?>
@@ -56,10 +57,15 @@
                 <div class="form-group">
                     <label for="senha">Senha</label>
                     <input type="password" id="senha" name="senha" required>
+                    <small style="color:#888;font-size:0.9rem;margin-top:4px;display:block;">Senha inicial: <strong>stcasa</strong> + matrícula &nbsp;(ex: <em>stcasa1234</em>)</small>
                 </div>
 
                 <button type="submit">Entrar</button>
             </form>
+
+            <div class="alert-senha-padrao" style="margin-top:16px;">
+                Problemas para acessar? Entre em contato com o setor de TI.
+            </div>
         </div>
 
     </div>

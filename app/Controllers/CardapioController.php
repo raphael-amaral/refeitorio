@@ -204,7 +204,7 @@ class CardapioController extends Controller
     }
 
     /**
-     * Verifica se $data (Y-m-d) está no intervalo editável: hoje até o próximo domingo.
+     * Verifica se $data (Y-m-d) está no intervalo editável: segunda-feira até o domingo da semana atual.
      */
     private function dataNaSemanaAtual(string $data): bool
     {
@@ -214,6 +214,7 @@ class CardapioController extends Controller
 
         $hoje    = (new \DateTime())->setTime(0, 0, 0);
         $diaNum  = (int) $hoje->format('N'); // 1=Seg … 7=Dom
+        $segunda = (clone $hoje)->modify('-' . ($diaNum - 1) . ' days')->setTime(0, 0, 0);
         $domingo = (clone $hoje)->modify('+' . (7 - $diaNum) . ' days')->setTime(23, 59, 59);
 
         $alvo = \DateTime::createFromFormat('Y-m-d', $data);
@@ -221,6 +222,6 @@ class CardapioController extends Controller
             return false;
         }
 
-        return $alvo >= $hoje && $alvo <= $domingo;
+        return $alvo >= $segunda && $alvo <= $domingo;
     }
 }

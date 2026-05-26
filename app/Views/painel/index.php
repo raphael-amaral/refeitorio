@@ -30,7 +30,7 @@ function btnEditar(string $chave, string $tipo, string $label, string $dataForma
                     $agendado    = $statusReg === 'agendado';
                     $podeAgendar = $dia['podeAgendar'];
                     $editavel    = $usuario['tipo'] === 'snd'
-                        && $chave >= $hoje
+                        && $chave >= $segunda->format('Y-m-d')
                         && $chave <= $domingo->format('Y-m-d');
                     $classes     = 'card';
                     if ($chave === $hoje) $classes .= ' card--hoje';

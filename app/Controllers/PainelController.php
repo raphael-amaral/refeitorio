@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Agendamento;
 use App\Core\Controller;
 use App\Models\Cardapio;
 use App\Models\Registro;
@@ -16,14 +17,11 @@ class PainelController extends Controller
         // Encontra a segunda-feira da semana atual
         $hoje    = new DateTime();
         $diaNum  = (int) $hoje->format('N'); // 1=Seg … 7=Dom
-        $segunda = (clone $hoje)->modify('-' . ($diaNum - 1) . ' days');
+        $segunda = (clone $hoje)->modify('-' . $diaNum - 1 . ' days');
 
-        $agora  = new DateTime();
-        $hoje   = $agora->format('Y-m-d');
-        $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
-        [$horaLimit, $minutoLimit] = explode(':', $limitTime);
-        $antes930 = $agora < (clone $agora)->setTime((int)$horaLimit, (int)$minutoLimit);
-        $ehComum  = $usuario['tipo'] === 'comum';
+        $agora                 = new DateTime();
+        $hoje                  = $agora->format('Y-m-d');
+        $ehComum               = $usuario['tipo'] === 'comum';
         $agendamentoHabilitado = filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
 
         // Monta a estrutura dos 7 dias com slots para almoço e jantar
@@ -33,10 +31,8 @@ class PainelController extends Controller
             $dia   = (clone $segunda)->modify("+{$i} days");
             $chave = $dia->format('Y-m-d');
 
-            // Pode agendar: agendamento habilitado + usuário comum + (dia futuro OU hoje antes do horário limite)
-            $podeAgendarDia = $agendamentoHabilitado && $ehComum && (
-                $chave > $hoje || ($chave === $hoje && $antes930)
-            );
+            // Pode agendar: agendamento habilitado + usuário comum + dia útil (seg–sex) + prazo não encerrado
+            $podeAgendarDia = $agendamentoHabilitado && $ehComum && $i < 5 && !Agendamento::foraPrazo($chave);
 
             $semana[$chave] = [
                 'label'        => $labels[$i],

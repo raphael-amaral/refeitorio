@@ -2,11 +2,11 @@
 
 namespace App\Controllers;
 
+use App\Core\Agendamento;
 use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Cardapio;
 use App\Models\Registro;
-use DateTime;
 
 class RegistroController extends Controller
 {
@@ -72,21 +72,18 @@ class RegistroController extends Controller
             }
         }
 
-        // Prazo: até hora limite do dia do cardápio
         if ($idCardapio > 0 && isset($cardapio)) {
-            $limitTime = $_ENV['LIMIT_TIME'] ?? '10:00';
-            [$horaLimit, $minutoLimit] = explode(':', $limitTime);
-            $agora        = new DateTime();
-            $diaCardapio  = new DateTime($cardapio['data']);
-            $hoje         = $agora->format('Y-m-d');
-            $fimPrazo     = (clone $diaCardapio)->setTime((int)$horaLimit, (int)$minutoLimit);
+            // Sábado e domingo não são agendáveis
+            if (Agendamento::fimDeSemana($cardapio['data'])) {
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fim_de_semana']);
+                $this->flash('Agendamentos não são permitidos para sábado ou domingo.', 'warning');
+                $this->redirect('/painel');
+            }
 
-            if (
-                $diaCardapio->format('Y-m-d') < $hoje ||
-                ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
-            ) {
+            // Prazo: até hora limite do dia do cardápio
+            if (Agendamento::foraPrazo($cardapio['data'])) {
                 Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fora_prazo']);
-                $timeFormatted = str_replace(':', 'h', $limitTime);
+                $timeFormatted = str_replace(':', 'h', $_ENV['LIMIT_TIME'] ?? '10:00');
                 $this->flash("Agendamentos encerrados para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect('/painel');
             }
@@ -122,20 +119,11 @@ class RegistroController extends Controller
         $registro = Registro::buscarPorId((int) $id);
 
         if ($registro) {
-            $cardapio    = Cardapio::buscarPorId($registro['id_cardapio']);
-            $limitTime = $_ENV['LIMIT_TIME'] ?? '09:30';
-            [$horaLimit, $minutoLimit] = explode(':', $limitTime);
-            $agora       = new DateTime();
-            $diaCardapio = new DateTime($cardapio['data']);
-            $hoje        = $agora->format('Y-m-d');
-            $fimPrazo    = (clone $diaCardapio)->setTime((int)$horaLimit, (int)$minutoLimit);
+            $cardapio = Cardapio::buscarPorId($registro['id_cardapio']);
 
-            if (
-                $diaCardapio->format('Y-m-d') < $hoje ||
-                ($diaCardapio->format('Y-m-d') === $hoje && $agora >= $fimPrazo)
-            ) {
-                $destino = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
-                $timeFormatted = str_replace(':', 'h', $limitTime);
+            if (Agendamento::foraPrazo($cardapio['data'])) {
+                $destino       = $this->input('redirect') === '/registro' ? '/registro' : '/painel';
+                $timeFormatted = str_replace(':', 'h', $_ENV['LIMIT_TIME'] ?? '10:00');
                 $this->flash("Cancelamento encerrado para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect($destino);
             }

@@ -1,9 +1,7 @@
 <?php
 $u       = $_SESSION['usuario'] ?? [];
 $urlAtual = strtok($_SERVER['REQUEST_URI'], '?');
-$navAtivo = function (string $href) use ($urlAtual): string {
-    return $urlAtual === $href ? ' class="active"' : '';
-};
+$navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' : '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -47,7 +45,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <span class="badge badge--tipo"><?= htmlspecialchars(($u['tipo'] ?? '') === 'comum' ? 'Colaborador' : ($u['tipo'] ?? '')) ?></span>
             <?php if (($u['tipo'] ?? '') === 'comum'): ?>
                 <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
-                    class="btn-logout" style="background:none;border:none;cursor:pointer;display:none;">Trocar senha</button>
+                    class="btn-logout" style="background:none;border:none;cursor:pointer;">Trocar senha</button>
             <?php endif; ?>
             <a href="/logout" class="btn-logout">Sair</a>
         </div>
@@ -55,11 +53,9 @@ $navAtivo = function (string $href) use ($urlAtual): string {
 
     <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
         <div class="alert-senha-padrao">
-            Agendamentos temporariamente desabilitados. Você pode visualizar o cardápio da semana normalmente.
-            <!--
             Você está usando a senha provisória. Recomendamos trocar para maior segurança.
             <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
-                class="btn-trocar-senha">Trocar agora</button> !-->
+                class="btn-trocar-senha">Trocar agora</button>
         </div>
     <?php endif; ?>
 
@@ -71,6 +67,7 @@ $navAtivo = function (string $href) use ($urlAtual): string {
             <?php unset($_SESSION['flash']); ?>
         <?php endif; ?>
 
+        <?php /** @var string $conteudo */ ?>
         <?= $conteudo ?>
     </main>
 

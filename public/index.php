@@ -93,8 +93,7 @@ function csrf_validate_or_fail(): void
     $tokenSessao = $_SESSION['_csrf_token'] ?? '';
 
     if (!is_string($tokenEnviado) || !is_string($tokenSessao) || !hash_equals($tokenSessao, $tokenEnviado)) {
-        http_response_code(403);
-        echo 'CSRF inválido.';
+        header('Location: /logout');
         exit;
     }
 }

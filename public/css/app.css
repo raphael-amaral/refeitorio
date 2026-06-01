@@ -430,6 +430,7 @@ body:has(.painel-dashboard) .container {
   font-size: 0.88rem;
   border-bottom: 1px solid #f1f5f9;
   color: #222;
+  overflow-wrap: break-word;
 }
 
 .tabela th {
@@ -656,8 +657,9 @@ body:has(.painel-dashboard) .container {
   grid-auto-rows: 1fr;
 }
 
+
 .painel-dashboard .card {
-  min-height: 170px;
+  min-height: 187px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -896,7 +898,7 @@ body:has(.painel-dashboard) .container {
   }
 
   .painel-dashboard .card {
-    min-height: 200px;
+    min-height: 220px;
   }
 
   .card__header strong {
@@ -1183,6 +1185,8 @@ body:has(.painel-dashboard) .container {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  .tabela th {
     white-space: nowrap;
   }
   .tabela th,

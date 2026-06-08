@@ -82,7 +82,8 @@ use App\Models\Usuario; ?>
 
                 <?php if (($totalPaginas ?? 1) > 1): ?>
                     <?php
-                    function urlPaginaUsuario(int $p, string $busca): string {
+                    function urlPaginaUsuario(int $p, string $busca): string
+                    {
                         $q = array_filter(['busca' => $busca, 'pagina' => $p], fn($v) => $v !== '' && $v !== 0);
                         return '/usuario' . ($q ? '?' . http_build_query($q) : '');
                     }
@@ -128,7 +129,7 @@ use App\Models\Usuario; ?>
                         <div class="form-group" id="campo-matricula">
                             <label for="matricula">Matrícula</label>
                             <input type="text" id="matricula" name="matricula" maxlength="12"
-                                placeholder="Ex: 00123">
+                                placeholder="Ex: 1234">
                         </div>
                         <div class="form-group">
                             <label for="nome">Nome</label>
@@ -171,23 +172,23 @@ use App\Models\Usuario; ?>
                 <!-- Formulário importação em lote -->
                 <div id="painel-lote" style="display:none;">
 
-                <?php
+                    <?php
                     $errosImport = array_merge(
                         $_SESSION['import_invalidas'] ?? [],
                         $_SESSION['import_duplicadas'] ?? []
                     );
                     unset($_SESSION['import_invalidas'], $_SESSION['import_duplicadas']);
-                ?>
-                <?php if (!empty($errosImport)): ?>
-                    <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-family:var(--font-cards);font-size:.83rem;color:#991b1b;">
-                        <strong>Problemas encontrados — corrija e tente novamente:</strong>
-                        <ul style="margin:6px 0 0 16px;line-height:1.8;">
-                            <?php foreach ($errosImport as $erro): ?>
-                                <li><?= htmlspecialchars($erro) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
+                    ?>
+                    <?php if (!empty($errosImport)): ?>
+                        <div style="background:#fee2e2;border:1px solid #fecaca;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-family:var(--font-cards);font-size:.83rem;color:#991b1b;">
+                            <strong>Problemas encontrados — corrija e tente novamente:</strong>
+                            <ul style="margin:6px 0 0 16px;line-height:1.8;">
+                                <?php foreach ($errosImport as $erro): ?>
+                                    <li><?= htmlspecialchars($erro) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
 
                     <div id="overlay-importando" style="display:none;text-align:center;padding:32px 0;">
                         <p style="font-family:var(--font-cards);font-size:.95rem;color:#555;margin-bottom:6px;">
@@ -198,7 +199,7 @@ use App\Models\Usuario; ?>
                         </p>
                     </div>
                     <form id="form-importar-lote" method="POST" action="/usuario/importar"
-                          class="form-usuario" enctype="multipart/form-data">
+                        class="form-usuario" enctype="multipart/form-data">
                         <?= csrf_field() ?>
                         <div class="form-group">
                             <label for="arquivo">Arquivo CSV</label>
@@ -240,23 +241,23 @@ use App\Models\Usuario; ?>
 
 <script>
     (function() {
-        var form      = document.getElementById('form-usuario');
-        var titulo    = document.getElementById('form-titulo');
-        var campoMat  = document.getElementById('campo-matricula');
-        var inputMat  = document.getElementById('matricula');
+        var form = document.getElementById('form-usuario');
+        var titulo = document.getElementById('form-titulo');
+        var campoMat = document.getElementById('campo-matricula');
+        var inputMat = document.getElementById('matricula');
         var inputNome = document.getElementById('nome');
-        var inputSenha          = document.getElementById('senha');
-        var campoConfirmar      = document.getElementById('campo-confirmar-senha');
-        var inputConfirmar      = document.getElementById('confirmar_senha');
-        var hintSenhaPadrao     = document.getElementById('hint-senha-padrao');
-        var hintSenhaEdicao     = document.getElementById('hint-senha-edicao');
+        var inputSenha = document.getElementById('senha');
+        var campoConfirmar = document.getElementById('campo-confirmar-senha');
+        var inputConfirmar = document.getElementById('confirmar_senha');
+        var hintSenhaPadrao = document.getElementById('hint-senha-padrao');
+        var hintSenhaEdicao = document.getElementById('hint-senha-edicao');
         var selectTipo = document.getElementById('tipo');
-        var btnSubmit  = document.getElementById('btn-submit');
-        var btnCancel  = document.getElementById('btn-cancelar-edicao');
+        var btnSubmit = document.getElementById('btn-submit');
+        var btnCancel = document.getElementById('btn-cancelar-edicao');
 
         // Exibe/oculta campo de confirmação conforme o usuário digita a senha
         var modoEdicao = false;
-        inputSenha.addEventListener('input', function () {
+        inputSenha.addEventListener('input', function() {
             var preenchida = inputSenha.value !== '';
             if (!modoEdicao) {
                 campoConfirmar.style.display = preenchida ? '' : 'none';
@@ -281,7 +282,7 @@ use App\Models\Usuario; ?>
         document.querySelectorAll('.btn-editar-u').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 modoEdicao = true;
-                var mat  = btn.dataset.matricula;
+                var mat = btn.dataset.matricula;
                 var nome = btn.dataset.nome;
                 var tipo = btn.dataset.tipo;
 
@@ -292,7 +293,7 @@ use App\Models\Usuario; ?>
                 hintSenhaPadrao.style.display = 'none';
                 hintSenhaEdicao.style.display = 'block';
 
-                inputNome.value  = nome;
+                inputNome.value = nome;
                 selectTipo.value = tipo;
                 inputSenha.value = '';
                 campoConfirmar.style.display = 'none';
@@ -324,21 +325,21 @@ use App\Models\Usuario; ?>
 
         // Alternância entre abas Individual / Lote
         var btnAbaUnico = document.getElementById('btn-aba-unico');
-        var btnAbaLote  = document.getElementById('btn-aba-lote');
+        var btnAbaLote = document.getElementById('btn-aba-lote');
         var painelUnico = document.getElementById('painel-unico');
-        var painelLote  = document.getElementById('painel-lote');
+        var painelLote = document.getElementById('painel-lote');
 
-        btnAbaUnico.addEventListener('click', function () {
+        btnAbaUnico.addEventListener('click', function() {
             painelUnico.style.display = '';
-            painelLote.style.display  = 'none';
+            painelLote.style.display = 'none';
             btnAbaUnico.classList.add('btn-aba--ativo');
             btnAbaLote.classList.remove('btn-aba--ativo');
             titulo.textContent = modoEdicao ? 'Editar usuário' : 'Novo usuário';
         });
 
-        btnAbaLote.addEventListener('click', function () {
+        btnAbaLote.addEventListener('click', function() {
             painelUnico.style.display = 'none';
-            painelLote.style.display  = '';
+            painelLote.style.display = '';
             btnAbaLote.classList.add('btn-aba--ativo');
             btnAbaUnico.classList.remove('btn-aba--ativo');
             titulo.textContent = 'Importar em lote';
@@ -347,7 +348,7 @@ use App\Models\Usuario; ?>
         // Abre aba de lote automaticamente se houver erros a exibir
         if (document.querySelector('#painel-lote [style*="fee2e2"]')) {
             painelUnico.style.display = 'none';
-            painelLote.style.display  = '';
+            painelLote.style.display = '';
             btnAbaLote.classList.add('btn-aba--ativo');
             btnAbaUnico.classList.remove('btn-aba--ativo');
             titulo.textContent = 'Importar em lote';
@@ -355,10 +356,10 @@ use App\Models\Usuario; ?>
 
         // Mostra nome do arquivo selecionado e limpa o textarea
         var inputArquivo = document.getElementById('arquivo');
-        var labelLista   = document.getElementById('label-lista-lote');
+        var labelLista = document.getElementById('label-lista-lote');
         var textareaLista = document.getElementById('lista');
 
-        inputArquivo.addEventListener('change', function () {
+        inputArquivo.addEventListener('change', function() {
             if (inputArquivo.files.length > 0) {
                 labelLista.textContent = 'ou cole a lista diretamente (arquivo selecionado será usado)';
                 textareaLista.placeholder = 'O arquivo CSV será usado. Você pode deixar isso em branco.';
@@ -369,26 +370,26 @@ use App\Models\Usuario; ?>
         });
 
         // Overlay de aguarde na importação em lote
-        var formLote    = document.getElementById('form-importar-lote');
+        var formLote = document.getElementById('form-importar-lote');
         var overlayLote = document.getElementById('overlay-importando');
         var btnImportar = document.getElementById('btn-importar');
 
-        formLote.addEventListener('submit', function () {
-            var temArquivo  = inputArquivo.files.length > 0;
-            var temTexto    = textareaLista.value.trim() !== '';
+        formLote.addEventListener('submit', function() {
+            var temArquivo = inputArquivo.files.length > 0;
+            var temTexto = textareaLista.value.trim() !== '';
             if (!temArquivo && !temTexto) return; // validação nativa cobre isso
-            formLote.style.display    = 'none';
+            formLote.style.display = 'none';
             overlayLote.style.display = 'block';
-            btnImportar.disabled      = true;
+            btnImportar.disabled = true;
         });
 
         // Submete o form de busca automaticamente após o usuário parar de digitar
         var inputBusca = document.querySelector('input[name="busca"]');
         if (inputBusca) {
             var debounceTimer;
-            inputBusca.addEventListener('input', function () {
+            inputBusca.addEventListener('input', function() {
                 clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(function () {
+                debounceTimer = setTimeout(function() {
                     inputBusca.closest('form').submit();
                 }, 800);
             });

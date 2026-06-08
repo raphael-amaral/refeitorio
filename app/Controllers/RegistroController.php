@@ -73,14 +73,14 @@ class RegistroController extends Controller
         }
 
         if ($idCardapio > 0 && isset($cardapio)) {
-            // Sábado e domingo não são agendáveis
-            if (Agendamento::fimDeSemana($cardapio['data'])) {
+            $podeAgendarFinalSemana = filter_var($_ENV['AGENDAMENTO_SABADO_DOMINGO'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+
+            if (!$podeAgendarFinalSemana && Agendamento::fimDeSemana($cardapio['data'])) {
                 Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fim_de_semana']);
                 $this->flash('Agendamentos não são permitidos para sábado ou domingo.', 'warning');
                 $this->redirect('/painel');
             }
 
-            // Prazo: até hora limite do dia do cardápio
             if (Agendamento::foraPrazo($cardapio['data'])) {
                 Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fora_prazo']);
                 $timeFormatted = str_replace(':', 'h', $_ENV['LIMIT_TIME'] ?? '10:00');

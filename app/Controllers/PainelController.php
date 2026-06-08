@@ -19,10 +19,11 @@ class PainelController extends Controller
         $diaNum  = (int) $hoje->format('N'); // 1=Seg … 7=Dom
         $segunda = (clone $hoje)->modify('-' . $diaNum - 1 . ' days');
 
-        $agora                 = new DateTime();
-        $hoje                  = $agora->format('Y-m-d');
-        $ehComum               = $usuario['tipo'] === 'comum';
-        $agendamentoHabilitado = filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN);
+        $agora                  = new DateTime();
+        $hoje                   = $agora->format('Y-m-d');
+        $ehComum                = $usuario['tipo'] === 'comum';
+        $agendamentoHabilitado  = filter_var($_ENV['AGENDAMENTO_HABILITADO']      ?? 'true',  FILTER_VALIDATE_BOOLEAN);
+        $agendaSabadoDomingo    = filter_var($_ENV['AGENDAMENTO_SABADO_DOMINGO']  ?? 'false', FILTER_VALIDATE_BOOLEAN);
 
         // Monta a estrutura dos 7 dias com slots para almoço e jantar
         $labels = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -31,8 +32,9 @@ class PainelController extends Controller
             $dia   = (clone $segunda)->modify("+{$i} days");
             $chave = $dia->format('Y-m-d');
 
-            // Pode agendar: agendamento habilitado + usuário comum + dia útil (seg–sex) + prazo não encerrado
-            $podeAgendarDia = $agendamentoHabilitado && $ehComum && $i < 5 && !Agendamento::foraPrazo($chave);
+            // Pode agendar: agendamento habilitado + usuário comum + dia permitido + prazo não encerrado
+            $diaPermitido   = $i < 5 || $agendaSabadoDomingo;
+            $podeAgendarDia = $agendamentoHabilitado && $ehComum && $diaPermitido && !Agendamento::foraPrazo($chave);
 
             $semana[$chave] = [
                 'label'        => $labels[$i],

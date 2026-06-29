@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Core\Security;
 use App\Models\Usuario;
@@ -72,6 +73,7 @@ class LoginController extends Controller
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
             $_SESSION['_last_activity'] = time();
 
+            Audit::write('auth.login', 'success', $matricula, ['tipo' => $usuario['tipo']]);
             $destino = $usuario['tipo'] === 'dp' ? '/questor' : '/painel';
             $this->redirect($destino);
         }
@@ -80,6 +82,7 @@ class LoginController extends Controller
         Security::registerFailure('web_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
         usleep(random_int(150000, 350000));
 
+        Audit::write('auth.login', 'failed', $matricula !== '' ? $matricula : null, ['motivo' => 'credenciais_invalidas']);
         $_SESSION['erro_login'] = 'Credenciais inválidas.';
         $this->redirect('/');
     }
@@ -89,6 +92,7 @@ class LoginController extends Controller
      */
     public function logout(): void
     {
+        Audit::write('auth.logout', 'success', $_SESSION['usuario']['matricula'] ?? null);
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {

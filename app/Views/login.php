@@ -11,6 +11,12 @@
 
 <body>
 
+    <?php if (($_ENV['APP_ENV'] ?? 'production') !== 'production'): ?>
+        <div style="position:fixed;top:0;left:0;right:0;z-index:1000;background:#f59e0b;color:#1c1917;text-align:center;font-size:.85rem;font-weight:600;padding:8px;letter-spacing:.05em;">
+            AMBIENTE DE TESTE — alterações aqui não afetam a produção
+        </div>
+    <?php endif; ?>
+
     <div class="login-wrapper">
 
         <!-- Cardápios do dia -->

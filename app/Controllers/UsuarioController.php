@@ -111,6 +111,7 @@ class UsuarioController extends Controller
         }
 
         if ($lista === '') {
+            Audit::write('usuario.importar', 'blocked', null, ['motivo' => 'lista_vazia', 'tipo' => $tipo]);
             $this->flash('Nenhum dado para importar.', 'error');
             $this->redirect('/usuario');
         }
@@ -150,6 +151,11 @@ class UsuarioController extends Controller
         }
 
         if ($invalidas) {
+            Audit::write('usuario.importar', 'blocked', null, [
+                'motivo'          => 'linhas_invalidas',
+                'tipo'            => $tipo,
+                'total_invalidas' => count($invalidas),
+            ]);
             $_SESSION['import_invalidas'] = $invalidas;
             $this->flash(count($invalidas) . ' problema(s) encontrado(s) no arquivo. Corrija e tente novamente.', 'error');
             $this->redirect('/usuario');
@@ -160,6 +166,11 @@ class UsuarioController extends Controller
         $duplicadas = Usuario::matriculasExistentes($matriculas);
 
         if (!empty($duplicadas)) {
+            Audit::write('usuario.importar', 'blocked', null, [
+                'motivo'           => 'matriculas_duplicadas',
+                'tipo'             => $tipo,
+                'total_duplicadas' => count($duplicadas),
+            ]);
             $_SESSION['import_duplicadas'] = $duplicadas;
             $this->flash(count($duplicadas) . ' matrícula(s) já cadastrada(s) no sistema. Corrija a lista e tente novamente.', 'error');
             $this->redirect('/usuario');
@@ -191,6 +202,7 @@ class UsuarioController extends Controller
         }
 
         $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
+        $usuarioAtual = Usuario::buscarPorMatricula($matricula);
 
         if (!$nome || !in_array($tipo, $tiposPermitidos, true)) {
             Audit::write('usuario.editar', 'blocked', $matricula, [
@@ -203,7 +215,10 @@ class UsuarioController extends Controller
 
         Usuario::atualizarUsuario($matricula, $nome, $tipo, $senha !== '' ? $senha : null);
         Audit::write('usuario.editar', 'success', $matricula, [
-            'tipo' => $tipo,
+            'nome_anterior'  => $usuarioAtual['nome'] ?? null,
+            'tipo_anterior'  => $usuarioAtual['tipo'] ?? null,
+            'nome_novo'      => $nome,
+            'tipo_novo'      => $tipo,
             'senha_alterada' => $senha !== '',
         ]);
         $this->flash('Usuário atualizado com sucesso.', 'success');
@@ -222,8 +237,9 @@ class UsuarioController extends Controller
             $this->redirect('/usuario');
         }
 
+        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
         Usuario::alterarAtivo($matricula, 0);
-        Audit::write('usuario.inativar', 'success', $matricula);
+        Audit::write('usuario.inativar', 'success', $matricula, ['nome' => $nomeAlvo]);
         $this->flash('Usuário inativado.', 'success');
         $this->redirect('/usuario');
     }
@@ -233,8 +249,9 @@ class UsuarioController extends Controller
      */
     public function ativar(string $matricula): void
     {
+        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
         Usuario::alterarAtivo($matricula, 1);
-        Audit::write('usuario.ativar', 'success', $matricula);
+        Audit::write('usuario.ativar', 'success', $matricula, ['nome' => $nomeAlvo]);
         $this->flash('Usuário reativado.', 'success');
         $this->redirect('/usuario');
     }
@@ -256,8 +273,9 @@ class UsuarioController extends Controller
             $this->redirect('/usuario');
         }
 
+        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
         Usuario::excluir($matricula);
-        Audit::write('usuario.excluir', 'success', $matricula);
+        Audit::write('usuario.excluir', 'success', $matricula, ['nome' => $nomeAlvo]);
         $this->flash('Usuário excluído com sucesso.', 'success');
         $this->redirect('/usuario');
     }

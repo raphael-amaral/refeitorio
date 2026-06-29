@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Registro;
 
@@ -66,6 +67,49 @@ class QuestorController extends Controller
         }
 
         fclose($out);
+
+        Audit::write('questor_export', 'success', null, [
+            'data_inicio'        => $dataInicio,
+            'data_fim'           => $dataFim,
+            'valor_refeicao'     => $valorRefeicao,
+            'total_funcionarios' => count($funcionarios),
+        ]);
+
+        $this->gerarBackup($dataInicio, $dataFim);
+
         exit;
+    }
+
+    private function gerarBackup(string $dataInicio, string $dataFim): void
+    {
+        $host     = $_ENV['DB_HOST']     ?? 'db';
+        $user     = $_ENV['DB_USERNAME'] ?? '';
+        $password = $_ENV['DB_PASSWORD'] ?? '';
+        $database = $_ENV['DB_DATABASE'] ?? '';
+
+        $dir = dirname(__DIR__, 2) . '/storage/backups/questor';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        $sufixo   = str_replace('-', '', $dataInicio) . '_' . str_replace('-', '', $dataFim);
+        $arquivo  = $dir . '/questor_' . $sufixo . '_' . date('His') . '.sql';
+
+        $cmd = sprintf(
+            'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
+            escapeshellarg($host),
+            escapeshellarg($user),
+            escapeshellarg($password),
+            escapeshellarg($database),
+            escapeshellarg($arquivo)
+        );
+
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            Audit::write('questor_backup', 'error', null, ['saida' => implode("\n", $output)]);
+        } else {
+            Audit::write('questor_backup', 'success', null, ['arquivo' => basename($arquivo)]);
+        }
     }
 }

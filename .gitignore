@@ -2,10 +2,7 @@
 *.xls
 *.csv
 
-#Scripts de backup e configuracao
-*.sh
-*.bat
-*.py
+storage/backups/
 
 # 1. Credenciais e Variáveis de Ambiente
 # Nunca suba senhas ou configurações específicas do servidor/máquina local

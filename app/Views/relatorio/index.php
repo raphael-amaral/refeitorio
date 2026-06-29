@@ -8,6 +8,11 @@
 /** @var string  $status */
 /** @var string  $matricula */
 
+$hoje            = new DateTime();
+$diasParaDomingo = (int) $hoje->format('w');
+$defaultInicio   = (clone $hoje)->modify("-{$diasParaDomingo} days")->format('Y-m-d');
+$defaultFim      = (clone $hoje)->modify('+' . (6 - $diasParaDomingo) . ' days')->format('Y-m-d');
+
 $labelStatus = [
     'agendado'  => 'Agendado',
     'cancelado' => 'Cancelado',
@@ -200,8 +205,8 @@ $anoFiltro = date('Y', strtotime($dataInicio));
 <div class="filtro-relatorio">
     <div class="tabs">
         <button type="button" class="tab-btn <?= $modo === 'dia' ? 'active' : '' ?>" data-target="tab-dia">Dia Específico</button>
-        <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <button type="button" class="tab-btn <?= $modo === 'periodo' ? 'active' : '' ?>" data-target="tab-periodo">Período</button>
+        <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
         <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" class="btn-gerar-pdf">🖨️ Gerar PDF</a>
     </div>
 
@@ -238,11 +243,11 @@ $anoFiltro = date('Y', strtotime($dataInicio));
         <div id="tab-periodo" class="tab-pane <?= $modo === 'periodo' ? 'active' : '' ?>">
             <div class="filtro-campo">
                 <label>De</label>
-                <input type="date" name="data_inicio" value="<?= $modo === 'periodo' ? $dataInicio : date('Y-m-01') ?>">
+                <input type="date" name="data_inicio" value="<?= $modo === 'periodo' ? $dataInicio : $defaultInicio ?>">
             </div>
             <div class="filtro-campo">
                 <label>Até</label>
-                <input type="date" name="data_fim" value="<?= $modo === 'periodo' ? $dataFim : date('Y-m-t') ?>">
+                <input type="date" name="data_fim" value="<?= $modo === 'periodo' ? $dataFim : $defaultFim ?>">
             </div>
         </div>
 

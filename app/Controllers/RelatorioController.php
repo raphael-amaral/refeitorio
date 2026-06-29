@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Registro;
 
@@ -27,6 +28,14 @@ class RelatorioController extends Controller
     {
         $dados = $this->prepararDadosRelatorio();
 
+        Audit::write('relatorio.pdf', 'success', null, [
+            'data_inicio'     => $dados['dataInicio'],
+            'data_fim'        => $dados['dataFim'],
+            'status'          => $dados['status'] !== '' ? $dados['status'] : null,
+            'matricula'       => $dados['matricula'] !== '' ? $dados['matricula'] : null,
+            'total_registros' => count($dados['registros']),
+        ]);
+
         // Renderiza sem layout base ($layout = null)
         $this->render('relatorio/pdf', [
             ...$dados,
@@ -50,10 +59,16 @@ class RelatorioController extends Controller
             $dataInicio = preg_match($reData, $dataDia) ? $dataDia : date('Y-m-d');
             $dataFim    = $dataInicio;
         } elseif ($modo === 'periodo') {
-            $di         = $_GET['data_inicio'] ?? '';
-            $df         = $_GET['data_fim']    ?? '';
-            $dataInicio = preg_match($reData, $di) ? $di : date('Y-m-01');
-            $dataFim    = preg_match($reData, $df) ? $df : date('Y-m-t');
+            $di   = $_GET['data_inicio'] ?? '';
+            $df   = $_GET['data_fim']    ?? '';
+
+            $hoje            = new \DateTime();
+            $diasParaDomingo = (int) $hoje->format('w'); // 0=Dom … 6=Sab
+            $domingo         = (clone $hoje)->modify("-{$diasParaDomingo} days");
+            $sabado          = (clone $domingo)->modify('+6 days');
+
+            $dataInicio = preg_match($reData, $di) ? $di : $domingo->format('Y-m-d');
+            $dataFim    = preg_match($reData, $df) ? $df : $sabado->format('Y-m-d');
         } else {
             $ano        = (int) ($_GET['ano'] ?? date('Y'));
             $mes        = (int) ($_GET['mes'] ?? date('m'));

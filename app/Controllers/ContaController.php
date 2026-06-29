@@ -39,7 +39,9 @@ class ContaController extends Controller
         Usuario::atualizarUsuario($matricula, $usuario['nome'], $usuario['tipo'], $novaSenha);
         $_SESSION['usuario']['senha_padrao'] = false;
 
-        Audit::write('conta.senha', 'success', $matricula);
+        Audit::write('conta.senha', 'success', $matricula, [
+            'era_senha_padrao' => !empty($_SESSION['usuario']['senha_padrao']),
+        ]);
         $this->flash('Senha alterada com sucesso.', 'success');
         $this->redirect('/painel');
     }

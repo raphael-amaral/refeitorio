@@ -51,6 +51,12 @@ $navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' 
         </div>
     </nav>
 
+    <?php if (($_ENV['APP_ENV'] ?? 'production') !== 'production'): ?>
+        <div style="background:#f59e0b;color:#1c1917;text-align:center;font-size:.85rem;font-weight:600;padding:8px;letter-spacing:.05em;">
+            AMBIENTE DE TESTE — alterações aqui não afetam a produção
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
         <div class="alert-senha-padrao">
             Você está usando a senha provisória. Recomendamos trocar para maior segurança.

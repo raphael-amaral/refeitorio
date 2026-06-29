@@ -132,6 +132,8 @@ class CardapioController extends Controller
             'descricao' => mb_strtoupper(trim($this->input('descricao') ?? '')),
         ];
 
+        $cardapioAtual = Cardapio::buscarPorId((int) $id);
+
         if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
             Audit::write('cardapio.atualizar', 'blocked', (string) $id, [
                 'motivo' => 'validacao',
@@ -144,8 +146,10 @@ class CardapioController extends Controller
 
         Cardapio::atualizar((int) $id, $dados);
         Audit::write('cardapio.atualizar', 'success', (string) $id, [
-            'data' => $dados['data'],
-            'tipo' => $dados['tipo'],
+            'descricao_anterior' => $cardapioAtual['descricao'] ?? null,
+            'data'               => $dados['data'],
+            'tipo'               => $dados['tipo'],
+            'descricao'          => $dados['descricao'],
         ]);
         $this->flash('Cardápio atualizado com sucesso.', 'success');
         $this->redirect('/cardapio');
@@ -158,6 +162,7 @@ class CardapioController extends Controller
     public function excluir(string $id): void
     {
         $idInt = (int) $id;
+        $cardapioAlvo = Cardapio::buscarPorId($idInt);
 
         if (\App\Models\Registro::contarPorCardapio($idInt) > 0) {
             Audit::write('cardapio.excluir', 'blocked', (string) $idInt, ['motivo' => 'possui_registros']);
@@ -167,7 +172,10 @@ class CardapioController extends Controller
 
         try {
             Cardapio::deletar($idInt);
-            Audit::write('cardapio.excluir', 'success', (string) $idInt);
+            Audit::write('cardapio.excluir', 'success', (string) $idInt, [
+                'data' => $cardapioAlvo['data'] ?? null,
+                'tipo' => $cardapioAlvo['tipo'] ?? null,
+            ]);
         } catch (\PDOException $e) {
             Audit::write('cardapio.excluir', 'error', (string) $idInt, ['erro' => $e->getCode()]);
             $this->flash('Erro ao excluir o cardápio. Verifique se há dados vinculados.', 'error');

@@ -49,6 +49,7 @@ class ScannerController extends Controller
             Security::clear('api_login_ip', $ipKey);
             Security::clear('api_login_user', $userKey);
 
+            Audit::write('scanner.login_app', 'success', $matriculaForm, ['nome' => $usuario['nome']]);
             $this->json([
                 'ok'    => true,
                 'nome'  => $usuario['nome'],
@@ -61,6 +62,7 @@ class ScannerController extends Controller
         Security::registerFailure('api_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
         usleep(random_int(150000, 350000));
 
+        Audit::write('scanner.login_app', 'failed', $matriculaForm !== '' ? $matriculaForm : null, ['motivo' => 'credenciais_invalidas']);
         $this->json(['ok' => false, 'erro' => 'Credenciais inválidas.'], 401);
     }
 
@@ -84,25 +86,33 @@ class ScannerController extends Controller
 
         // 1. Erro: Não agendou
         if (!$registro) {
+            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'sem_agendamento']);
             $this->json(['ok' => false, 'erro' => 'Nenhum agendamento encontrado para hoje.'], 404);
             return;
         }
 
         // 2. Erro: Já passou o crachá antes (já comeu)
-        // Verifique qual é o nome exato da coluna de status no seu banco de dados
         if (isset($registro['status']) && $registro['status'] === 'concluido') {
+            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'ja_concluido']);
             $this->json(['ok' => false, 'erro' => 'Refeição já registrada hoje.'], 400);
             return;
         }
 
-        // 3. Erro: Agendamento cancelado (se o seu sistema tiver essa opção)
+        // 3. Erro: Agendamento cancelado
         if (isset($registro['status']) && $registro['status'] === 'cancelado') {
+            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'agendamento_cancelado']);
             $this->json(['ok' => false, 'erro' => 'Agendamento está cancelado.'], 400);
             return;
         }
 
         // Se passou por tudo, conclui a refeição
         Registro::concluir((int) $registro['id']);
+
+        Audit::write('scanner.processar', 'success', $matricula, [
+            'nome'         => $registro['nome_usuario'],
+            'tipo_refeicao' => $registro['tipo_refeicao'],
+            'id_registro'  => $registro['id'],
+        ]);
 
         $this->json([
             'ok'       => true,
@@ -121,39 +131,46 @@ class ScannerController extends Controller
         $senha     = trim($_POST['senha']     ?? '');
 
         if ($matricula === '' || $senha === '') {
+            Audit::write('scanner.excecao', 'blocked', $matricula !== '' ? $matricula : null, ['motivo' => 'campos_vazios']);
             $this->json(['ok' => false, 'erro' => 'Matrícula e senha são obrigatórias.'], 422);
             return;
         }
 
         $limiteHora = $_ENV['EXCECAO_LIMIT_TIME'] ?? '13:30';
         if (date('H:i') > $limiteHora) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'fora_do_horario', 'limite' => $limiteHora]);
             $this->json(['ok' => false, 'erro' => "Exceções encerradas após {$limiteHora}."], 422);
             return;
         }
 
         $usuario = Usuario::buscarPorMatricula($matricula);
         if (!$usuario) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'usuario_nao_encontrado']);
             $this->json(['ok' => false, 'erro' => 'Funcionário não encontrado.'], 404);
             return;
         }
 
         if (!password_verify($senha, $usuario['senha'])) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'credenciais_invalidas']);
             $this->json(['ok' => false, 'erro' => 'Credenciais inválidas.'], 401);
             return;
         }
 
         if ($usuario['tipo'] !== 'comum') {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'tipo_nao_permitido', 'tipo' => $usuario['tipo']]);
             $this->json(['ok' => false, 'erro' => 'Exceção disponível apenas para funcionários comuns.'], 403);
             return;
         }
 
         $cardapio = Cardapio::almocoDaData(date('Y-m-d'));
         if (!$cardapio) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'sem_cardapio_hoje']);
             $this->json(['ok' => false, 'erro' => 'Nenhum cardápio de almoço cadastrado para hoje.'], 404);
             return;
         }
 
         if (Registro::jaConcluidoPorCardapio($matricula, (int) $cardapio['id'])) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'ja_concluido', 'id_cardapio' => $cardapio['id']]);
             $this->json(['ok' => false, 'erro' => 'Refeição já registrada hoje.'], 400);
             return;
         }

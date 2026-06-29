@@ -9,6 +9,9 @@ RUN sed -i 's/ServerTokens OS/ServerTokens Prod/' /etc/apache2/conf-available/se
 
 RUN echo "session.cookie_httponly = 1" >> /usr/local/etc/php/conf.d/security.ini
 
+# Instala cliente MySQL (necessário para mysqldump no backup questor)
+RUN apt-get update && apt-get install -y --no-install-recommends default-mysql-client && rm -rf /var/lib/apt/lists/*
+
 # Instala as extensões do banco de dados
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 

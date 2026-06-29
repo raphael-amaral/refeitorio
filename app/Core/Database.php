@@ -12,6 +12,18 @@ class Database
     private function __construct() {}
     private function __clone() {}
 
+    /** Injeta uma conexão PDO para uso nos testes (SQLite in-memory). */
+    public static function setTestConnection(PDO $pdo): void
+    {
+        self::$instance = $pdo;
+    }
+
+    /** Remove a conexão injetada, forçando reconexão na próxima chamada. */
+    public static function reset(): void
+    {
+        self::$instance = null;
+    }
+
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {

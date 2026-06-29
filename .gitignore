@@ -27,6 +27,9 @@ composer.phar
 /mysql/
 /data/
 
+# PHPUnit
+.phpunit.result.cache
+
 # 4. Logs e Arquivos Temporários do Sistema
 # Evita o envio de logs de erro que mudam constantemente.
 *.log

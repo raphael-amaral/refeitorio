@@ -1,8 +1,10 @@
+name: refeitorio-teste
+
 services:
   web:
     build: .
     ports:
-      - "8101:80" # Acesso no navegador: porta 8101. O Docker direciona para a 80 do Apache.
+      - "${WEB_PORT}:80"
     volumes:
       - .:/var/www/html
     env_file:
@@ -28,7 +30,7 @@ services:
   db:
     image: mysql:8.0
     ports:
-      - "3101:3306"
+      - "${DB_PORT_EXTERNAL}:3306"
     env_file:
       - .env
     restart: unless-stopped

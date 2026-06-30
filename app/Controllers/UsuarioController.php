@@ -70,7 +70,7 @@ class UsuarioController extends Controller
 
         try {
             Usuario::novoUsuario($matricula, $nome, $senha, $tipo);
-            Audit::write('usuario.criar', 'success', $matricula, ['tipo' => $tipo]);
+            Audit::write('usuario.criar', 'success', $matricula, ['nome' => $nome, 'tipo' => $tipo]);
             $this->flash("Usuário {$nome} criado com sucesso.", 'success');
         } catch (\PDOException $e) {
             Audit::write('usuario.criar', 'error', $matricula, [
@@ -180,7 +180,7 @@ class UsuarioController extends Controller
         foreach ($entradas as $entrada) {
             // Custo 8 (vs padrão 10) para viabilizar importação em lote sem travar o servidor
             Usuario::novoUsuario($entrada['matricula'], $entrada['nome'], 'stcasa' . $entrada['matricula'], $tipo, 8);
-            Audit::write('usuario.criar', 'success', $entrada['matricula'], ['tipo' => $tipo, 'lote' => true]);
+            Audit::write('usuario.criar', 'success', $entrada['matricula'], ['nome' => $entrada['nome'], 'tipo' => $tipo, 'lote' => true]);
             $criados++;
         }
 

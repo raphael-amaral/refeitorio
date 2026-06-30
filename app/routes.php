@@ -25,13 +25,7 @@ $router->post('/conta/senha', 'App\Controllers\ContaController', 'alterarSenha',
 // Cardápios
 // Rotas estáticas ANTES das dinâmicas para evitar conflito de padrão regex
 // ---------------------------------------------------------------------------
-$router->get('/cardapio',               'App\Controllers\CardapioController', 'index',    ['App\Middleware\Auth@snd']);
-$router->post('/cardapio',              'App\Controllers\CardapioController', 'criar',    ['App\Middleware\Auth@dev']);
-$router->get('/cardapio/{id}/editar',   'App\Controllers\CardapioController', 'editar',   ['App\Middleware\Auth@dev']);
-$router->post('/cardapio/{id}',         'App\Controllers\CardapioController', 'atualizar', ['App\Middleware\Auth@dev']);
-$router->post('/cardapio/{id}/excluir', 'App\Controllers\CardapioController', 'excluir',  ['App\Middleware\Auth@dev']);
-
-// Edição de cardápio por dia/tipo — painel da SND
+$router->get('/cardapio',                'App\Controllers\CardapioController', 'index',    ['App\Middleware\Auth@snd']);
 $router->post('/cardapio/{data}/{tipo}', 'App\Controllers\CardapioController', 'salvarDia', ['App\Middleware\Auth@snd']);
 
 // ---------------------------------------------------------------------------

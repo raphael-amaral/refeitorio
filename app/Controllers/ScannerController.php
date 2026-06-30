@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Core\Audit;
 use App\Core\Controller;
 use App\Core\Security;
-use App\Models\Cardapio;
 use App\Models\Registro;
 use App\Models\Usuario;
 
@@ -93,14 +92,14 @@ class ScannerController extends Controller
 
         // 2. Erro: Já passou o crachá antes (já comeu)
         if (isset($registro['status']) && $registro['status'] === 'concluido') {
-            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'ja_concluido']);
+            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'ja_concluido', 'nome_usuario' => $registro['nome_usuario'], 'id_registro' => $registro['id'], 'id_cardapio' => $registro['id_cardapio'], 'tipo_refeicao' => $registro['tipo_refeicao']]);
             $this->json(['ok' => false, 'erro' => 'Refeição já registrada hoje.'], 400);
             return;
         }
 
         // 3. Erro: Agendamento cancelado
         if (isset($registro['status']) && $registro['status'] === 'cancelado') {
-            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'agendamento_cancelado']);
+            Audit::write('scanner.processar', 'blocked', $matricula, ['motivo' => 'agendamento_cancelado', 'nome_usuario' => $registro['nome_usuario'], 'id_registro' => $registro['id'], 'id_cardapio' => $registro['id_cardapio'], 'tipo_refeicao' => $registro['tipo_refeicao']]);
             $this->json(['ok' => false, 'erro' => 'Agendamento está cancelado.'], 400);
             return;
         }
@@ -109,9 +108,11 @@ class ScannerController extends Controller
         Registro::concluir((int) $registro['id']);
 
         Audit::write('scanner.processar', 'success', $matricula, [
-            'nome'         => $registro['nome_usuario'],
+            'nome_usuario'  => $registro['nome_usuario'],
+            'id_registro'   => $registro['id'],
+            'id_cardapio'   => $registro['id_cardapio'],
+            'data_cardapio' => date('Y-m-d'),
             'tipo_refeicao' => $registro['tipo_refeicao'],
-            'id_registro'  => $registro['id'],
         ]);
 
         $this->json([
@@ -122,8 +123,8 @@ class ScannerController extends Controller
     }
 
     /**
-     * Registra uma exceção para um funcionário sem agendamento (POST /scanner/excecao).
-     * Vincula sempre ao almoço do dia. Bloqueado após EXCECAO_LIMIT_TIME (padrão 13:30).
+     * Confirma a refeição de um funcionário via matrícula+senha (POST /scanner/excecao).
+     * Idêntico ao fluxo do crachá, com autenticação por senha no lugar do scanner.
      */
     public function excecao(): void
     {
@@ -136,57 +137,48 @@ class ScannerController extends Controller
             return;
         }
 
-        $limiteHora = $_ENV['EXCECAO_LIMIT_TIME'] ?? '13:30';
-        if (date('H:i') > $limiteHora) {
-            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'fora_do_horario', 'limite' => $limiteHora]);
-            $this->json(['ok' => false, 'erro' => "Exceções encerradas após {$limiteHora}."], 422);
-            return;
-        }
-
         $usuario = Usuario::buscarPorMatricula($matricula);
-        if (!$usuario) {
-            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'usuario_nao_encontrado']);
-            $this->json(['ok' => false, 'erro' => 'Funcionário não encontrado.'], 404);
-            return;
-        }
 
-        if (!password_verify($senha, $usuario['senha'])) {
+        if (!$usuario || !password_verify($senha, $usuario['senha'])) {
             Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'credenciais_invalidas']);
             $this->json(['ok' => false, 'erro' => 'Credenciais inválidas.'], 401);
             return;
         }
 
-        if ($usuario['tipo'] !== 'comum') {
-            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'tipo_nao_permitido', 'tipo' => $usuario['tipo']]);
-            $this->json(['ok' => false, 'erro' => 'Exceção disponível apenas para funcionários comuns.'], 403);
+        $registro = Registro::buscarParaScannerHoje($matricula);
+
+        if (!$registro) {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'sem_agendamento']);
+            $this->json(['ok' => false, 'erro' => 'Nenhum agendamento encontrado para hoje.'], 404);
             return;
         }
 
-        $cardapio = Cardapio::almocoDaData(date('Y-m-d'));
-        if (!$cardapio) {
-            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'sem_cardapio_hoje']);
-            $this->json(['ok' => false, 'erro' => 'Nenhum cardápio de almoço cadastrado para hoje.'], 404);
-            return;
-        }
-
-        if (Registro::jaConcluidoPorCardapio($matricula, (int) $cardapio['id'])) {
-            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'ja_concluido', 'id_cardapio' => $cardapio['id']]);
+        if (isset($registro['status']) && $registro['status'] === 'concluido') {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'ja_concluido', 'nome_usuario' => $registro['nome_usuario'], 'id_registro' => $registro['id'], 'id_cardapio' => $registro['id_cardapio'], 'tipo_refeicao' => $registro['tipo_refeicao']]);
             $this->json(['ok' => false, 'erro' => 'Refeição já registrada hoje.'], 400);
             return;
         }
 
-        Registro::concluirExcecao($matricula, (int) $cardapio['id']);
+        if (isset($registro['status']) && $registro['status'] === 'cancelado') {
+            Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'agendamento_cancelado', 'nome_usuario' => $registro['nome_usuario'], 'id_registro' => $registro['id'], 'id_cardapio' => $registro['id_cardapio'], 'tipo_refeicao' => $registro['tipo_refeicao']]);
+            $this->json(['ok' => false, 'erro' => 'Agendamento está cancelado.'], 400);
+            return;
+        }
 
-        Audit::write('scanner.excecao', 'success', null, [
-            'matricula_funcionario' => $matricula,
-            'nome_funcionario'      => $usuario['nome'],
-            'id_cardapio'           => $cardapio['id'],
+        Registro::concluir((int) $registro['id']);
+
+        Audit::write('scanner.excecao', 'success', $matricula, [
+            'nome_usuario'  => $registro['nome_usuario'],
+            'id_registro'   => $registro['id'],
+            'id_cardapio'   => $registro['id_cardapio'],
+            'data_cardapio' => date('Y-m-d'),
+            'tipo_refeicao' => $registro['tipo_refeicao'],
         ]);
 
         $this->json([
             'ok'      => true,
-            'nome'    => $usuario['nome'],
-            'refeicao' => 'Almoço',
+            'nome'    => $registro['nome_usuario'],
+            'refeicao' => $registro['tipo_refeicao'] === 'almoco' ? 'Almoço' : 'Jantar',
         ]);
     }
 

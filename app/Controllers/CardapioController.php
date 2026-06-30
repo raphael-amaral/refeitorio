@@ -8,12 +8,8 @@ use App\Models\Cardapio;
 
 class CardapioController extends Controller
 {
-    /**
-     * Lista cardápios (usuário comum vê apenas os próximos; admin/SND vê todos com filtro por data).
-     */
     public function index(): void
     {
-        $tipo      = $_SESSION['usuario']['tipo'];
         $porPagina = 14;
         $pagina    = max(1, (int) ($_GET['pagina'] ?? 1));
 
@@ -24,46 +20,35 @@ class CardapioController extends Controller
         $inicioOk = $dataInicio !== '' && preg_match($reData, $dataInicio);
         $fimOk    = $dataFim    !== '' && preg_match($reData, $dataFim);
 
-        if (in_array($tipo, ['snd', 'dev'], true)) {
-            $filtroExplicito = isset($_GET['data_inicio']) || isset($_GET['data_fim']);
+        $filtroExplicito = isset($_GET['data_inicio']) || isset($_GET['data_fim']);
 
-            if ($inicioOk && $fimOk && $dataInicio <= $dataFim) {
-                $qInicio = $dataInicio;
-                $qFim    = $dataFim;
-            } elseif ($inicioOk && !$fimOk) {
-                $qInicio = $dataInicio;
-                $qFim    = '9999-12-31';
-                $dataFim = '';
-            } elseif (!$inicioOk && $fimOk) {
-                $qInicio    = '0001-01-01';
-                $qFim       = $dataFim;
-                $dataInicio = '';
-            } else {
-                $dataInicio      = date('Y-m-01');
-                $dataFim         = date('Y-m-t');
-                $qInicio         = $dataInicio;
-                $qFim            = $dataFim;
-                $filtroExplicito = false;
-            }
-
-            $total        = Cardapio::contarPorPeriodo($qInicio, $qFim);
-            $totalPaginas = max(1, (int) ceil($total / $porPagina));
-            $pagina       = min($pagina, $totalPaginas);
-            $offset       = ($pagina - 1) * $porPagina;
-            $cardapios    = Cardapio::buscarPorPeriodoPaginado($qInicio, $qFim, $offset, $porPagina);
+        if ($inicioOk && $fimOk && $dataInicio <= $dataFim) {
+            $qInicio = $dataInicio;
+            $qFim    = $dataFim;
+        } elseif ($inicioOk && !$fimOk) {
+            $qInicio = $dataInicio;
+            $qFim    = '9999-12-31';
+            $dataFim = '';
+        } elseif (!$inicioOk && $fimOk) {
+            $qInicio    = '0001-01-01';
+            $qFim       = $dataFim;
+            $dataInicio = '';
         } else {
-            $cardapios       = Cardapio::proximosDias(14);
-            $dataInicio      = '';
-            $dataFim         = '';
+            $dataInicio      = date('Y-m-01');
+            $dataFim         = date('Y-m-t');
+            $qInicio         = $dataInicio;
+            $qFim            = $dataFim;
             $filtroExplicito = false;
-            $total           = count($cardapios);
-            $totalPaginas    = 1;
-            $pagina          = 1;
         }
+
+        $total        = Cardapio::contarPorPeriodo($qInicio, $qFim);
+        $totalPaginas = max(1, (int) ceil($total / $porPagina));
+        $pagina       = min($pagina, $totalPaginas);
+        $offset       = ($pagina - 1) * $porPagina;
 
         $this->render('cardapio/index', [
             'titulo'          => 'Cardápios',
-            'cardapios'       => $cardapios,
+            'cardapios'       => Cardapio::buscarPorPeriodoPaginado($qInicio, $qFim, $offset, $porPagina),
             'dataInicio'      => $dataInicio,
             'dataFim'         => $dataFim,
             'filtroExplicito' => $filtroExplicito,
@@ -72,116 +57,6 @@ class CardapioController extends Controller
             'total'           => $total,
             'porPagina'       => $porPagina,
         ]);
-    }
-
-    /**
-     * Processa o formulário de criação (admin/dev).
-     */
-    public function criar(): void
-    {
-        $dados = [
-            'data'      => $this->input('data'),
-            'tipo'      => $this->input('tipo'),
-            'descricao' => mb_strtoupper(trim($this->input('descricao') ?? '')),
-        ];
-
-        if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
-            Audit::write('cardapio.criar', 'blocked', null, [
-                'motivo' => 'validacao',
-                'data' => $dados['data'],
-                'tipo' => $dados['tipo'],
-            ]);
-            $this->flash('Preencha todos os campos corretamente.', 'error');
-            $this->redirect('/cardapio');
-        }
-
-        Cardapio::criar($dados);
-        Audit::write('cardapio.criar', 'success', null, [
-            'data' => $dados['data'],
-            'tipo' => $dados['tipo'],
-        ]);
-        $this->flash('Cardápio criado com sucesso.', 'success');
-        $this->redirect('/cardapio');
-    }
-
-    /**
-     * Exibe o formulário de edição (admin/dev).
-     */
-    public function editar(string $id): void
-    {
-        $cardapio = Cardapio::buscarPorId((int) $id);
-
-        if (!$cardapio) {
-            $this->redirect('/cardapio');
-        }
-
-        $this->render('cardapio/form', [
-            'titulo'   => 'Editar Cardápio',
-            'cardapio' => $cardapio,
-        ]);
-    }
-
-    /**
-     * Processa o formulário de edição (admin/dev).
-     */
-    public function atualizar(string $id): void
-    {
-        $dados = [
-            'data'      => $this->input('data'),
-            'tipo'      => $this->input('tipo'),
-            'descricao' => mb_strtoupper(trim($this->input('descricao') ?? '')),
-        ];
-
-        $cardapioAtual = Cardapio::buscarPorId((int) $id);
-
-        if (!$dados['data'] || !in_array($dados['tipo'], ['almoco', 'jantar'], true) || $dados['descricao'] === '') {
-            Audit::write('cardapio.atualizar', 'blocked', (string) $id, [
-                'motivo' => 'validacao',
-                'data' => $dados['data'],
-                'tipo' => $dados['tipo'],
-            ]);
-            $this->flash('Preencha todos os campos corretamente.', 'error');
-            $this->redirect('/cardapio');
-        }
-
-        Cardapio::atualizar((int) $id, $dados);
-        Audit::write('cardapio.atualizar', 'success', (string) $id, [
-            'descricao_anterior' => $cardapioAtual['descricao'] ?? null,
-            'data'               => $dados['data'],
-            'tipo'               => $dados['tipo'],
-            'descricao'          => $dados['descricao'],
-        ]);
-        $this->flash('Cardápio atualizado com sucesso.', 'success');
-        $this->redirect('/cardapio');
-    }
-
-    /**
-     * Remove um cardápio (admin/dev).
-     * Bloqueia se houver agendamentos vinculados (integridade referencial).
-     */
-    public function excluir(string $id): void
-    {
-        $idInt = (int) $id;
-        $cardapioAlvo = Cardapio::buscarPorId($idInt);
-
-        if (\App\Models\Registro::contarPorCardapio($idInt) > 0) {
-            Audit::write('cardapio.excluir', 'blocked', (string) $idInt, ['motivo' => 'possui_registros']);
-            $this->flash('Não é possível excluir: este cardápio possui agendamentos vinculados.', 'error');
-            $this->redirect('/cardapio');
-        }
-
-        try {
-            Cardapio::deletar($idInt);
-            Audit::write('cardapio.excluir', 'success', (string) $idInt, [
-                'data' => $cardapioAlvo['data'] ?? null,
-                'tipo' => $cardapioAlvo['tipo'] ?? null,
-            ]);
-        } catch (\PDOException $e) {
-            Audit::write('cardapio.excluir', 'error', (string) $idInt, ['erro' => $e->getCode()]);
-            $this->flash('Erro ao excluir o cardápio. Verifique se há dados vinculados.', 'error');
-        }
-
-        $this->redirect('/cardapio');
     }
 
     /**

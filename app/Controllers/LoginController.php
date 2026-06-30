@@ -73,7 +73,7 @@ class LoginController extends Controller
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
             $_SESSION['_last_activity'] = time();
 
-            Audit::write('auth.login', 'success', $matricula, ['tipo' => $usuario['tipo']]);
+            Audit::write('auth.login', 'success', $matricula, ['nome' => $usuario['nome'], 'tipo' => $usuario['tipo']]);
             $destino = $usuario['tipo'] === 'dp' ? '/questor' : '/painel';
             $this->redirect($destino);
         }
@@ -92,7 +92,7 @@ class LoginController extends Controller
      */
     public function logout(): void
     {
-        Audit::write('auth.logout', 'success', $_SESSION['usuario']['matricula'] ?? null);
+        Audit::write('auth.logout', 'success', $_SESSION['usuario']['matricula'] ?? null, ['nome' => $_SESSION['usuario']['nome'] ?? null]);
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {

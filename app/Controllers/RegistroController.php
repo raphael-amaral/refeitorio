@@ -7,6 +7,7 @@ use App\Core\Audit;
 use App\Core\Controller;
 use App\Models\Cardapio;
 use App\Models\Registro;
+use App\Models\Usuario;
 
 class RegistroController extends Controller
 {
@@ -52,14 +53,14 @@ class RegistroController extends Controller
         $idCardapio = (int) ($_POST['id_cardapio'] ?? 0);
 
         if (!filter_var($_ENV['AGENDAMENTO_HABILITADO'] ?? 'true', FILTER_VALIDATE_BOOLEAN)) {
-            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'agendamento_desabilitado']);
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'agendamento_desabilitado', 'matricula_usuario' => $usuario['matricula']]);
             $this->flash('Agendamentos estão desabilitados no momento.', 'warning');
             $this->redirect('/painel');
         }
 
         // Apenas usuários comuns podem agendar
         if ($usuario['tipo'] !== 'comum') {
-            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'tipo_nao_permitido']);
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'tipo_nao_permitido', 'matricula_usuario' => $usuario['matricula']]);
             $this->redirect('/painel');
         }
 
@@ -67,7 +68,7 @@ class RegistroController extends Controller
         if ($idCardapio > 0) {
             $cardapio = Cardapio::buscarPorId($idCardapio);
             if ($cardapio && $cardapio['tipo'] === 'jantar') {
-                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'jantar_nao_agendavel']);
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'jantar_nao_agendavel', 'matricula_usuario' => $usuario['matricula'], 'data_cardapio' => $cardapio['data']]);
                 $this->redirect('/painel');
             }
         }
@@ -76,13 +77,13 @@ class RegistroController extends Controller
             $podeAgendarFinalSemana = filter_var($_ENV['AGENDAMENTO_SABADO_DOMINGO'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
 
             if (!$podeAgendarFinalSemana && Agendamento::fimDeSemana($cardapio['data'])) {
-                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fim_de_semana']);
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fim_de_semana', 'matricula_usuario' => $usuario['matricula'], 'data_cardapio' => $cardapio['data']]);
                 $this->flash('Agendamentos não são permitidos para sábado ou domingo.', 'warning');
                 $this->redirect('/painel');
             }
 
             if (Agendamento::foraPrazo($cardapio['data'])) {
-                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fora_prazo']);
+                Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'fora_prazo', 'matricula_usuario' => $usuario['matricula'], 'data_cardapio' => $cardapio['data']]);
                 $timeFormatted = str_replace(':', 'h', $_ENV['LIMIT_TIME'] ?? '10:00');
                 $this->flash("Agendamentos encerrados para este dia. Prazo: até {$timeFormatted}.", 'warning');
                 $this->redirect('/painel');
@@ -93,11 +94,12 @@ class RegistroController extends Controller
             Registro::upsertAgendado($usuario['matricula'], $idCardapio);
             Audit::write('registro.criar', 'success', (string) $idCardapio, [
                 'matricula_usuario' => $usuario['matricula'],
+                'nome_usuario'      => $usuario['nome'],
                 'data_cardapio'     => $cardapio['data'] ?? null,
                 'tipo_refeicao'     => $cardapio['tipo'] ?? null,
             ]);
         } else {
-            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'ja_agendado_ou_invalido']);
+            Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'ja_agendado_ou_invalido', 'matricula_usuario' => $usuario['matricula']]);
         }
 
         $this->redirect('/painel');
@@ -132,6 +134,8 @@ class RegistroController extends Controller
         $cancelado = Registro::cancelarDoUsuario((int) $id, $usuario['matricula']);
         Audit::write('registro.cancelar', $cancelado ? 'success' : 'blocked', (string) $id, [
             'matricula_usuario' => $usuario['matricula'],
+            'nome_usuario'      => $usuario['nome'],
+            'id_cardapio'       => $registro['id_cardapio'] ?? null,
             'data_cardapio'     => $cardapio['data'] ?? null,
             'tipo_refeicao'     => $cardapio['tipo'] ?? null,
         ]);
@@ -148,9 +152,12 @@ class RegistroController extends Controller
         $registro = Registro::buscarPorId((int) $id);
         $cardapio = $registro ? Cardapio::buscarPorId($registro['id_cardapio']) : null;
 
+        $nomeUsuario = $registro ? (Usuario::buscarPorMatricula($registro['matricula_usuario'])['nome'] ?? null) : null;
         $ok = Registro::concluir((int) $id);
         Audit::write('registro.concluir', $ok ? 'success' : 'error', (string) $id, [
             'matricula_usuario' => $registro['matricula_usuario'] ?? null,
+            'nome_usuario'      => $nomeUsuario,
+            'id_cardapio'       => $registro['id_cardapio'] ?? null,
             'data_cardapio'     => $cardapio['data'] ?? null,
             'tipo_refeicao'     => $cardapio['tipo'] ?? null,
         ]);

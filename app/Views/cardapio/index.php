@@ -1,13 +1,3 @@
-<?php
-$isAdminDev  = $_SESSION['usuario']['tipo'] === 'dev'; // criar novo cardápio — só dev
-$isSND      = in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true);
-
-// Intervalo editável: hoje até próximo domingo
-$hojeStr   = date('Y-m-d');
-$diaNum    = (int) date('N'); // 1=Seg…7=Dom
-$domingoStr = date('Y-m-d', strtotime('+' . (7 - $diaNum) . ' days'));
-?>
-
 <style>
     .filtro-cardapio {
         background: #fff;

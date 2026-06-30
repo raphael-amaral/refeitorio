@@ -1,4 +1,4 @@
-name: refeitorio-teste
+name: ${COMPOSE_PROJECT_NAME:-refeitorio}
 
 services:
   web:

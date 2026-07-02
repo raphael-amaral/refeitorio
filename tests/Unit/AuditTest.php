@@ -128,16 +128,20 @@ class AuditTest extends TestCase
     {
         unset($_ENV['AUDIT_LOG_PATH']);
 
-        // Redireciona para confirmar que o caminho padrão segue o padrão audit-YYYY-MM.log
-        $esperado = dirname(__DIR__, 2) . '/storage/logs/audit-' . date('Y-m') . '.log';
+        // Confirma que o caminho padrão segue o padrão audit-YYYY-MM.log — sem destruir
+        // conteúdo real que já exista nesse arquivo (é o log de produção/uso real).
+        $esperado          = dirname(__DIR__, 2) . '/storage/logs/audit-' . date('Y-m') . '.log';
+        $conteudoOriginal  = is_file($esperado) ? file_get_contents($esperado) : null;
 
-        Audit::write('teste.padrao', 'ok');
-
-        $this->assertFileExists($esperado);
-
-        // Limpa o arquivo criado pelo teste
-        if (is_file($esperado)) {
-            @unlink($esperado);
+        try {
+            Audit::write('teste.padrao', 'ok');
+            $this->assertFileExists($esperado);
+        } finally {
+            if ($conteudoOriginal === null) {
+                @unlink($esperado);
+            } else {
+                file_put_contents($esperado, $conteudoOriginal);
+            }
         }
     }
 }

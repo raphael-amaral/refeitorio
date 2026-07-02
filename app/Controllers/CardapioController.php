@@ -2,9 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Core\Audit;
 use App\Core\Controller;
+use App\Exceptions\DataOuTipoInvalidoException;
+use App\Exceptions\DescricaoVaziaException;
 use App\Models\Cardapio;
+use App\Services\CardapioService;
 
 class CardapioController extends Controller
 {
@@ -64,47 +66,17 @@ class CardapioController extends Controller
      */
     public function salvarDia(string $data, string $tipo): void
     {
-        if (!in_array($tipo, ['almoco', 'jantar'], true) || !$this->dataNaSemanaAtual($data)) {
-            Audit::write('cardapio.salvar_dia', 'blocked', $data . ':' . $tipo, ['motivo' => 'fora_intervalo_ou_tipo']);
-            $this->redirect('/painel');
-        }
-
         $destino = $this->input('redirect') === '/cardapio' ? '/cardapio' : '/painel';
 
-        $descricao = mb_strtoupper(trim($this->input('descricao') ?? ''));
-
-        if ($descricao === '') {
-            Audit::write('cardapio.salvar_dia', 'blocked', $data . ':' . $tipo, ['motivo' => 'descricao_vazia']);
-            $_SESSION['flash'] = ['tipo' => 'error', 'mensagem' => 'A descrição do cardápio não pode ser vazia.'];
+        try {
+            CardapioService::salvarDia($data, $tipo, $this->input('descricao'));
+        } catch (DataOuTipoInvalidoException) {
+            $this->redirect('/painel');
+        } catch (DescricaoVaziaException) {
+            $this->flash('A descrição do cardápio não pode ser vazia.', 'error');
             $this->redirect('/painel');
         }
 
-        Cardapio::salvarDia($data, $tipo, $descricao);
-        Audit::write('cardapio.salvar_dia', 'success', $data . ':' . $tipo, [
-            'descricao' => $descricao,
-        ]);
         $this->redirect($destino);
-    }
-
-    /**
-     * Verifica se $data (Y-m-d) está no intervalo editável: segunda-feira até o domingo da semana atual.
-     */
-    private function dataNaSemanaAtual(string $data): bool
-    {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data)) {
-            return false;
-        }
-
-        $hoje    = (new \DateTime())->setTime(0, 0, 0);
-        $diaNum  = (int) $hoje->format('N'); // 1=Seg … 7=Dom
-        $segunda = (clone $hoje)->modify('-' . ($diaNum - 1) . ' days')->setTime(0, 0, 0);
-        $domingo = (clone $hoje)->modify('+' . (7 - $diaNum) . ' days')->setTime(23, 59, 59);
-
-        $alvo = \DateTime::createFromFormat('Y-m-d', $data);
-        if (!$alvo) {
-            return false;
-        }
-
-        return $alvo >= $segunda && $alvo <= $domingo;
     }
 }

@@ -259,21 +259,78 @@ class RegistroTest extends DatabaseTestCase
     }
 
     // =========================================================================
-    // Métodos MySQL-específicos (pulados no SQLite)
+    // upsertAgendado()
     // =========================================================================
 
-    public function testUpsertAgendadoRequerMySQL(): void
+    public function testUpsertAgendadoCriaRegistroNovo(): void
     {
-        $this->markTestSkipped('upsertAgendado() usa ON DUPLICATE KEY UPDATE — requer MySQL.');
+        Registro::upsertAgendado($this->matricula, $this->idCardapio);
+
+        $this->assertTrue(Registro::jaAgendado($this->matricula, $this->idCardapio));
     }
 
-    public function testConcluirExcecaoRequerMySQL(): void
+    public function testUpsertAgendadoReativaRegistroCancelado(): void
     {
-        $this->markTestSkipped('concluirExcecao() usa ON DUPLICATE KEY UPDATE — requer MySQL.');
+        $id = $this->inserirRegistro($this->matricula, $this->idCardapio, 'cancelado');
+
+        Registro::upsertAgendado($this->matricula, $this->idCardapio);
+
+        $registro = Registro::buscarPorId($id);
+        $this->assertSame('agendado', $registro['status']);
     }
 
-    public function testBuscarParaScannerHojeRequerMySQL(): void
+    // =========================================================================
+    // concluirExcecao()
+    // =========================================================================
+
+    public function testConcluirExcecaoCriaRegistroConcluido(): void
     {
-        $this->markTestSkipped('buscarParaScannerHoje() usa CURDATE() — requer MySQL.');
+        Registro::concluirExcecao($this->matricula, $this->idCardapio);
+
+        $this->assertTrue(Registro::jaConcluidoPorCardapio($this->matricula, $this->idCardapio));
+    }
+
+    public function testConcluirExcecaoSobrescreveRegistroExistente(): void
+    {
+        $id = $this->inserirRegistro($this->matricula, $this->idCardapio, 'agendado');
+
+        Registro::concluirExcecao($this->matricula, $this->idCardapio);
+
+        $registro = Registro::buscarPorId($id);
+        $this->assertSame('concluido', $registro['status']);
+    }
+
+    // =========================================================================
+    // buscarParaScannerHoje()
+    // =========================================================================
+
+    public function testBuscarParaScannerHojeRetornaRegistroDeHoje(): void
+    {
+        $idCardapioHoje = $this->inserirCardapio(date('Y-m-d'), 'almoco');
+        $this->inserirRegistro($this->matricula, $idCardapioHoje, 'agendado');
+
+        $registro = Registro::buscarParaScannerHoje($this->matricula);
+
+        $this->assertNotNull($registro);
+        $this->assertSame($idCardapioHoje, $registro['id_cardapio']);
+    }
+
+    public function testBuscarParaScannerHojeRetornaNullSemRegistroHoje(): void
+    {
+        // fixture do setUp() usa 2026-07-15, não é "hoje"
+        $this->assertNull(Registro::buscarParaScannerHoje($this->matricula));
+    }
+
+    public function testBuscarParaScannerHojePriorizaAgendadoSobreCancelado(): void
+    {
+        $hoje     = date('Y-m-d');
+        $idAlmoco = $this->inserirCardapio($hoje, 'almoco');
+        $idJantar = $this->inserirCardapio($hoje, 'jantar');
+        $this->inserirRegistro($this->matricula, $idAlmoco, 'cancelado');
+        $this->inserirRegistro($this->matricula, $idJantar, 'agendado');
+
+        $registro = Registro::buscarParaScannerHoje($this->matricula);
+
+        $this->assertSame('agendado', $registro['status']);
     }
 }

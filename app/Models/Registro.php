@@ -81,11 +81,7 @@ class Registro extends Model
      */
     public static function upsertAgendado(string $matricula, int $idCardapio): void
     {
-        static::db()->prepare(
-            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
-             VALUES (:matricula, :id_cardapio, 'agendado')
-             ON DUPLICATE KEY UPDATE status = 'agendado', atualizado_em = NOW()"
-        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        static::upsertStatus($matricula, $idCardapio, 'agendado');
     }
 
     /**
@@ -132,11 +128,30 @@ class Registro extends Model
      */
     public static function concluirExcecao(string $matricula, int $idCardapio): void
     {
-        static::db()->prepare(
-            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
-             VALUES (:matricula, :id_cardapio, 'concluido')
-             ON DUPLICATE KEY UPDATE status = 'concluido', atualizado_em = NOW()"
-        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        static::upsertStatus($matricula, $idCardapio, 'concluido');
+    }
+
+    /**
+     * Cria um registro para o par usuário/cardápio, ou atualiza o status se já existir.
+     * Portável entre MySQL e SQLite (evita ON DUPLICATE KEY UPDATE, específico do MySQL).
+     */
+    private static function upsertStatus(string $matricula, int $idCardapio, string $status): void
+    {
+        $stmt = static::db()->prepare(
+            'SELECT id FROM registros WHERE matricula_usuario = :matricula AND id_cardapio = :id_cardapio'
+        );
+        $stmt->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        $id = $stmt->fetchColumn();
+
+        if ($id !== false) {
+            static::atualizar((int) $id, ['status' => $status]);
+        } else {
+            static::criar([
+                'matricula_usuario' => $matricula,
+                'id_cardapio'       => $idCardapio,
+                'status'            => $status,
+            ]);
+        }
     }
 
     public static function buscarPorUsuarioPaginado(
@@ -264,11 +279,11 @@ class Registro extends Model
                JOIN cardapios c ON r.id_cardapio = c.id
                JOIN usuarios  u ON r.matricula_usuario = u.matricula
               WHERE r.matricula_usuario = :matricula
-                AND c.data = CURDATE()
+                AND c.data = :hoje
               ORDER BY r.status ASC
               LIMIT 1"
         );
-        $stmt->execute(['matricula' => $matricula]);
+        $stmt->execute(['matricula' => $matricula, 'hoje' => date('Y-m-d')]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }

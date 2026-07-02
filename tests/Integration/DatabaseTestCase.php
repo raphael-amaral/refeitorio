@@ -11,9 +11,6 @@ use PHPUnit\Framework\TestCase;
  *
  * Cria um banco SQLite em memória com o schema equivalente ao MySQL de produção.
  * Cada teste recebe um banco limpo; não há estado compartilhado entre testes.
- *
- * Métodos MySQL-específicos que usam CURDATE(), DATE_ADD() ou ON DUPLICATE KEY UPDATE
- * são marcados com markTestSkipped() nas subclasses, pois SQLite não os suporta.
  */
 abstract class DatabaseTestCase extends TestCase
 {

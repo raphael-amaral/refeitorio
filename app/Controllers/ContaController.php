@@ -2,9 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Core\Audit;
 use App\Core\Controller;
-use App\Models\Usuario;
+use App\Exceptions\SenhaAtualIncorretaException;
+use App\Exceptions\SenhaCurtaException;
+use App\Exceptions\SenhasNaoCoincidemException;
+use App\Services\ContaService;
 
 class ContaController extends Controller
 {
@@ -13,35 +15,27 @@ class ContaController extends Controller
      */
     public function alterarSenha(): void
     {
-        $matricula   = $_SESSION['usuario']['matricula'];
-        $senhaAtual  = $_POST['senha_atual'] ?? '';
-        $novaSenha   = $_POST['nova_senha'] ?? '';
-        $confirmacao = $_POST['confirmar_nova_senha'] ?? '';
+        $matricula = $_SESSION['usuario']['matricula'];
 
-        $usuario = Usuario::buscarPorMatricula($matricula);
-
-        if (!$usuario || !password_verify($senhaAtual, $usuario['senha'])) {
-            Audit::write('conta.senha', 'blocked', $matricula, ['motivo' => 'senha_atual_incorreta']);
+        try {
+            ContaService::alterarSenha(
+                $matricula,
+                $_POST['senha_atual'] ?? '',
+                $_POST['nova_senha'] ?? '',
+                $_POST['confirmar_nova_senha'] ?? ''
+            );
+        } catch (SenhaAtualIncorretaException) {
             $this->flash('Senha atual incorreta.', 'error');
             $this->redirect('/painel');
-        }
-
-        if ($novaSenha === '' || strlen($novaSenha) < 6) {
+        } catch (SenhaCurtaException) {
             $this->flash('A nova senha deve ter pelo menos 6 caracteres.', 'error');
             $this->redirect('/painel');
-        }
-
-        if ($novaSenha !== $confirmacao) {
+        } catch (SenhasNaoCoincidemException) {
             $this->flash('A nova senha e a confirmação não coincidem.', 'error');
             $this->redirect('/painel');
         }
 
-        Usuario::atualizarUsuario($matricula, $usuario['nome'], $usuario['tipo'], $novaSenha);
         $_SESSION['usuario']['senha_padrao'] = false;
-
-        Audit::write('conta.senha', 'success', $matricula, [
-            'era_senha_padrao' => !empty($_SESSION['usuario']['senha_padrao']),
-        ]);
         $this->flash('Senha alterada com sucesso.', 'success');
         $this->redirect('/painel');
     }

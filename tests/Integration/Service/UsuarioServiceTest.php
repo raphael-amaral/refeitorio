@@ -168,18 +168,18 @@ class UsuarioServiceTest extends DatabaseTestCase
     {
         $this->inserirUsuario('30020', 'NOME ANTIGO', 'comum');
 
-        UsuarioService::editar('30020', 'nome novo', 'snd', '');
+        UsuarioService::editar('30020', 'nome novo', 'snd', '', '');
 
         $usuario = Usuario::buscarPorMatricula('30020');
         $this->assertSame('NOME NOVO', $usuario['nome']);
         $this->assertSame('snd', $usuario['tipo']);
     }
 
-    public function testEditarAtualizaSenhaQuandoInformada(): void
+    public function testEditarAtualizaSenhaQuandoInformadaEConfirmada(): void
     {
         $this->inserirUsuario('30021', 'NOME');
 
-        UsuarioService::editar('30021', 'NOME', 'comum', 'novasenha123');
+        UsuarioService::editar('30021', 'NOME', 'comum', 'novasenha123', 'novasenha123');
 
         $usuario = Usuario::buscarPorMatricula('30021');
         $this->assertTrue(password_verify('novasenha123', $usuario['senha']));
@@ -191,7 +191,7 @@ class UsuarioServiceTest extends DatabaseTestCase
 
         $this->expectException(ValidacaoException::class);
 
-        UsuarioService::editar('30022', '', 'comum', '');
+        UsuarioService::editar('30022', '', 'comum', '', '');
     }
 
     public function testEditarLancaValidacaoParaTipoInvalido(): void
@@ -200,7 +200,39 @@ class UsuarioServiceTest extends DatabaseTestCase
 
         $this->expectException(ValidacaoException::class);
 
-        UsuarioService::editar('30023', 'NOME', 'invalido', '');
+        UsuarioService::editar('30023', 'NOME', 'invalido', '', '');
+    }
+
+    public function testEditarLancaSenhaCurtaParaSenhaMenorQueCinco(): void
+    {
+        $this->inserirUsuario('30024', 'NOME');
+
+        $this->expectException(SenhaCurtaException::class);
+
+        UsuarioService::editar('30024', 'NOME', 'comum', '1234', '1234');
+    }
+
+    public function testEditarLancaSenhasNaoCoincidemQuandoConfirmacaoDiferente(): void
+    {
+        $this->inserirUsuario('30025', 'NOME');
+
+        $this->expectException(SenhasNaoCoincidemException::class);
+
+        UsuarioService::editar('30025', 'NOME', 'comum', 'novasenha123', 'outrasenha');
+    }
+
+    public function testEditarNaoAlteraSenhaQuandoConfirmacaoDivergeMantemAntiga(): void
+    {
+        $this->inserirUsuario('30026', 'NOME', 'comum', 1, password_hash('senhaoriginal', PASSWORD_BCRYPT, ['cost' => 4]));
+
+        try {
+            UsuarioService::editar('30026', 'NOME', 'comum', 'novasenha123', 'outrasenha');
+        } catch (SenhasNaoCoincidemException) {
+            // esperado
+        }
+
+        $usuario = Usuario::buscarPorMatricula('30026');
+        $this->assertTrue(password_verify('senhaoriginal', $usuario['senha']));
     }
 
     // =========================================================================

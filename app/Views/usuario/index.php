@@ -138,7 +138,7 @@ use App\Models\Usuario; ?>
                         </div>
                         <div class="form-group">
                             <label for="senha" id="label-senha">Senha</label>
-                            <input type="password" id="senha" name="senha" minlength="6"
+                            <input type="password" id="senha" name="senha" minlength="5"
                                 placeholder="Deixe vazio para usar senha padrão">
                             <small id="hint-senha-padrao" style="color:#888;font-size:.78rem">
                                 Se vazio, a senha será <strong>stcasa</strong> + matrícula
@@ -149,7 +149,7 @@ use App\Models\Usuario; ?>
                         </div>
                         <div class="form-group" id="campo-confirmar-senha" style="display:none;">
                             <label for="confirmar_senha">Confirmar senha</label>
-                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="6"
+                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="5"
                                 placeholder="Repita a senha">
                         </div>
                         <div class="form-group">

@@ -22,7 +22,7 @@ class ContaService
             throw new SenhaAtualIncorretaException();
         }
 
-        if ($novaSenha === '' || strlen($novaSenha) < 6) {
+        if ($novaSenha === '' || strlen($novaSenha) < 5) {
             throw new SenhaCurtaException();
         }
 

@@ -60,7 +60,7 @@ class UsuarioController extends Controller
             $this->flash('Preencha todos os campos corretamente.', 'error');
             $this->redirect('/usuario');
         } catch (SenhaCurtaException) {
-            $this->flash('A senha deve ter pelo menos 6 caracteres.', 'error');
+            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
             $this->redirect('/usuario');
         } catch (SenhasNaoCoincidemException) {
             $this->flash('As senhas não coincidem.', 'error');
@@ -119,18 +119,25 @@ class UsuarioController extends Controller
      */
     public function editar(string $matricula): void
     {
-        $nome  = trim($_POST['nome'] ?? '');
-        $tipo  = $_POST['tipo'] ?? 'comum';
-        $senha = $_POST['senha'] ?? '';
+        $nome           = trim($_POST['nome'] ?? '');
+        $tipo           = $_POST['tipo'] ?? 'comum';
+        $senha          = $_POST['senha'] ?? '';
+        $confirmarSenha = $_POST['confirmar_senha'] ?? '';
 
         if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
             $tipo = $_SESSION['usuario']['tipo'];
         }
 
         try {
-            UsuarioService::editar($matricula, $nome, $tipo, $senha);
+            UsuarioService::editar($matricula, $nome, $tipo, $senha, $confirmarSenha);
         } catch (ValidacaoException) {
             $this->flash('Preencha os campos corretamente.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhaCurtaException) {
+            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhasNaoCoincidemException) {
+            $this->flash('As senhas não coincidem.', 'error');
             $this->redirect('/usuario');
         }
 

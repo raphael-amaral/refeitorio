@@ -35,7 +35,7 @@ class UsuarioService
         if ($senha === '') {
             $senha = 'stcasa' . $matricula;
         } else {
-            if (strlen($senha) < 6) {
+            if (strlen($senha) < 5) {
                 throw new SenhaCurtaException();
             }
             if ($senha !== $confirmarSenha) {
@@ -133,7 +133,7 @@ class UsuarioService
     /**
      * Atualiza nome, tipo e opcionalmente a senha de um usuário.
      */
-    public static function editar(string $matricula, string $nome, string $tipo, string $senha): void
+    public static function editar(string $matricula, string $nome, string $tipo, string $senha, string $confirmarSenha): void
     {
         $nome         = mb_strtoupper(trim($nome));
         $usuarioAtual = Usuario::buscarPorMatricula($matricula);
@@ -141,6 +141,15 @@ class UsuarioService
         if (!$nome || !in_array($tipo, self::TIPOS_PERMITIDOS, true)) {
             Audit::write('usuario.editar', 'blocked', $matricula, ['motivo' => 'validacao', 'tipo' => $tipo]);
             throw new ValidacaoException();
+        }
+
+        if ($senha !== '') {
+            if (strlen($senha) < 5) {
+                throw new SenhaCurtaException();
+            }
+            if ($senha !== $confirmarSenha) {
+                throw new SenhasNaoCoincidemException();
+            }
         }
 
         Usuario::atualizarUsuario($matricula, $nome, $tipo, $senha !== '' ? $senha : null);

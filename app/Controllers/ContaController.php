@@ -28,7 +28,7 @@ class ContaController extends Controller
             $this->flash('Senha atual incorreta.', 'error');
             $this->redirect('/painel');
         } catch (SenhaCurtaException) {
-            $this->flash('A nova senha deve ter pelo menos 6 caracteres.', 'error');
+            $this->flash('A nova senha deve ter pelo menos 5 caracteres.', 'error');
             $this->redirect('/painel');
         } catch (SenhasNaoCoincidemException) {
             $this->flash('A nova senha e a confirmação não coincidem.', 'error');

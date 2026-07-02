@@ -57,18 +57,23 @@ class UsuarioController extends Controller
         try {
             $nomeCriado = UsuarioService::criar($matricula, $nome, $senha, $confirmarSenha, $tipo);
         } catch (ValidacaoException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('Preencha todos os campos corretamente.', 'error');
             $this->redirect('/usuario');
         } catch (SenhaCurtaException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
             $this->redirect('/usuario');
         } catch (SenhasNaoCoincidemException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('As senhas não coincidem.', 'error');
             $this->redirect('/usuario');
         } catch (MatriculaDuplicadaException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('Matrícula já cadastrada.', 'error');
             $this->redirect('/usuario');
         } catch (ErroAoCriarUsuarioException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('Erro ao criar usuário.', 'error');
             $this->redirect('/usuario');
         }
@@ -128,15 +133,20 @@ class UsuarioController extends Controller
             $tipo = $_SESSION['usuario']['tipo'];
         }
 
+        $dadosAntigos = ['modo' => 'editar', 'matricula_alvo' => $matricula, 'nome' => $nome, 'tipo' => $tipo];
+
         try {
             UsuarioService::editar($matricula, $nome, $tipo, $senha, $confirmarSenha);
         } catch (ValidacaoException) {
+            $this->oldInput($dadosAntigos);
             $this->flash('Preencha os campos corretamente.', 'error');
             $this->redirect('/usuario');
         } catch (SenhaCurtaException) {
+            $this->oldInput($dadosAntigos);
             $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
             $this->redirect('/usuario');
         } catch (SenhasNaoCoincidemException) {
+            $this->oldInput($dadosAntigos);
             $this->flash('As senhas não coincidem.', 'error');
             $this->redirect('/usuario');
         }

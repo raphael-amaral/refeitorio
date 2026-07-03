@@ -21,8 +21,8 @@ $labelStatus = [
 $diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 $mesesPtBr = [1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril', 5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto', 9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'];
 
-$mesFiltro = date('m', strtotime($dataInicio));
-$anoFiltro = date('Y', strtotime($dataInicio));
+$mesFiltro = $modo === 'mes' ? date('m', strtotime($dataInicio)) : date('m');
+$anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
 ?>
 
 <!-- Estilos do Filtro Aba -->
@@ -269,7 +269,7 @@ $anoFiltro = date('Y', strtotime($dataInicio));
             <div class="filtro-comuns-acoes">
                 <button type="submit" style="background:var(--verde);color:white;padding:8px 20px;border:none;border-radius:4px;font-weight:600;cursor:pointer;">Filtrar</button>
                 <?php if (!empty($_GET)): ?>
-                    <a href="/relatorios" style="padding:8px 16px;border:1px solid #ccc;color:#555;border-radius:4px;text-decoration:none;font-size:0.9rem;">Limpar</a>
+                    <a href="/relatorios?modo=<?= urlencode($modo) ?>" style="padding:8px 16px;border:1px solid #ccc;color:#555;border-radius:4px;text-decoration:none;font-size:0.9rem;">Limpar</a>
                 <?php endif; ?>
             </div>
         </div>

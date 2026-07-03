@@ -49,6 +49,10 @@ ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_samesite', $_ENV['SESSION_SAMESITE'] ?? 'Lax');
 ini_set('session.cookie_secure', $isHttps ? '1' : '0');
 
+// Nome do cookie distinto por ambiente, evita colisão de sessão quando
+// produção/teste/dev rodam no mesmo host em portas diferentes.
+session_name($_ENV['SESSION_NAME'] ?? 'PHPSESSID');
+
 // Inicia a sessão uma única vez para toda a aplicação
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

@@ -1,5 +1,8 @@
 FROM php:8.2-apache
 
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+
 # Esconde o header X-Powered-By (PHP)
 RUN echo "expose_php = Off" > /usr/local/etc/php/conf.d/security.ini
 
@@ -18,11 +21,15 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql
 # Habilita o módulo de reescrita de URL (necessário para o .htaccess funcionar)
 RUN a2enmod rewrite
 
-# Dependências Python são instaladas no serviço python_app (compose.yaml)
-
 # Altera a raiz do servidor web para a pasta public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 WORKDIR /var/www/html
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT [ "entrypoint.sh" ]
+CMD [ "apache2-foreground" ]

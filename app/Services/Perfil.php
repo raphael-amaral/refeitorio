@@ -26,6 +26,11 @@ class Perfil
         return $tipo === 'dev';
     }
 
+    public static function ehDp(string $tipo): bool
+    {
+        return $tipo === 'dp';
+    }
+
     /** snd ou dev — opera o scanner e o cadastro de cardápio. */
     public static function podeScanner(string $tipo): bool
     {

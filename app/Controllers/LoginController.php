@@ -7,6 +7,7 @@ use App\Core\Security;
 use App\Exceptions\CredenciaisInvalidasException;
 use App\Models\Cardapio;
 use App\Services\LoginService;
+use App\Services\Perfil;
 
 class LoginController extends Controller
 {
@@ -80,8 +81,7 @@ class LoginController extends Controller
         $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['_last_activity'] = time();
 
-        $destino = $usuario['tipo'] === 'dp' ? '/questor' : '/painel';
-        $this->redirect($destino);
+        $this->redirect(Perfil::rotaInicial($usuario['tipo']));
     }
 
     /**

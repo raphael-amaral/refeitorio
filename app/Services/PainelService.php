@@ -23,7 +23,7 @@ class PainelService
 
         $agora                 = new DateTime();
         $hojeStr               = $agora->format('Y-m-d');
-        $ehComum               = $usuario['tipo'] === 'comum';
+        $ehComum               = Perfil::ehComum($usuario['tipo']);
         $agendamentoHabilitado = filter_var($_ENV['AGENDAMENTO_HABILITADO']     ?? 'true',  FILTER_VALIDATE_BOOLEAN);
         $agendaSabadoDomingo   = filter_var($_ENV['AGENDAMENTO_SABADO_DOMINGO'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
 

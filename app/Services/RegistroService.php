@@ -28,7 +28,7 @@ class RegistroService
         }
 
         // Apenas usuários comuns podem agendar
-        if ($usuario['tipo'] !== 'comum') {
+        if (!Perfil::ehComum($usuario['tipo'])) {
             Audit::write('registro.criar', 'blocked', (string) $idCardapio, ['motivo' => 'tipo_nao_permitido', 'matricula_usuario' => $usuario['matricula']]);
             throw new TipoNaoPermitidoException($usuario['tipo']);
         }

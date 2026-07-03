@@ -25,7 +25,7 @@ class ScannerService
     {
         $usuario = Usuario::buscarPorMatricula($matricula);
 
-        if (!$usuario || !password_verify($senha, $usuario['senha']) || !in_array($usuario['tipo'], ['snd', 'dev'], true)) {
+        if (!$usuario || !password_verify($senha, $usuario['senha']) || !Perfil::podeScanner($usuario['tipo'])) {
             Audit::write('scanner.login_app', 'failed', $matricula !== '' ? $matricula : null, ['motivo' => 'credenciais_invalidas']);
             throw new CredenciaisInvalidasException();
         }
@@ -89,7 +89,7 @@ class ScannerService
             throw new CredenciaisInvalidasException();
         }
 
-        if ($usuario['tipo'] !== 'comum') {
+        if (!Perfil::ehComum($usuario['tipo'])) {
             Audit::write('scanner.excecao', 'blocked', $matricula, ['motivo' => 'tipo_nao_permitido', 'tipo' => $usuario['tipo']]);
             throw new TipoNaoPermitidoException($usuario['tipo']);
         }

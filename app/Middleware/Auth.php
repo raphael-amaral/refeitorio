@@ -2,6 +2,8 @@
 
 namespace App\Middleware;
 
+use App\Services\Perfil;
+
 /**
  * Middleware de autenticação e controle de acesso por tipo de usuário.
  *
@@ -26,7 +28,8 @@ class Auth
             exit;
         }
 
-        if ($_SESSION['usuario']['tipo'] === 'dp') {
+        $destino = Perfil::rotaInicial($_SESSION['usuario']['tipo']);
+        if ($destino === '/questor') {
             header('Location: /questor');
             exit;
         }
@@ -39,7 +42,7 @@ class Auth
     {
         self::handle();
 
-        if ($_SESSION['usuario']['tipo'] !== 'dev') {
+        if (!Perfil::ehDev($_SESSION['usuario']['tipo'])) {
             header('Location: /painel');
             exit;
         }
@@ -52,7 +55,7 @@ class Auth
     {
         self::handle();
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dev'], true)) {
+        if (!Perfil::podeScanner($_SESSION['usuario']['tipo'])) {
             header('Location: /painel');
             exit;
         }
@@ -69,7 +72,7 @@ class Auth
             exit;
         }
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['snd', 'dp', 'dev'], true)) {
+        if (!Perfil::podeRelatorio($_SESSION['usuario']['tipo'])) {
             header('Location: /painel');
             exit;
         }
@@ -86,7 +89,7 @@ class Auth
             exit;
         }
 
-        if (!in_array($_SESSION['usuario']['tipo'], ['dp', 'dev'], true)) {
+        if (!Perfil::podeDp($_SESSION['usuario']['tipo'])) {
             header('Location: /painel');
             exit;
         }
@@ -99,7 +102,7 @@ class Auth
     {
         self::handle();
 
-        if ($_SESSION['usuario']['tipo'] !== 'comum') {
+        if (!Perfil::ehComum($_SESSION['usuario']['tipo'])) {
             header('Location: /painel');
             exit;
         }

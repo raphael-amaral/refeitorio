@@ -18,8 +18,6 @@ use PDOException;
 
 class UsuarioService
 {
-    private const TIPOS_PERMITIDOS = ['comum', 'snd', 'dp', 'dev'];
-
     /**
      * Cria um novo usuário. Retorna o nome normalizado (maiúsculas), para uso em mensagens.
      */
@@ -27,7 +25,7 @@ class UsuarioService
     {
         $nome = mb_strtoupper(trim($nome));
 
-        if (!$matricula || !$nome || !in_array($tipo, self::TIPOS_PERMITIDOS, true)) {
+        if (!$matricula || !$nome || !Perfil::valido($tipo)) {
             Audit::write('usuario.criar', 'blocked', $matricula !== '' ? $matricula : null, ['motivo' => 'validacao', 'tipo' => $tipo]);
             throw new ValidacaoException();
         }
@@ -64,7 +62,7 @@ class UsuarioService
      */
     public static function importar(string $tipo, string $lista): int
     {
-        if (!in_array($tipo, self::TIPOS_PERMITIDOS, true)) {
+        if (!Perfil::valido($tipo)) {
             $tipo = 'comum';
         }
 
@@ -138,7 +136,7 @@ class UsuarioService
         $nome         = mb_strtoupper(trim($nome));
         $usuarioAtual = Usuario::buscarPorMatricula($matricula);
 
-        if (!$nome || !in_array($tipo, self::TIPOS_PERMITIDOS, true)) {
+        if (!$nome || !Perfil::valido($tipo)) {
             Audit::write('usuario.editar', 'blocked', $matricula, ['motivo' => 'validacao', 'tipo' => $tipo]);
             throw new ValidacaoException();
         }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Core\Agendamento;
 use App\Core\Audit;
 use App\Exceptions\AgendamentoDesabilitadoException;
 use App\Exceptions\FimDeSemanaException;

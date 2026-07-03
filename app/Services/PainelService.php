@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Core\Agendamento;
 use App\Models\Cardapio;
 use App\Models\Registro;
 use DateTime;

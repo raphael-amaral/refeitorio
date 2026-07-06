@@ -102,7 +102,7 @@ class QuestorService
         $arquivo = $dir . '/questor_' . $sufixo . '_' . date('His') . '.sql';
 
         $cmd = sprintf(
-            'mysqldump -h %s -u %s -p%s %s > %s 2>&1',
+            'mysqldump --skip-ssl --no-tablespaces -h %s -u %s -p%s %s > %s 2>&1',
             escapeshellarg($host),
             escapeshellarg($user),
             escapeshellarg($password),

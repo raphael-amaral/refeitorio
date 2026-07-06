@@ -9,6 +9,7 @@ use App\Exceptions\ForaDoPrazoException;
 use App\Exceptions\JaAgendadoOuInvalidoException;
 use App\Exceptions\JantarNaoAgendavelException;
 use App\Exceptions\TipoNaoPermitidoException;
+use App\Models\QuestorExportacao;
 use App\Models\Registro;
 use App\Services\RegistroService;
 
@@ -35,15 +36,37 @@ class RegistroController extends Controller
         $pagina       = min($pagina, $totalPaginas);
         $offset       = ($pagina - 1) * $porPagina;
 
+        $ultimaExportacao = QuestorExportacao::ultima();
+
+        // Valor já fechado pelo Questor na última exportação.
+        $qtdUltima   = $ultimaExportacao
+            ? Registro::contarPorUsuario($usuario['matricula'], 'concluido', $ultimaExportacao['data_inicio'], $ultimaExportacao['data_fim'])
+            : 0;
+        $valorUltima = $qtdUltima * (float) ($ultimaExportacao['valor_refeicao'] ?? 0);
+        $mesUltima   = $ultimaExportacao ? (int) date('n', strtotime($ultimaExportacao['data_fim'])) : null;
+
+        // Valor estimado para a próxima exportação (período ainda em aberto).
+        $referenciaDesconto = $ultimaExportacao
+            ? date('Y-m-d', strtotime($ultimaExportacao['data_fim'] . ' +1 day'))
+            : date('Y-m-01');
+        $qtdProxima   = Registro::contarPorUsuario($usuario['matricula'], 'concluido', $referenciaDesconto, date('Y-m-d'));
+        $valorProxima = $qtdProxima * (float) ($_ENV['VALOR_REFEICAO'] ?? 15);
+        $mesProxima   = (int) date('n', strtotime($referenciaDesconto . ' +1 month'));
+
         $this->render('registro/index', [
-            'titulo'       => 'Meus Agendamentos',
-            'registros'    => Registro::buscarPorUsuarioPaginado($usuario['matricula'], $status, $dataInicio, $dataFim, $offset, $porPagina),
-            'status'       => $status,
-            'dataInicio'   => $dataInicio,
-            'dataFim'      => $dataFim,
-            'pagina'       => $pagina,
-            'totalPaginas' => $totalPaginas,
-            'total'        => $total,
+            'titulo'           => 'Meus Agendamentos',
+            'registros'        => Registro::buscarPorUsuarioPaginado($usuario['matricula'], $status, $dataInicio, $dataFim, $offset, $porPagina),
+            'status'           => $status,
+            'dataInicio'       => $dataInicio,
+            'dataFim'          => $dataFim,
+            'pagina'           => $pagina,
+            'totalPaginas'     => $totalPaginas,
+            'total'            => $total,
+            'ultimaExportacao' => $ultimaExportacao,
+            'mesUltima'        => $mesUltima,
+            'valorUltima'      => $valorUltima,
+            'mesProxima'       => $mesProxima,
+            'valorProxima'     => $valorProxima,
         ]);
     }
 

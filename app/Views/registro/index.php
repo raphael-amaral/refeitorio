@@ -1,12 +1,24 @@
 <?php
 $temFiltro = !empty($dataInicio) || !empty($dataFim) || !empty($status);
 $labelStatus = ['agendado' => 'Agendado', 'cancelado' => 'Cancelado', 'concluido' => 'Concluído'];
+$mesesPtBr = [1 => 'janeiro', 2 => 'fevereiro', 3 => 'março', 4 => 'abril', 5 => 'maio', 6 => 'junho', 7 => 'julho', 8 => 'agosto', 9 => 'setembro', 10 => 'outubro', 11 => 'novembro', 12 => 'dezembro'];
 ?>
 
 <!-- Filtros -->
 <div style="background:#fff;border-radius:6px;padding:18px 22px;margin-bottom:18px;box-shadow:1px 5px 12px rgba(0,0,0,0.25);">
     <p style="font-family:var(--font-principal);font-size:0.85rem;font-weight:600;color:var(--verde);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:14px;">
         Filtrar agendamentos
+    </p>
+    <p style="font-family:var(--font-cards);font-size:0.82rem;color:#666;margin:-4px 0 14px;">
+        <?php if ($ultimaExportacao): ?>
+            Última exportação Questor (<?= date('d/m/Y', strtotime($ultimaExportacao['data_inicio'])) ?> – <?= date('d/m/Y', strtotime($ultimaExportacao['data_fim'])) ?>),
+            desconto de <?= $mesesPtBr[$mesUltima] ?>: <strong>R$ <?= number_format($valorUltima, 2, ',', '') ?></strong>
+        <?php else: ?>
+            Nenhuma exportação Questor registrada ainda.
+        <?php endif; ?>
+        <br>
+        Valor aproximado para o desconto de <?= $mesesPtBr[$mesProxima] ?>:
+        <strong>R$ <?= number_format($valorProxima, 2, ',', '') ?></strong>
     </p>
     <form method="GET" action="/registro" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:4px;">

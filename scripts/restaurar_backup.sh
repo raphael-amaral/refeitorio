@@ -23,12 +23,11 @@ fi
 #   ./scripts/restaurar_backup.sh --dry-run latest
 #   ./scripts/restaurar_backup.sh --no-pre-backup latest
 
-# Usa variáveis do .env se disponíveis, senão usa padrão antigo
-CONTAINER_NAME="${CONTAINER_NAME:-refeitorio-db-1}"
-DB_USER="${DB_USER:-${DB_USERNAME:-root}}"
-DB_PASSWORD="${DB_PASSWORD:-snd1234}"
-DB_DATABASE="${DB_DATABASE:-refeitorio_snd}"
-BACKUP_DIR="${BACKUP_DIR:-/home/usuario/raphael/projetos/backups_refeitorio/backups}"
+CONTAINER_NAME="${CONTAINER_NAME:?CONTAINER_NAME não definido no .env}"
+DB_USER="${DB_USERNAME:?DB_USERNAME não definido no .env}"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD não definido no .env}"
+DB_DATABASE="${DB_DATABASE:?DB_DATABASE não definido no .env}"
+BACKUP_DIR="${BACKUP_DIR:?BACKUP_DIR não definido no .env}"
 
 DRY_RUN=0
 USE_PRE_BACKUP=1
@@ -67,10 +66,10 @@ if [[ ! -d "$BACKUP_DIR" ]]; then
   exit 1
 fi
 
-mapfile -t BACKUP_FILES < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name "*.sql" | sort)
+mapfile -t BACKUP_FILES < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name "*${DB_DATABASE}*.sql" | sort)
 
 if [[ ${#BACKUP_FILES[@]} -eq 0 ]]; then
-  echo "Nenhum arquivo .sql encontrado em: $BACKUP_DIR"
+  echo "Nenhum arquivo .sql de '$DB_DATABASE' encontrado em: $BACKUP_DIR"
   exit 1
 fi
 

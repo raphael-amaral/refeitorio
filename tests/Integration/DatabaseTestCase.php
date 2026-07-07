@@ -2,22 +2,22 @@
 
 namespace Tests\Integration;
 
+use App\Core\Audit;
 use App\Core\Database;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Classe base para testes de integração dos Models.
+ * Classe base para testes de integração dos Models e Services.
  *
  * Cria um banco SQLite em memória com o schema equivalente ao MySQL de produção.
  * Cada teste recebe um banco limpo; não há estado compartilhado entre testes.
- *
- * Métodos MySQL-específicos que usam CURDATE(), DATE_ADD() ou ON DUPLICATE KEY UPDATE
- * são marcados com markTestSkipped() nas subclasses, pois SQLite não os suporta.
+ * Redireciona o Audit::write() pra um arquivo descartável, pra não poluir o log real.
  */
 abstract class DatabaseTestCase extends TestCase
 {
     protected PDO $pdo;
+    private string $auditTestPath;
 
     protected function setUp(): void
     {
@@ -32,12 +32,18 @@ abstract class DatabaseTestCase extends TestCase
 
         Database::setTestConnection($this->pdo);
         $this->criarSchema();
+
+        $this->auditTestPath = tempnam(sys_get_temp_dir(), 'audit_test_');
+        Audit::setTestPath($this->auditTestPath);
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
         Database::reset();
+
+        Audit::reset();
+        @unlink($this->auditTestPath);
     }
 
     private function criarSchema(): void

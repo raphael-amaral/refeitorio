@@ -17,6 +17,8 @@
             <directory>app/Models</directory>
             <directory>app/Middleware</directory>
             <directory>app/Controllers</directory>
+            <directory>app/Services</directory>
+            <directory>app/Exceptions</directory>
         </include>
     </source>
 </phpunit>

@@ -15,12 +15,18 @@ class Cardapio extends Model
      */
     public static function proximosDias(int $dias = 7): array
     {
+        $hoje = new \DateTime();
+        $fim  = (clone $hoje)->modify("+{$dias} days");
+
         $stmt = static::db()->prepare(
             'SELECT * FROM cardapios
-              WHERE data BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :dias DAY)
+              WHERE data BETWEEN :inicio AND :fim
               ORDER BY data ASC, tipo ASC'
         );
-        $stmt->execute(['dias' => $dias]);
+        $stmt->execute([
+            'inicio' => $hoje->format('Y-m-d'),
+            'fim'    => $fim->format('Y-m-d'),
+        ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -103,15 +109,16 @@ class Cardapio extends Model
      */
     public static function salvarDia(string $data, string $tipo, string $descricao): void
     {
-        static::db()->prepare(
-            'INSERT INTO cardapios (data, tipo, descricao)
-             VALUES (:data, :tipo, :descricao)
-             ON DUPLICATE KEY UPDATE descricao = :descricao2, atualizado_em = NOW()'
-        )->execute([
-            'data'       => $data,
-            'tipo'       => $tipo,
-            'descricao'  => $descricao,
-            'descricao2' => $descricao,
-        ]);
+        $stmt = static::db()->prepare(
+            'SELECT id FROM cardapios WHERE data = :data AND tipo = :tipo'
+        );
+        $stmt->execute(['data' => $data, 'tipo' => $tipo]);
+        $id = $stmt->fetchColumn();
+
+        if ($id !== false) {
+            static::atualizar((int) $id, ['descricao' => $descricao]);
+        } else {
+            static::criar(['data' => $data, 'tipo' => $tipo, 'descricao' => $descricao]);
+        }
     }
 }

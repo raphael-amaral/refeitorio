@@ -32,6 +32,16 @@ CREATE TABLE registros (
     UNIQUE KEY uk_matricula_cardapio (matricula_usuario, id_cardapio)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE questor_exportacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    valor_refeicao DECIMAL(6,2) NOT NULL,
+    exportado_por VARCHAR(12),
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (exportado_por) REFERENCES usuarios(matricula)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO usuarios (matricula, nome, senha, tipo) VALUES
 ('snd',   'Equipe SND', '$2y$10$hdqv3YqpLoXwuR/m8Bqtg.OIgBzVOy59zQ5c5Y8M5qq7OIBfqmX0G', 'snd'),
 ('teste', 'Usuário Teste', '$2y$10$f3vRylZ68AI3HYXqlN7aeOtkDhxDxIV09Z6BvY3yDdI9bvBcsVQUu', 'comum'),

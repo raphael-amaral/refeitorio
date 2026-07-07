@@ -78,4 +78,13 @@ abstract class Controller
     {
         $_SESSION['flash'] = ['mensagem' => $mensagem, 'tipo' => $tipo];
     }
+
+    /**
+     * Guarda os dados de um formulário na sessão para a view repopular após um erro de validação.
+     * Nunca inclua senha — o valor não deve ser refletido de volta no HTML.
+     */
+    protected function oldInput(array $dados): void
+    {
+        $_SESSION['old_input'] = $dados;
+    }
 }

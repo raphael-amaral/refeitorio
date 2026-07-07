@@ -4,8 +4,26 @@ namespace App\Core;
 
 class Audit
 {
+    private static ?string $testPath = null;
+
+    /** Redireciona a escrita do audit pra um arquivo descartável, uso exclusivo dos testes. */
+    public static function setTestPath(string $path): void
+    {
+        self::$testPath = $path;
+    }
+
+    /** Remove o redirecionamento, forçando o caminho real na próxima escrita. */
+    public static function reset(): void
+    {
+        self::$testPath = null;
+    }
+
     private static function logPath(): string
     {
+        if (self::$testPath !== null) {
+            return self::$testPath;
+        }
+
         $customPath = trim((string) ($_ENV['AUDIT_LOG_PATH'] ?? ''));
         if ($customPath !== '') {
             return $customPath;

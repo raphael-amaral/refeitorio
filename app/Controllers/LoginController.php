@@ -2,11 +2,12 @@
 
 namespace App\Controllers;
 
-use App\Core\Audit;
 use App\Core\Controller;
 use App\Core\Security;
-use App\Models\Usuario;
+use App\Exceptions\CredenciaisInvalidasException;
 use App\Models\Cardapio;
+use App\Services\LoginService;
+use App\Services\Perfil;
 
 class LoginController extends Controller
 {
@@ -56,35 +57,31 @@ class LoginController extends Controller
             $this->redirect('/');
         }
 
-        $usuario = Usuario::buscarPorMatricula($matricula);
-
-        if ($usuario && password_verify($senha, $usuario['senha'])) {
-            Security::clear('web_login_ip', $ipKey);
-            Security::clear('web_login_user', $userKey);
-
-            session_regenerate_id(true);
-
-            $_SESSION['usuario'] = [
-                'matricula'    => $usuario['matricula'],
-                'nome'         => $usuario['nome'],
-                'tipo'         => $usuario['tipo'],
-                'senha_padrao' => password_verify('stcasa' . $usuario['matricula'], $usuario['senha']),
-            ];
-            $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
-            $_SESSION['_last_activity'] = time();
-
-            Audit::write('auth.login', 'success', $matricula, ['nome' => $usuario['nome'], 'tipo' => $usuario['tipo']]);
-            $destino = $usuario['tipo'] === 'dp' ? '/questor' : '/painel';
-            $this->redirect($destino);
+        try {
+            $usuario = LoginService::autenticar($matricula, $senha);
+        } catch (CredenciaisInvalidasException) {
+            Security::registerFailure('web_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
+            Security::registerFailure('web_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
+            usleep(random_int(150000, 350000));
+            $_SESSION['erro_login'] = 'Credenciais inválidas.';
+            $this->redirect('/');
         }
 
-        Security::registerFailure('web_login_ip', $ipKey, $windowSeconds, $maxAttempts, $lockSeconds);
-        Security::registerFailure('web_login_user', $userKey, $windowSeconds, $maxAttempts, $lockSeconds);
-        usleep(random_int(150000, 350000));
+        Security::clear('web_login_ip', $ipKey);
+        Security::clear('web_login_user', $userKey);
 
-        Audit::write('auth.login', 'failed', $matricula !== '' ? $matricula : null, ['motivo' => 'credenciais_invalidas']);
-        $_SESSION['erro_login'] = 'Credenciais inválidas.';
-        $this->redirect('/');
+        session_regenerate_id(true);
+
+        $_SESSION['usuario'] = [
+            'matricula'    => $usuario['matricula'],
+            'nome'         => $usuario['nome'],
+            'tipo'         => $usuario['tipo'],
+            'senha_padrao' => password_verify('stcasa' . $usuario['matricula'], $usuario['senha']),
+        ];
+        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['_last_activity'] = time();
+
+        $this->redirect(Perfil::rotaInicial($usuario['tipo']));
     }
 
     /**
@@ -92,7 +89,7 @@ class LoginController extends Controller
      */
     public function logout(): void
     {
-        Audit::write('auth.logout', 'success', $_SESSION['usuario']['matricula'] ?? null, ['nome' => $_SESSION['usuario']['nome'] ?? null]);
+        LoginService::registrarLogout($_SESSION['usuario']['matricula'] ?? null, $_SESSION['usuario']['nome'] ?? null);
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {

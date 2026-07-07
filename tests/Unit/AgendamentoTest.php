@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Core\Agendamento;
+use App\Services\Agendamento;
 use DateTime;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

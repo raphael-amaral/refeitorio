@@ -2,9 +2,19 @@
 
 namespace App\Controllers;
 
-use App\Core\Audit;
 use App\Core\Controller;
+use App\Exceptions\AutoAcaoNaoPermitidaException;
+use App\Exceptions\ErroAoCriarUsuarioException;
+use App\Exceptions\LinhasInvalidasException;
+use App\Exceptions\ListaVaziaException;
+use App\Exceptions\MatriculaDuplicadaException;
+use App\Exceptions\MatriculasDuplicadasException;
+use App\Exceptions\PossuiRegistrosException;
+use App\Exceptions\SenhaCurtaException;
+use App\Exceptions\SenhasNaoCoincidemException;
+use App\Exceptions\ValidacaoException;
 use App\Models\Usuario;
+use App\Services\UsuarioService;
 
 class UsuarioController extends Controller
 {
@@ -39,51 +49,36 @@ class UsuarioController extends Controller
     public function criar(): void
     {
         $matricula      = trim($_POST['matricula'] ?? '');
-        $nome           = mb_strtoupper(trim($_POST['nome'] ?? ''));
+        $nome           = trim($_POST['nome'] ?? '');
         $senha          = $_POST['senha'] ?? '';
         $confirmarSenha = $_POST['confirmar_senha'] ?? '';
         $tipo           = $_POST['tipo'] ?? 'comum';
 
-        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
-
-        if (!$matricula || !$nome || !in_array($tipo, $tiposPermitidos, true)) {
-            Audit::write('usuario.criar', 'blocked', $matricula !== '' ? $matricula : null, [
-                'motivo' => 'validacao',
-                'tipo' => $tipo,
-            ]);
+        try {
+            $nomeCriado = UsuarioService::criar($matricula, $nome, $senha, $confirmarSenha, $tipo);
+        } catch (ValidacaoException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
             $this->flash('Preencha todos os campos corretamente.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhaCurtaException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
+            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhasNaoCoincidemException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
+            $this->flash('As senhas não coincidem.', 'error');
+            $this->redirect('/usuario');
+        } catch (MatriculaDuplicadaException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
+            $this->flash('Matrícula já cadastrada.', 'error');
+            $this->redirect('/usuario');
+        } catch (ErroAoCriarUsuarioException) {
+            $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
+            $this->flash('Erro ao criar usuário.', 'error');
             $this->redirect('/usuario');
         }
 
-        if ($senha === '') {
-            $senha = 'stcasa' . $matricula;
-        } else {
-            if (strlen($senha) < 6) {
-                $this->flash('A senha deve ter pelo menos 6 caracteres.', 'error');
-                $this->redirect('/usuario');
-            }
-            if ($senha !== $confirmarSenha) {
-                $this->flash('As senhas não coincidem.', 'error');
-                $this->redirect('/usuario');
-            }
-        }
-
-        try {
-            Usuario::novoUsuario($matricula, $nome, $senha, $tipo);
-            Audit::write('usuario.criar', 'success', $matricula, ['nome' => $nome, 'tipo' => $tipo]);
-            $this->flash("Usuário {$nome} criado com sucesso.", 'success');
-        } catch (\PDOException $e) {
-            Audit::write('usuario.criar', 'error', $matricula, [
-                'tipo' => $tipo,
-                'erro' => $e->getCode(),
-            ]);
-            if ($e->getCode() === '23000') {
-                $this->flash('Matrícula já cadastrada.', 'error');
-            } else {
-                $this->flash('Erro ao criar usuário.', 'error');
-            }
-        }
-
+        $this->flash("Usuário {$nomeCriado} criado com sucesso.", 'success');
         $this->redirect('/usuario');
     }
 
@@ -95,11 +90,6 @@ class UsuarioController extends Controller
     {
         $tipo = $_POST['tipo_importacao'] ?? 'comum';
 
-        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
-        if (!in_array($tipo, $tiposPermitidos, true)) {
-            $tipo = 'comum';
-        }
-
         // Arquivo CSV tem prioridade sobre o textarea
         $arquivo = $_FILES['arquivo'] ?? null;
         if (!empty($arquivo['tmp_name']) && is_uploaded_file($arquivo['tmp_name'])) {
@@ -110,78 +100,19 @@ class UsuarioController extends Controller
             $lista = trim($_POST['lista'] ?? '');
         }
 
-        if ($lista === '') {
-            Audit::write('usuario.importar', 'blocked', null, ['motivo' => 'lista_vazia', 'tipo' => $tipo]);
+        try {
+            $criados = UsuarioService::importar($tipo, $lista);
+        } catch (ListaVaziaException) {
             $this->flash('Nenhum dado para importar.', 'error');
             $this->redirect('/usuario');
-        }
-
-        set_time_limit(300);
-
-        $linhas   = array_values(array_filter(array_map('trim', explode("\n", $lista))));
-        $invalidas = [];
-        $entradas  = [];
-        $vistos    = [];
-
-        foreach ($linhas as $linha) {
-            // Detecta separador: ; , ou espaço
-            if (str_contains($linha, ';')) {
-                [$matricula, $nome] = array_map('trim', explode(';', $linha, 2));
-            } elseif (str_contains($linha, ',')) {
-                [$matricula, $nome] = array_map('trim', explode(',', $linha, 2));
-            } else {
-                $partes    = preg_split('/\s+/', $linha, 2);
-                $matricula = trim($partes[0] ?? '');
-                $nome      = trim($partes[1] ?? '');
-            }
-
-            if ($matricula === '' || $nome === '') {
-                $invalidas[] = mb_strimwidth($linha, 0, 40, '…');
-                continue;
-            }
-
-            // Duplicata dentro do próprio arquivo
-            if (isset($vistos[$matricula])) {
-                $invalidas[] = "Matrícula {$matricula} repetida no arquivo";
-                continue;
-            }
-
-            $vistos[$matricula] = true;
-            $entradas[] = ['matricula' => $matricula, 'nome' => mb_strtoupper($nome)];
-        }
-
-        if ($invalidas) {
-            Audit::write('usuario.importar', 'blocked', null, [
-                'motivo'          => 'linhas_invalidas',
-                'tipo'            => $tipo,
-                'total_invalidas' => count($invalidas),
-            ]);
-            $_SESSION['import_invalidas'] = $invalidas;
-            $this->flash(count($invalidas) . ' problema(s) encontrado(s) no arquivo. Corrija e tente novamente.', 'error');
+        } catch (LinhasInvalidasException $e) {
+            $_SESSION['import_invalidas'] = $e->invalidas;
+            $this->flash(count($e->invalidas) . ' problema(s) encontrado(s) no arquivo. Corrija e tente novamente.', 'error');
             $this->redirect('/usuario');
-        }
-
-        // Verifica duplicatas no banco antes de inserir qualquer usuário
-        $matriculas = array_column($entradas, 'matricula');
-        $duplicadas = Usuario::matriculasExistentes($matriculas);
-
-        if (!empty($duplicadas)) {
-            Audit::write('usuario.importar', 'blocked', null, [
-                'motivo'           => 'matriculas_duplicadas',
-                'tipo'             => $tipo,
-                'total_duplicadas' => count($duplicadas),
-            ]);
-            $_SESSION['import_duplicadas'] = $duplicadas;
-            $this->flash(count($duplicadas) . ' matrícula(s) já cadastrada(s) no sistema. Corrija a lista e tente novamente.', 'error');
+        } catch (MatriculasDuplicadasException $e) {
+            $_SESSION['import_duplicadas'] = $e->duplicadas;
+            $this->flash(count($e->duplicadas) . ' matrícula(s) já cadastrada(s) no sistema. Corrija a lista e tente novamente.', 'error');
             $this->redirect('/usuario');
-        }
-
-        $criados = 0;
-        foreach ($entradas as $entrada) {
-            // Custo 8 (vs padrão 10) para viabilizar importação em lote sem travar o servidor
-            Usuario::novoUsuario($entrada['matricula'], $entrada['nome'], 'stcasa' . $entrada['matricula'], $tipo, 8);
-            Audit::write('usuario.criar', 'success', $entrada['matricula'], ['nome' => $entrada['nome'], 'tipo' => $tipo, 'lote' => true]);
-            $criados++;
         }
 
         $this->flash("{$criados} usuário(s) importado(s) com sucesso.", 'success');
@@ -193,34 +124,33 @@ class UsuarioController extends Controller
      */
     public function editar(string $matricula): void
     {
-        $nome  = mb_strtoupper(trim($_POST['nome'] ?? ''));
-        $tipo  = $_POST['tipo'] ?? 'comum';
-        $senha = $_POST['senha'] ?? '';
+        $nome           = trim($_POST['nome'] ?? '');
+        $tipo           = $_POST['tipo'] ?? 'comum';
+        $senha          = $_POST['senha'] ?? '';
+        $confirmarSenha = $_POST['confirmar_senha'] ?? '';
 
         if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
             $tipo = $_SESSION['usuario']['tipo'];
         }
 
-        $tiposPermitidos = ['comum', 'snd', 'dp', 'dev'];
-        $usuarioAtual = Usuario::buscarPorMatricula($matricula);
+        $dadosAntigos = ['modo' => 'editar', 'matricula_alvo' => $matricula, 'nome' => $nome, 'tipo' => $tipo];
 
-        if (!$nome || !in_array($tipo, $tiposPermitidos, true)) {
-            Audit::write('usuario.editar', 'blocked', $matricula, [
-                'motivo' => 'validacao',
-                'tipo' => $tipo,
-            ]);
+        try {
+            UsuarioService::editar($matricula, $nome, $tipo, $senha, $confirmarSenha);
+        } catch (ValidacaoException) {
+            $this->oldInput($dadosAntigos);
             $this->flash('Preencha os campos corretamente.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhaCurtaException) {
+            $this->oldInput($dadosAntigos);
+            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
+            $this->redirect('/usuario');
+        } catch (SenhasNaoCoincidemException) {
+            $this->oldInput($dadosAntigos);
+            $this->flash('As senhas não coincidem.', 'error');
             $this->redirect('/usuario');
         }
 
-        Usuario::atualizarUsuario($matricula, $nome, $tipo, $senha !== '' ? $senha : null);
-        Audit::write('usuario.editar', 'success', $matricula, [
-            'nome_anterior'  => $usuarioAtual['nome'] ?? null,
-            'tipo_anterior'  => $usuarioAtual['tipo'] ?? null,
-            'nome_novo'      => $nome,
-            'tipo_novo'      => $tipo,
-            'senha_alterada' => $senha !== '',
-        ]);
         $this->flash('Usuário atualizado com sucesso.', 'success');
         $this->redirect('/usuario');
     }
@@ -230,16 +160,13 @@ class UsuarioController extends Controller
      */
     public function inativar(string $matricula): void
     {
-        // Impede inativar a própria conta
-        if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
-            Audit::write('usuario.inativar', 'blocked', $matricula, ['motivo' => 'auto_inativacao']);
+        try {
+            UsuarioService::inativar($matricula, $_SESSION['usuario']['matricula'] ?? '');
+        } catch (AutoAcaoNaoPermitidaException) {
             $this->flash('Você não pode inativar sua própria conta.', 'error');
             $this->redirect('/usuario');
         }
 
-        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
-        Usuario::alterarAtivo($matricula, 0);
-        Audit::write('usuario.inativar', 'success', $matricula, ['nome' => $nomeAlvo]);
         $this->flash('Usuário inativado.', 'success');
         $this->redirect('/usuario');
     }
@@ -249,9 +176,7 @@ class UsuarioController extends Controller
      */
     public function ativar(string $matricula): void
     {
-        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
-        Usuario::alterarAtivo($matricula, 1);
-        Audit::write('usuario.ativar', 'success', $matricula, ['nome' => $nomeAlvo]);
+        UsuarioService::ativar($matricula);
         $this->flash('Usuário reativado.', 'success');
         $this->redirect('/usuario');
     }
@@ -261,21 +186,16 @@ class UsuarioController extends Controller
      */
     public function excluir(string $matricula): void
     {
-        if ($matricula === ($_SESSION['usuario']['matricula'] ?? '')) {
-            Audit::write('usuario.excluir', 'blocked', $matricula, ['motivo' => 'auto_exclusao']);
+        try {
+            UsuarioService::excluir($matricula, $_SESSION['usuario']['matricula'] ?? '');
+        } catch (AutoAcaoNaoPermitidaException) {
             $this->flash('Você não pode excluir sua própria conta.', 'error');
             $this->redirect('/usuario');
-        }
-
-        if (Usuario::temRegistros($matricula)) {
-            Audit::write('usuario.excluir', 'blocked', $matricula, ['motivo' => 'possui_registros']);
+        } catch (PossuiRegistrosException) {
             $this->flash('Não é possível excluir: usuário possui agendamentos.', 'error');
             $this->redirect('/usuario');
         }
 
-        $nomeAlvo = Usuario::buscarPorMatricula($matricula)['nome'] ?? null;
-        Usuario::excluir($matricula);
-        Audit::write('usuario.excluir', 'success', $matricula, ['nome' => $nomeAlvo]);
         $this->flash('Usuário excluído com sucesso.', 'success');
         $this->redirect('/usuario');
     }

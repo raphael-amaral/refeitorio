@@ -1,6 +1,10 @@
 <?php
 
-use App\Models\Usuario; ?>
+use App\Models\Usuario;
+
+$oldInput = $_SESSION['old_input'] ?? null;
+unset($_SESSION['old_input']);
+?>
 <div class="usuarios-page">
 
     <div class="usuarios-layout">
@@ -129,16 +133,16 @@ use App\Models\Usuario; ?>
                         <div class="form-group" id="campo-matricula">
                             <label for="matricula">Matrícula</label>
                             <input type="text" id="matricula" name="matricula" maxlength="12"
-                                placeholder="Ex: 1234">
+                                placeholder="Ex: 1234" value="<?= htmlspecialchars($oldInput['matricula'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="nome">Nome</label>
                             <input type="text" id="nome" name="nome" required maxlength="100"
-                                placeholder="Nome completo">
+                                placeholder="Nome completo" value="<?= htmlspecialchars($oldInput['nome'] ?? '') ?>">
                         </div>
                         <div class="form-group">
                             <label for="senha" id="label-senha">Senha</label>
-                            <input type="password" id="senha" name="senha" minlength="6"
+                            <input type="password" id="senha" name="senha" minlength="5"
                                 placeholder="Deixe vazio para usar senha padrão">
                             <small id="hint-senha-padrao" style="color:#888;font-size:.78rem">
                                 Se vazio, a senha será <strong>stcasa</strong> + matrícula
@@ -149,16 +153,17 @@ use App\Models\Usuario; ?>
                         </div>
                         <div class="form-group" id="campo-confirmar-senha" style="display:none;">
                             <label for="confirmar_senha">Confirmar senha</label>
-                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="6"
+                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="5"
                                 placeholder="Repita a senha">
                         </div>
                         <div class="form-group">
                             <label for="tipo">Perfil</label>
+                            <?php $tipoAntigo = $oldInput['tipo'] ?? 'comum'; ?>
                             <select id="tipo" name="tipo">
-                                <option value="comum">Comum</option>
-                                <option value="snd">SND</option>
-                                <option value="dp">Dep. Pessoal</option>
-                                <option value="dev">Dev</option>
+                                <option value="comum" <?= $tipoAntigo === 'comum' ? 'selected' : '' ?>>Comum</option>
+                                <option value="snd" <?= $tipoAntigo === 'snd' ? 'selected' : '' ?>>SND</option>
+                                <option value="dp" <?= $tipoAntigo === 'dp' ? 'selected' : '' ?>>Dep. Pessoal</option>
+                                <option value="dev" <?= $tipoAntigo === 'dev' ? 'selected' : '' ?>>Dev</option>
                             </select>
                         </div>
                         <div class="form-actions" style="gap:8px;display:flex;justify-content:flex-end">
@@ -279,29 +284,30 @@ use App\Models\Usuario; ?>
             }
         });
 
+        function entrarModoEdicao(mat, nome, tipo) {
+            modoEdicao = true;
+
+            form.action = '/usuario/' + encodeURIComponent(mat) + '/editar';
+            titulo.textContent = 'Editar usuário';
+            campoMat.style.display = 'none';
+            inputMat.removeAttribute('required');
+            hintSenhaPadrao.style.display = 'none';
+            hintSenhaEdicao.style.display = 'block';
+
+            inputNome.value = nome;
+            selectTipo.value = tipo;
+            inputSenha.value = '';
+            campoConfirmar.style.display = 'none';
+            inputConfirmar.value = '';
+            inputConfirmar.removeAttribute('required');
+
+            btnSubmit.textContent = 'Salvar alterações';
+            btnCancel.style.display = 'inline-block';
+        }
+
         document.querySelectorAll('.btn-editar-u').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                modoEdicao = true;
-                var mat = btn.dataset.matricula;
-                var nome = btn.dataset.nome;
-                var tipo = btn.dataset.tipo;
-
-                form.action = '/usuario/' + encodeURIComponent(mat) + '/editar';
-                titulo.textContent = 'Editar usuário';
-                campoMat.style.display = 'none';
-                inputMat.removeAttribute('required');
-                hintSenhaPadrao.style.display = 'none';
-                hintSenhaEdicao.style.display = 'block';
-
-                inputNome.value = nome;
-                selectTipo.value = tipo;
-                inputSenha.value = '';
-                campoConfirmar.style.display = 'none';
-                inputConfirmar.value = '';
-                inputConfirmar.removeAttribute('required');
-
-                btnSubmit.textContent = 'Salvar alterações';
-                btnCancel.style.display = 'inline-block';
+                entrarModoEdicao(btn.dataset.matricula, btn.dataset.nome, btn.dataset.tipo);
                 inputNome.focus();
             });
         });
@@ -322,6 +328,14 @@ use App\Models\Usuario; ?>
         });
 
         inputMat.setAttribute('required', '');
+
+        <?php if (($oldInput['modo'] ?? '') === 'editar'): ?>
+        entrarModoEdicao(
+            <?= json_encode($oldInput['matricula_alvo']) ?>,
+            <?= json_encode($oldInput['nome']) ?>,
+            <?= json_encode($oldInput['tipo']) ?>
+        );
+        <?php endif; ?>
 
         // Alternância entre abas Individual / Lote
         var btnAbaUnico = document.getElementById('btn-aba-unico');

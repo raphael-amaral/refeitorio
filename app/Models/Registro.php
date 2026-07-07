@@ -20,33 +20,46 @@ class Registro extends Model
         string $dataInicio = '',
         string $dataFim = ''
     ): array {
+        $filtro = static::filtrosStatusEPeriodo($status, $dataInicio, $dataFim);
+
         $sql = 'SELECT r.*, c.data, c.tipo AS tipo_refeicao, c.descricao
                   FROM registros r
                   JOIN cardapios c ON r.id_cardapio = c.id
-                 WHERE r.matricula_usuario = :matricula';
+                 WHERE r.matricula_usuario = :matricula'
+            . $filtro['sql']
+            . ' ORDER BY c.data DESC, c.tipo ASC';
 
-        $params = ['matricula' => $matricula];
+        $stmt = static::db()->prepare($sql);
+        $stmt->execute(['matricula' => $matricula] + $filtro['params']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Monta o fragmento SQL (cláusulas AND) e os parâmetros dos filtros de status e
+     * período do cardápio, comuns a buscarPorUsuario, buscarPorUsuarioPaginado,
+     * contarPorUsuario e buscarParaRelatorio.
+     *
+     * @return array{sql: string, params: array<string, string>}
+     */
+    private static function filtrosStatusEPeriodo(string $status, string $dataInicio, string $dataFim): array
+    {
+        $sql    = '';
+        $params = [];
 
         if ($status !== '') {
             $sql .= ' AND r.status = :status';
             $params['status'] = $status;
         }
-
         if ($dataInicio !== '') {
             $sql .= ' AND c.data >= :data_inicio';
             $params['data_inicio'] = $dataInicio;
         }
-
         if ($dataFim !== '') {
             $sql .= ' AND c.data <= :data_fim';
             $params['data_fim'] = $dataFim;
         }
 
-        $sql .= ' ORDER BY c.data DESC, c.tipo ASC';
-
-        $stmt = static::db()->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ['sql' => $sql, 'params' => $params];
     }
 
     /**
@@ -81,11 +94,7 @@ class Registro extends Model
      */
     public static function upsertAgendado(string $matricula, int $idCardapio): void
     {
-        static::db()->prepare(
-            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
-             VALUES (:matricula, :id_cardapio, 'agendado')
-             ON DUPLICATE KEY UPDATE status = 'agendado', atualizado_em = NOW()"
-        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        static::upsertStatus($matricula, $idCardapio, 'agendado');
     }
 
     /**
@@ -132,11 +141,30 @@ class Registro extends Model
      */
     public static function concluirExcecao(string $matricula, int $idCardapio): void
     {
-        static::db()->prepare(
-            "INSERT INTO registros (matricula_usuario, id_cardapio, status)
-             VALUES (:matricula, :id_cardapio, 'concluido')
-             ON DUPLICATE KEY UPDATE status = 'concluido', atualizado_em = NOW()"
-        )->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        static::upsertStatus($matricula, $idCardapio, 'concluido');
+    }
+
+    /**
+     * Cria um registro para o par usuário/cardápio, ou atualiza o status se já existir.
+     * Portável entre MySQL e SQLite (evita ON DUPLICATE KEY UPDATE, específico do MySQL).
+     */
+    private static function upsertStatus(string $matricula, int $idCardapio, string $status): void
+    {
+        $stmt = static::db()->prepare(
+            'SELECT id FROM registros WHERE matricula_usuario = :matricula AND id_cardapio = :id_cardapio'
+        );
+        $stmt->execute(['matricula' => $matricula, 'id_cardapio' => $idCardapio]);
+        $id = $stmt->fetchColumn();
+
+        if ($id !== false) {
+            static::atualizar((int) $id, ['status' => $status]);
+        } else {
+            static::criar([
+                'matricula_usuario' => $matricula,
+                'id_cardapio'       => $idCardapio,
+                'status'            => $status,
+            ]);
+        }
     }
 
     public static function buscarPorUsuarioPaginado(
@@ -147,30 +175,17 @@ class Registro extends Model
         int $offset,
         int $limite
     ): array {
+        $filtro = static::filtrosStatusEPeriodo($status, $dataInicio, $dataFim);
+
         $sql = 'SELECT r.*, c.data, c.tipo AS tipo_refeicao, c.descricao
                   FROM registros r
                   JOIN cardapios c ON r.id_cardapio = c.id
-                 WHERE r.matricula_usuario = :matricula';
-
-        $params = ['matricula' => $matricula];
-
-        if ($status !== '') {
-            $sql .= ' AND r.status = :status';
-            $params['status'] = $status;
-        }
-        if ($dataInicio !== '') {
-            $sql .= ' AND c.data >= :data_inicio';
-            $params['data_inicio'] = $dataInicio;
-        }
-        if ($dataFim !== '') {
-            $sql .= ' AND c.data <= :data_fim';
-            $params['data_fim'] = $dataFim;
-        }
-
-        $sql .= ' ORDER BY c.data DESC, c.tipo ASC LIMIT :limite OFFSET :offset';
+                 WHERE r.matricula_usuario = :matricula'
+            . $filtro['sql']
+            . ' ORDER BY c.data DESC, c.tipo ASC LIMIT :limite OFFSET :offset';
 
         $stmt = static::db()->prepare($sql);
-        foreach ($params as $k => $v) {
+        foreach (['matricula' => $matricula] + $filtro['params'] as $k => $v) {
             $stmt->bindValue($k, $v);
         }
         $stmt->bindValue('limite', $limite, PDO::PARAM_INT);
@@ -185,27 +200,16 @@ class Registro extends Model
         string $dataInicio = '',
         string $dataFim = ''
     ): int {
-        $sql    = 'SELECT COUNT(*)
-                     FROM registros r
-                     JOIN cardapios c ON r.id_cardapio = c.id
-                    WHERE r.matricula_usuario = :matricula';
-        $params = ['matricula' => $matricula];
+        $filtro = static::filtrosStatusEPeriodo($status, $dataInicio, $dataFim);
 
-        if ($status !== '') {
-            $sql .= ' AND r.status = :status';
-            $params['status'] = $status;
-        }
-        if ($dataInicio !== '') {
-            $sql .= ' AND c.data >= :data_inicio';
-            $params['data_inicio'] = $dataInicio;
-        }
-        if ($dataFim !== '') {
-            $sql .= ' AND c.data <= :data_fim';
-            $params['data_fim'] = $dataFim;
-        }
+        $sql = 'SELECT COUNT(*)
+                  FROM registros r
+                  JOIN cardapios c ON r.id_cardapio = c.id
+                 WHERE r.matricula_usuario = :matricula'
+            . $filtro['sql'];
 
         $stmt = static::db()->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(['matricula' => $matricula] + $filtro['params']);
         return (int) $stmt->fetchColumn();
     }
 
@@ -219,28 +223,18 @@ class Registro extends Model
         string $dataFim = '',
         string $matricula = ''
     ): array {
+        $filtro = static::filtrosStatusEPeriodo($status, $dataInicio, $dataFim);
+        $params = $filtro['params'];
+
         $sql = 'SELECT r.id, r.status, r.criado_em,
                        u.matricula, u.nome AS nome_usuario,
                        c.data AS data_cardapio, c.tipo AS tipo_refeicao, c.descricao
                   FROM registros r
                   JOIN usuarios  u ON r.matricula_usuario = u.matricula
                   JOIN cardapios c ON r.id_cardapio       = c.id
-                 WHERE 1=1';
+                 WHERE 1=1'
+            . $filtro['sql'];
 
-        $params = [];
-
-        if ($status !== '') {
-            $sql .= ' AND r.status = :status';
-            $params['status'] = $status;
-        }
-        if ($dataInicio !== '') {
-            $sql .= ' AND c.data >= :data_inicio';
-            $params['data_inicio'] = $dataInicio;
-        }
-        if ($dataFim !== '') {
-            $sql .= ' AND c.data <= :data_fim';
-            $params['data_fim'] = $dataFim;
-        }
         if ($matricula !== '') {
             $sql .= ' AND r.matricula_usuario LIKE :matricula';
             $params['matricula'] = '%' . $matricula . '%';
@@ -264,11 +258,11 @@ class Registro extends Model
                JOIN cardapios c ON r.id_cardapio = c.id
                JOIN usuarios  u ON r.matricula_usuario = u.matricula
               WHERE r.matricula_usuario = :matricula
-                AND c.data = CURDATE()
+                AND c.data = :hoje
               ORDER BY r.status ASC
               LIMIT 1"
         );
-        $stmt->execute(['matricula' => $matricula]);
+        $stmt->execute(['matricula' => $matricula, 'hoje' => date('Y-m-d')]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }

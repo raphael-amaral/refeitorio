@@ -132,17 +132,46 @@ class CardapioTest extends DatabaseTestCase
     }
 
     // =========================================================================
-    // Métodos MySQL-específicos (pulados no SQLite)
+    // proximosDias()
     // =========================================================================
 
-    public function testProximosDiasRequerMySQL(): void
+    public function testProximosDiasRetornaCardapiosNoIntervalo(): void
     {
-        $this->markTestSkipped('proximosDias() usa CURDATE() e DATE_ADD() — requer MySQL.');
+        $hoje = new \DateTime();
+        $this->inserirCardapio($hoje->format('Y-m-d'), 'almoco', 'HOJE');
+        $this->inserirCardapio((clone $hoje)->modify('+3 days')->format('Y-m-d'), 'almoco', 'DEPOIS');
+        $this->inserirCardapio((clone $hoje)->modify('-1 days')->format('Y-m-d'), 'almoco', 'ONTEM');
+        $this->inserirCardapio((clone $hoje)->modify('+10 days')->format('Y-m-d'), 'almoco', 'MUITO_DEPOIS');
+
+        $cardapios = Cardapio::proximosDias(7);
+
+        $this->assertCount(2, $cardapios);
+        $this->assertSame('HOJE', $cardapios[0]['descricao']);
+        $this->assertSame('DEPOIS', $cardapios[1]['descricao']);
     }
 
-    public function testSalvarDiaRequerMySQL(): void
+    // =========================================================================
+    // salvarDia()
+    // =========================================================================
+
+    public function testSalvarDiaCriaCardapioNovo(): void
     {
-        $this->markTestSkipped('salvarDia() usa ON DUPLICATE KEY UPDATE — requer MySQL.');
+        Cardapio::salvarDia('2026-08-01', 'almoco', 'NOVO CARDAPIO');
+
+        $cardapios = Cardapio::buscarPorData('2026-08-01');
+        $this->assertCount(1, $cardapios);
+        $this->assertSame('NOVO CARDAPIO', $cardapios[0]['descricao']);
+    }
+
+    public function testSalvarDiaAtualizaCardapioExistente(): void
+    {
+        $this->inserirCardapio('2026-08-01', 'almoco', 'ORIGINAL');
+
+        Cardapio::salvarDia('2026-08-01', 'almoco', 'ATUALIZADO');
+
+        $cardapios = Cardapio::buscarPorData('2026-08-01');
+        $this->assertCount(1, $cardapios);
+        $this->assertSame('ATUALIZADO', $cardapios[0]['descricao']);
     }
 
     // =========================================================================

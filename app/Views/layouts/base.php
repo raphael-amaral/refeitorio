@@ -1,7 +1,11 @@
 <?php
-$u       = $_SESSION['usuario'] ?? [];
+
+use App\Services\Perfil;
+
+$u        = $_SESSION['usuario'] ?? [];
 $urlAtual = strtok($_SERVER['REQUEST_URI'], '?');
 $navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' : '';
+$tipoU    = $u['tipo'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -20,30 +24,30 @@ $navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' 
         <a href="/painel" class="navbar-brand">Refeitório</a>
 
         <ul class="navbar-nav">
-            <?php if (($u['tipo'] ?? '') !== 'dp'): ?>
+            <?php if (!Perfil::ehDp($tipoU)): ?>
                 <li><a href="/painel" <?= $navAtivo('/painel') ?>>Painel</a></li>
             <?php endif; ?>
-            <?php if (($u['tipo'] ?? '') === 'comum'): ?>
+            <?php if (Perfil::ehComum($tipoU)): ?>
                 <li><a href="/registro" <?= $navAtivo('/registro') ?>>Meus Agendamentos</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['snd', 'dev'], true)): ?>
+            <?php if (Perfil::podeScanner($tipoU)): ?>
                 <li><a href="/cardapio" <?= $navAtivo('/cardapio') ?>>Cardápios</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['dp', 'dev'], true)): ?>
+            <?php if (Perfil::podeDp($tipoU)): ?>
                 <li><a href="/questor" <?= $navAtivo('/questor') ?>>Exportação (Questor)</a></li>
             <?php endif; ?>
-            <?php if (in_array($u['tipo'] ?? '', ['snd', 'dp', 'dev'], true)): ?>
+            <?php if (Perfil::podeRelatorio($tipoU)): ?>
                 <li><a href="/relatorios" <?= $navAtivo('/relatorios') ?>>Relatórios</a></li>
             <?php endif; ?>
-            <?php if (($u['tipo'] ?? '') === 'dev'): ?>
+            <?php if (Perfil::ehDev($tipoU)): ?>
                 <li><a href="/usuario" <?= $navAtivo('/usuario') ?>>Usuários</a></li>
             <?php endif; ?>
         </ul>
         <div class="navbar-user">
             <span class="navbar-nome navbar-nome--full"><?= htmlspecialchars($u['nome'] ?? '') ?></span>
             <span class="navbar-nome navbar-nome--short"><?= htmlspecialchars(explode(' ', $u['nome'] ?? '')[0]) ?></span>
-            <span class="badge badge--tipo"><?= htmlspecialchars(($u['tipo'] ?? '') === 'comum' ? 'Colaborador' : ($u['tipo'] ?? '')) ?></span>
-            <?php if (($u['tipo'] ?? '') === 'comum'): ?>
+            <span class="badge badge--tipo"><?= htmlspecialchars(Perfil::ehComum($tipoU) ? 'Colaborador' : $tipoU) ?></span>
+            <?php if (Perfil::ehComum($tipoU)): ?>
                 <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
                     class="btn-logout" style="background:none;border:none;cursor:pointer;">Trocar senha</button>
             <?php endif; ?>
@@ -57,7 +61,7 @@ $navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' 
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($_SESSION['usuario']['senha_padrao']) && ($u['tipo'] ?? '') === 'comum'): ?>
+    <?php if (!empty($_SESSION['usuario']['senha_padrao']) && Perfil::ehComum($tipoU)): ?>
         <div class="alert-senha-padrao">
             Você está usando a senha provisória. Recomendamos trocar para maior segurança.
             <button type="button" onclick="document.getElementById('modal-trocar-senha').style.display='flex'"
@@ -77,7 +81,7 @@ $navAtivo = fn(string $href): string => $urlAtual === $href ? ' class="active"' 
         <?= $conteudo ?>
     </main>
 
-    <?php if (($u['tipo'] ?? '') === 'comum'): ?>
+    <?php if (Perfil::ehComum($tipoU)): ?>
         <!-- Modal troca de senha (apenas usuários comuns) -->
         <div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;">
             <div style="background:#fff;border-radius:8px;padding:28px 32px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);">

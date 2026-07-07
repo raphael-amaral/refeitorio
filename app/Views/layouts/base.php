@@ -21,7 +21,7 @@ $tipoU    = $u['tipo'] ?? '';
 <body>
 
     <nav class="navbar">
-        <a href="/painel" class="navbar-brand">Refeitório</a>
+        <a href="/painel" class="navbar-brand">Refeitório Santa Casa Alegrete</a>
 
         <ul class="navbar-nav">
             <?php if (!Perfil::ehDp($tipoU)): ?>

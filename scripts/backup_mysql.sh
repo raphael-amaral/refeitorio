@@ -30,13 +30,15 @@ FILE_PATH="$DIR_BACKUP/backup_${DB_DATABASE}_${DATE}.sql"
 
 # Se hoje for o ultimo dia do mes, cria backup especial de fim de mes
 if [[ "$(date -d tomorrow +%d)" == "01" ]]; then
-  FINAL_MES_FILE="$DIR_BACKUP/backup_${DB_DATABASE}_FIM_MES_$(date +%Y-%m).sql"
+  MESES=(JANEIRO FEVEREIRO MARCO ABRIL MAIO JUNHO JULHO AGOSTO SETEMBRO OUTUBRO NOVEMBRO DEZEMBRO)
+  MES_NOME="${MESES[$((10#$(date +%m) - 1))]}"
+  FINAL_MES_FILE="$DIR_BACKUP/backup_${DB_DATABASE}_FIM_${MES_NOME}_$(date +%Y).sql"
   cp "$FILE_PATH" "$FINAL_MES_FILE"
 fi
 
-# Remove apenas backups diarios com mais de 7 dias (nao remove FIM_MES)
+# Remove apenas backups diarios com mais de 7 dias (nao remove backups FIM_<MES>)
 find "$DIR_BACKUP" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
-  ! -name "*_FIM_MES_*" -mtime +6 -delete
+  ! -name "*_FIM_*" -mtime +6 -delete
 
 # Copia backups questor gerados pelo sistema para o diretório externo
 QUESTOR_SRC="$SCRIPT_DIR/../storage/backups/questor"

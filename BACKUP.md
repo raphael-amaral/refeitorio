@@ -37,11 +37,11 @@ Executa todo dia às **02:00**.
    /home/usuario/raphael/projetos/backups_refeitorio/backups/
      backup_refeitorio_snd_YYYY-MM-DD_HH-MM-SS.sql
    ```
-4. Se for o **último dia do mês**, cria uma cópia especial:
+4. Se for o **último dia do mês**, cria uma cópia especial com o nome do mês por extenso (em português):
    ```
-   backup_refeitorio_snd_FIM_MES_YYYY-MM.sql
+   backup_refeitorio_snd_FIM_JULHO_YYYY.sql
    ```
-5. Remove backups diários com **mais de 7 dias**. Backups `FIM_MES` **nunca são removidos** automaticamente.
+5. Remove backups diários com **mais de 7 dias**. Backups `FIM_<MES>` (ex.: `FIM_JANEIRO`, `FIM_FEVEREIRO`) **nunca são removidos** automaticamente.
 
 ### Retenção no servidor Linux
 
@@ -78,7 +78,7 @@ Executa todo dia às **02:00**.
 2. Após o download, **remove** do destino Windows os backups diários que não sejam de hoje nem de ontem — mantendo sempre:
    - Backup de **hoje**
    - Backup de **ontem**
-   - Todos os backups **`FIM_MES`**
+   - Todos os backups **`FIM_<MES>`** (ex.: `FIM_JANEIRO`, `FIM_FEVEREIRO`)
 
 ### Retenção na máquina Windows
 

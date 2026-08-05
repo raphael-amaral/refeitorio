@@ -31,7 +31,7 @@ for /f %%a in ('powershell -NoProfile -Command "(Get-Date).AddDays(-1).ToString(
 
 REM Remove arquivos que NAO sejam especiais, hoje ou ontem
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$p='%DESTINO%'; $hoje='%HOJE%'; $ontem='%ONTEM%'; if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { $n=$_.Name; if ($n -notmatch '_FIM_MES_' -and $n -notmatch $hoje -and $n -notmatch $ontem) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } }"
+    "$p='%DESTINO%'; $hoje='%HOJE%'; $ontem='%ONTEM%'; if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { $n=$_.Name; if ($n -notmatch '_FIM_' -and $n -notmatch $hoje -and $n -notmatch $ontem) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } }"
 
 if errorlevel 1 (
     echo [ERRO] Falha durante limpeza dos backups antigos.

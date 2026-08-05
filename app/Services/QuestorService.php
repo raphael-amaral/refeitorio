@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Core\Audit;
+use App\Exceptions\PeriodoInvalidoException;
+use App\Exceptions\QuestorBackupException;
 use App\Models\Registro;
 
 class QuestorService
@@ -18,6 +20,15 @@ class QuestorService
         $reData     = '/^\d{4}-\d{2}-\d{2}$/';
         $dataInicio = preg_match($reData, $dataInicioRaw) ? $dataInicioRaw : date('Y-m-01');
         $dataFim    = preg_match($reData, $dataFimRaw)    ? $dataFimRaw    : date('Y-m-t');
+
+        if ($dataInicio > $dataFim) {
+            Audit::write('questor_export', 'blocked', null, [
+                'motivo'      => 'periodo_invertido',
+                'data_inicio' => $dataInicio,
+                'data_fim'    => $dataFim,
+            ]);
+            throw new PeriodoInvalidoException();
+        }
 
         $valorRefeicao = (float) str_replace(',', '.', $valorRefeicaoRaw);
         if ($valorRefeicao <= 0) {
@@ -100,6 +111,7 @@ class QuestorService
 
         $sufixo  = str_replace('-', '', $dataInicio) . '_' . str_replace('-', '', $dataFim);
         $arquivo = $dir . '/questor_' . $sufixo . '_' . date('His') . '.sql';
+        $temporario = $arquivo . '.tmp';
 
         $cmd = sprintf(
             'mysqldump --skip-ssl --no-tablespaces -h %s -u %s -p%s %s > %s 2>&1',
@@ -107,15 +119,28 @@ class QuestorService
             escapeshellarg($user),
             escapeshellarg($password),
             escapeshellarg($database),
-            escapeshellarg($arquivo)
+            escapeshellarg($temporario)
         );
 
         exec($cmd, $output, $exitCode);
 
         if ($exitCode !== 0) {
-            Audit::write('questor_backup', 'error', null, ['saida' => implode("\n", $output)]);
-        } else {
-            Audit::write('questor_backup', 'success', null, ['arquivo' => basename($arquivo)]);
+            $erro = is_file($temporario) ? trim((string) file_get_contents($temporario)) : implode("\n", $output);
+            if (is_file($temporario)) {
+                unlink($temporario);
+            }
+            Audit::write('questor_backup', 'error', null, ['saida' => $erro]);
+            throw new QuestorBackupException();
         }
+
+        if (!is_file($temporario) || filesize($temporario) === 0 || !rename($temporario, $arquivo)) {
+            if (is_file($temporario)) {
+                unlink($temporario);
+            }
+            Audit::write('questor_backup', 'error', null, ['saida' => 'Dump vazio ou falha ao publicar o arquivo.']);
+            throw new QuestorBackupException();
+        }
+
+        Audit::write('questor_backup', 'success', null, ['arquivo' => basename($arquivo)]);
     }
 }

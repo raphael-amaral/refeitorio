@@ -36,9 +36,16 @@ if [[ "$(date -d tomorrow +%d)" == "01" ]]; then
   cp "$FILE_PATH" "$FINAL_MES_FILE"
 fi
 
-# Remove apenas backups diarios com mais de 7 dias (nao remove backups FIM_<MES>)
-find "$DIR_BACKUP" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
-  ! -name "*_FIM_*" -mtime +6 -delete
+# Mantem exatamente os 7 backups diarios mais recentes (nao considera FIM_<MES>)
+mapfile -t BACKUPS_DIARIOS < <(
+  find "$DIR_BACKUP" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
+    ! -name "*_FIM_*" -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
+)
+if (( ${#BACKUPS_DIARIOS[@]} > 7 )); then
+  for backup_antigo in "${BACKUPS_DIARIOS[@]:7}"; do
+    rm -- "$backup_antigo"
+  done
+fi
 
 # Copia backups questor gerados pelo sistema para o diretório externo
 QUESTOR_SRC="$SCRIPT_DIR/../storage/backups/questor"

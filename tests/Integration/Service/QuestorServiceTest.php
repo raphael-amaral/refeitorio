@@ -2,6 +2,7 @@
 
 namespace Tests\Integration\Service;
 
+use App\Exceptions\PeriodoInvalidoException;
 use App\Services\QuestorService;
 use Tests\Integration\DatabaseTestCase;
 
@@ -43,6 +44,13 @@ class QuestorServiceTest extends DatabaseTestCase
 
         $this->assertSame(date('Y-m-01'), $relatorio['data_inicio']);
         $this->assertSame(date('Y-m-t'), $relatorio['data_fim']);
+    }
+
+    public function testRelatorioRejeitaPeriodoInvertido(): void
+    {
+        $this->expectException(PeriodoInvalidoException::class);
+
+        QuestorService::relatorio('2026-08-01', '2026-07-31', '15');
     }
 
     public function testRelatorioUsaValorRefeicaoInformado(): void

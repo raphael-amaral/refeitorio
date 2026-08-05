@@ -41,15 +41,24 @@ Executa todo dia às **02:00**.
    ```
    backup_refeitorio_snd_FIM_JULHO_YYYY.sql
    ```
-5. Remove backups diários com **mais de 7 dias**. Backups `FIM_<MES>` (ex.: `FIM_JANEIRO`, `FIM_FEVEREIRO`) **nunca são removidos** automaticamente.
+5. Mantém exatamente os **7 backups diários mais recentes**. Backups `FIM_<MES>` (ex.: `FIM_JANEIRO`, `FIM_FEVEREIRO`) **nunca são removidos** automaticamente.
 
 ### Retenção no servidor Linux
 
 | Tipo              | Retenção                   |
 |-------------------|----------------------------|
-| Diário            | 7 dias (os 7 mais recentes)|
+| Diário            | Os 7 arquivos mais recentes|
 | Fim de mês        | Indefinida (manual)        |
 | Pré-restauração   | Indefinida (manual)        |
+
+### Backups da exportação Questor
+
+Cada exportação Questor concluída gera um dump em `storage/backups/questor/`, que
+é copiado pelo backup diário para o subdiretório externo `backups/questor/`.
+Somente dumps concluídos são publicados com extensão `.sql`; se o `mysqldump`
+falhar ou produzir um arquivo vazio, a exportação é cancelada e o temporário é
+removido. Esses arquivos correspondem ao histórico de exportações registrado no
+banco e não expiram automaticamente.
 
 ### Variáveis relevantes do `.env`
 

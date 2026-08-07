@@ -38,6 +38,7 @@ CREATE TABLE questor_exportacoes (
     data_fim DATE NOT NULL,
     valor_refeicao DECIMAL(6,2) NOT NULL,
     exportado_por VARCHAR(12),
+    arquivo_backup VARCHAR(255),
     criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (exportado_por) REFERENCES usuarios(matricula)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -83,6 +83,19 @@ abstract class DatabaseTestCase extends TestCase
                 FOREIGN KEY (id_cardapio)       REFERENCES cardapios(id)
             )
         ");
+
+        $this->pdo->exec("
+            CREATE TABLE questor_exportacoes (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_inicio     TEXT NOT NULL,
+                data_fim        TEXT NOT NULL,
+                valor_refeicao  NUMERIC NOT NULL,
+                exportado_por   TEXT,
+                arquivo_backup  TEXT,
+                criado_em       TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (exportado_por) REFERENCES usuarios(matricula)
+            )
+        ");
     }
 
     // -------------------------------------------------------------------------

@@ -1,0 +1,42 @@
+// Database: MySQL 8.0
+// https://dbdiagram.io/d 
+// Modulo: Refeitorio
+
+Table cardapios {
+  id int [pk]
+  data date [not null]
+  descricao text [null]
+  tipo enum('almoco', 'jantar') [not null]
+  criado_em datetime [not null, default: 'CURRENT_TIMESTAMP']
+  atualizado_em datetime [null, default: 'CURRENT_TIMESTAMP']
+}
+
+Table questor_exportacoes{
+  id int [pk]
+  data_inicio date [not null]
+  data_fim date [not null]
+  valor_refeicao decimal(6,2) [not null]
+  exportado_por varchar(12) [null]
+  criado_em datetime [not null, default: 'CURRENT_TIMESTAMP']
+}
+
+Table usuarios {
+  matricula varchar(12) [pk]
+  nome varchar(100) [not null]
+  senha varchar(255) [not null]
+  tipo enum('comum', 'snd', 'dp', 'dev') [not null, default: 'comum']
+  ativo tinyint(1) [not null, default: '1']
+  criado_em datetime [not null, default: 'CURRENT_TIMESTAMP']
+}
+
+Table registros{
+  id int [pk]
+  matricula_usuario varchar(12) [not null]
+  id_cardapio int [not null]
+  status enum('agendado', 'concluido', 'cancelado') [not null, default: 'agendado']
+  criado_em datetime [not null, default: 'CURRENT_TIMESTAMP']
+  atualizado_em datetime [null, default: 'CURRENT_TIMESTAMP']
+}
+
+Ref: registros.matricula_usuario ?> usuarios.matricula
+Ref: registros.id_cardapio ?> cardapios.id

@@ -49,3 +49,6 @@ composer.phar
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# 7.
+*.dbdiagram

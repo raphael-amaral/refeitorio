@@ -66,7 +66,11 @@ if [[ ! -d "$BACKUP_DIR" ]]; then
   exit 1
 fi
 
-mapfile -t BACKUP_FILES < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name "*${DB_DATABASE}*.sql" | sort)
+# Durante a transição, também reconhece os backups antigos que ainda estiverem na raiz.
+mapfile -t BACKUP_FILES < <(
+  find "$BACKUP_DIR" "$BACKUP_DIR/diarios" "$BACKUP_DIR/fim_mes" \
+    -maxdepth 1 -type f -name "*${DB_DATABASE}*.sql" 2>/dev/null | sort -u
+)
 
 if [[ ${#BACKUP_FILES[@]} -eq 0 ]]; then
   echo "Nenhum arquivo .sql de '$DB_DATABASE' encontrado em: $BACKUP_DIR"
@@ -128,7 +132,8 @@ fi
 
 TARGET_FILE="$(resolve_target_file "$TARGET_ARG")"
 DATE_NOW="$(date +%Y-%m-%d_%H-%M-%S)"
-PRE_BACKUP_FILE="$BACKUP_DIR/pre_restore_${DB_DATABASE}_${DATE_NOW}.sql"
+mkdir -p "$BACKUP_DIR/pre_restore"
+PRE_BACKUP_FILE="$BACKUP_DIR/pre_restore/pre_restore_${DB_DATABASE}_${DATE_NOW}.sql"
 
 echo
 echo "Arquivo selecionado para restaurar: $TARGET_FILE"

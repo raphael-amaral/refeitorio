@@ -23,15 +23,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [INFO] Download concluido. Mantendo apenas especiais, hoje e ontem...
+echo [INFO] Download concluido. Limpando diarios antigos (fim_mes, questor e pre_restore ficam intactos)...
 
 REM Datas para manter
 for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set "HOJE=%%a"
 for /f %%a in ('powershell -NoProfile -Command "(Get-Date).AddDays(-1).ToString(\"yyyy-MM-dd\")"') do set "ONTEM=%%a"
 
-REM Remove arquivos que NAO sejam especiais, hoje ou ontem
+REM Remove, apenas na pasta diarios, arquivos que NAO sejam de hoje ou ontem
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$p='%DESTINO%'; $hoje='%HOJE%'; $ontem='%ONTEM%'; if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { $n=$_.Name; if ($n -notmatch '_FIM_MES_' -and $n -notmatch $hoje -and $n -notmatch $ontem) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } }"
+    "$p='%DESTINO%\diarios'; $hoje='%HOJE%'; $ontem='%ONTEM%'; if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { $n=$_.Name; if ($n -notmatch $hoje -and $n -notmatch $ontem) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } }"
 
 if errorlevel 1 (
     echo [ERRO] Falha durante limpeza dos backups antigos.

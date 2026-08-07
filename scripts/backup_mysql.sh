@@ -18,33 +18,47 @@ DB_USER="${DB_USERNAME:?DB_USERNAME não definido no .env}"
 DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD não definido no .env}"
 DB_DATABASE="${DB_DATABASE:?DB_DATABASE não definido no .env}"
 DIR_BACKUP="${BACKUP_DIR:?BACKUP_DIR não definido no .env}"
+DIR_DIARIOS="$DIR_BACKUP/diarios"
+DIR_FIM_MES="$DIR_BACKUP/fim_mes"
 
-mkdir -p "$DIR_BACKUP"
+mkdir -p "$DIR_DIARIOS" "$DIR_FIM_MES"
 
 DATE="$(date +%Y-%m-%d_%H-%M-%S)"
-FILE_PATH="$DIR_BACKUP/backup_${DB_DATABASE}_${DATE}.sql"
+FILE_PATH="$DIR_DIARIOS/backup_${DB_DATABASE}_${DATE}.sql"
+TEMP_FILE="${FILE_PATH}.tmp"
 
-# Backup diario
+cleanup() {
+  rm -f -- "$TEMP_FILE"
+}
+trap cleanup EXIT
+
+# Publica o backup diario apenas depois que o mysqldump terminar com conteúdo.
 /usr/bin/docker exec -e MYSQL_PWD="$DB_PASSWORD" "$CONTAINER_NAME" \
-  /usr/bin/mysqldump --no-tablespaces -u"$DB_USER" "$DB_DATABASE" > "$FILE_PATH"
+  /usr/bin/mysqldump --no-tablespaces -u"$DB_USER" "$DB_DATABASE" > "$TEMP_FILE"
+
+if [[ ! -s "$TEMP_FILE" ]]; then
+  echo "Erro: mysqldump gerou um arquivo vazio." >&2
+  exit 1
+fi
+
+mv -- "$TEMP_FILE" "$FILE_PATH"
+trap - EXIT
 
 # Se hoje for o ultimo dia do mes, cria backup especial de fim de mes
 if [[ "$(date -d tomorrow +%d)" == "01" ]]; then
-  FINAL_MES_FILE="$DIR_BACKUP/backup_${DB_DATABASE}_FIM_MES_$(date +%Y-%m).sql"
+  MESES=(JANEIRO FEVEREIRO MARCO ABRIL MAIO JUNHO JULHO AGOSTO SETEMBRO OUTUBRO NOVEMBRO DEZEMBRO)
+  MES_NOME="${MESES[$((10#$(date +%m) - 1))]}"
+  FINAL_MES_FILE="$DIR_FIM_MES/backup_${DB_DATABASE}_FIM_${MES_NOME}_$(date +%Y).sql"
   cp "$FILE_PATH" "$FINAL_MES_FILE"
 fi
 
-# Remove apenas backups diarios com mais de 7 dias (nao remove FIM_MES)
-find "$DIR_BACKUP" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
-  ! -name "*_FIM_MES_*" -mtime +6 -delete
-
-# Copia backups questor gerados pelo sistema para o diretório externo
-QUESTOR_SRC="$SCRIPT_DIR/../storage/backups/questor"
-QUESTOR_DST="$DIR_BACKUP/questor"
-if [[ -d "$QUESTOR_SRC" ]]; then
-  mkdir -p "$QUESTOR_DST"
-  find "$QUESTOR_SRC" -maxdepth 1 -type f -name "questor_*.sql" | while read -r f; do
-    dest="$QUESTOR_DST/$(basename "$f")"
-    [[ ! -f "$dest" ]] && cp "$f" "$dest"
+# Mantem exatamente os 7 backups diarios mais recentes.
+mapfile -t BACKUPS_DIARIOS < <(
+  find "$DIR_DIARIOS" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
+    -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
+)
+if (( ${#BACKUPS_DIARIOS[@]} > 7 )); then
+  for backup_antigo in "${BACKUPS_DIARIOS[@]:7}"; do
+    rm -- "$backup_antigo"
   done
 fi

@@ -1,6 +1,6 @@
 # Sistema de Backup — Refeitório SND
 
-O backup opera em duas camadas independentes: o **servidor Linux** gera os dumps diariamente, e a **máquina Windows INF010** baixa e arquiva uma cópia local via SCP.
+O backup opera em duas camadas independentes: o **servidor Linux** gera os dumps (diários, fim de mês e Questor), e a **máquina Windows INF010** baixa e arquiva uma cópia local via SCP. Dentro do diretório de backups, cada tipo fica na sua própria subpasta.
 
 ---
 
@@ -8,13 +8,15 @@ O backup opera em duas camadas independentes: o **servidor Linux** gera os dumps
 
 ```
 [Servidor Linux 10.1.0.225]                  [Windows INF010 10.1.0.127]
-  cron 02:00                                   Agendador de Tarefas
-  backup_mysql.sh                              baixar_backups.bat
-       │                                              │
-       ▼                                             ▼
-  /home/usuario/raphael/projetos/        C:\Users\usuario\estagio\producao\
-    backups_refeitorio/backups/            backups_refeitorio\backups\
-  (dump SQL do container Docker)         (cópia local dos arquivos .sql)
+  cron 02:00          container web            Agendador de Tarefas
+  backup_mysql.sh     (export Questor)         baixar_backups.bat
+       │                    │                         │
+       ▼                    ▼                        ▼
+  backups_refeitorio/backups/             C:\...\backups_refeitorio\backups\
+    ├── diarios/       (7 arquivos)          (cópia local via SCP, mesma estrutura)
+    ├── fim_mes/       (indefinido)
+    ├── questor/       (indefinido, escrito direto pelo container)
+    └── pre_restore/   (indefinido, gerado por restaurar_backup.sh)
 ```
 
 ---
@@ -34,31 +36,68 @@ Executa todo dia às **02:00**.
 2. Executa `mysqldump` dentro do container Docker `refeitorio-db-1` (ou o valor de `CONTAINER_NAME` no `.env`).
 3. Salva o dump em:
    ```
-   /home/usuario/raphael/projetos/backups_refeitorio/backups/
-     backup_refeitorio_snd_YYYY-MM-DD_HH-MM-SS.sql
+   backups_refeitorio/backups/diarios/backup_refeitorio_snd_YYYY-MM-DD_HH-MM-SS.sql
    ```
-4. Se for o **último dia do mês**, cria uma cópia especial:
+4. Se for o **último dia do mês**, cria uma cópia especial com o nome do mês por extenso:
    ```
-   backup_refeitorio_snd_FIM_MES_YYYY-MM.sql
+   backups_refeitorio/backups/fim_mes/backup_refeitorio_snd_FIM_JULHO_YYYY.sql
    ```
-5. Remove backups diários com **mais de 7 dias**. Backups `FIM_MES` **nunca são removidos** automaticamente.
+5. Mantém exatamente os **7 arquivos mais recentes** em `diarios/`. `fim_mes/` nunca é tocado por essa rotina — fica em pasta separada.
+
+Backups **Questor** não passam por esse script: o container web escreve direto em `backups_refeitorio/backups/questor/` a cada exportação (ver seção própria abaixo).
 
 ### Retenção no servidor Linux
 
-| Tipo              | Retenção                   |
-|-------------------|----------------------------|
-| Diário            | 7 dias (os 7 mais recentes)|
-| Fim de mês        | Indefinida (manual)        |
-| Pré-restauração   | Indefinida (manual)        |
+| Tipo              | Pasta           | Retenção                   |
+|-------------------|-----------------|-----------------------------|
+| Diário            | `diarios/`      | Os 7 arquivos mais recentes|
+| Fim de mês        | `fim_mes/`      | Indefinida                 |
+| Questor           | `questor/`      | Indefinida                 |
+| Pré-restauração   | `pre_restore/`  | Indefinida (manual)        |
+
+Fim de mês, Questor e pré-restauração não têm rotação automática — são registros de auditoria/desconto em folha, não backups de curto prazo, e o volume de dados é pequeno o suficiente para não pesar no disco com o tempo.
+
+### Backup Questor (exportação de vale-refeição)
+
+Toda vez que o RH exporta o CSV Questor em `/questor/exportar` (usado para desconto em folha), o `QuestorService::gerarBackup()` roda um `mysqldump` completo do banco **direto** no container web e salva em:
+```
+backups_refeitorio/backups/questor/questor_<banco>_<data_inicio>_<data_fim>_<HHMMSS>.sql
+```
+O nome do banco (`refeitorio_snd` em produção, `refeitorio_teste` em teste) fica sempre no nome do arquivo, já que ambiente de produção e teste compartilham o mesmo `BACKUP_DIR` neste servidor.
+
+Isso exige um bind mount do host para dentro do container (ver `compose.yaml`), para que o `mysqldump` do PHP escreva direto no destino final — sem depender do cron noturno para "materializar" o backup fora do container.
+
+O nome do arquivo gerado é salvo na coluna `arquivo_backup` da tabela `questor_exportacoes`, junto com o restante do histórico daquela exportação.
+
+O dump é escrito primeiro com extensão `.tmp` e só é publicado como `.sql` depois de o `mysqldump` terminar com sucesso e produzir conteúdo. Se isso falhar, o temporário é removido e a exportação do CSV é cancelada.
+
+### Atualização de uma instalação existente
+
+Antes de subir a versão que grava `arquivo_backup`, aplique a migração uma única vez no banco de cada ambiente:
+
+```bash
+docker compose exec -T db sh -c \
+  'MYSQL_PWD="$DB_PASSWORD" mysql -u"$DB_USERNAME" "$DB_DATABASE"' \
+  < database/migrations/20260807_add_arquivo_backup_questor_exportacoes.sql
+```
+
+Depois, recrie o container web para ativar o bind mount de `questor/`:
+
+```bash
+docker compose up -d --build web
+```
+
+Backups anteriores que ainda estejam diretamente na raiz de `BACKUP_DIR` continuam aparecendo no restaurador. Eles podem ser reorganizados manualmente depois da implantação; a atualização não os move nem remove automaticamente.
 
 ### Variáveis relevantes do `.env`
 
-| Variável         | Fallback padrão      | Descrição              |
-|------------------|----------------------|------------------------|
-| `CONTAINER_NAME` | `refeitorio-db-1`    | Nome do container MySQL|
-| `DB_USER`        | `root`               | Usuário do banco       |
-| `DB_PASSWORD`    | —                    | Senha do banco         |
-| `DB_DATABASE`    | `refeitorio_snd`     | Nome do banco          |
+| Variável          | Obrigatória | Descrição                         |
+|-------------------|-------------|-----------------------------------|
+| `CONTAINER_NAME`  | Sim         | Nome do container MySQL           |
+| `DB_USERNAME`     | Sim         | Usuário do banco                  |
+| `DB_PASSWORD`     | Sim         | Senha do banco                    |
+| `DB_DATABASE`     | Sim         | Nome do banco                     |
+| `BACKUP_DIR`      | Sim         | Diretório absoluto compartilhado  |
 
 ---
 
@@ -72,20 +111,19 @@ Executa todo dia às **02:00**.
 
 ### O que faz
 
-1. Baixa via **SCP** todos os arquivos `.sql` do servidor Linux:
-   - **Origem:** `usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups/*.sql`
-   - **Destino:** `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\`
-2. Após o download, **remove** do destino Windows os backups diários que não sejam de hoje nem de ontem — mantendo sempre:
-   - Backup de **hoje**
-   - Backup de **ontem**
-   - Todos os backups **`FIM_MES`**
+1. Baixa via **SCP**, recursivamente, toda a árvore de pastas do servidor Linux:
+   - **Origem:** `usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups/.`
+   - **Destino:** `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (mesma estrutura de subpastas)
+2. Após o download, **remove** apenas de `%DESTINO%\diarios\` os backups que não sejam de hoje nem de ontem. As pastas `fim_mes\`, `questor\` e `pre_restore\` nunca são tocadas por essa limpeza — ficam com o histórico completo.
 
 ### Retenção na máquina Windows
 
-| Tipo              | Retenção                      |
-|-------------------|-------------------------------|
-| Diário            | Hoje + ontem (2 arquivos)     |
-| Fim de mês        | Todos (não são removidos)     |
+| Tipo              | Pasta          | Retenção                      |
+|-------------------|----------------|--------------------------------|
+| Diário            | `diarios\`     | Hoje + ontem (2 arquivos)     |
+| Fim de mês        | `fim_mes\`     | Todos (não são removidos)     |
+| Questor           | `questor\`     | Todos (não são removidos)     |
+| Pré-restauração   | `pre_restore\` | Todos (não são removidos)     |
 
 ---
 
@@ -120,9 +158,11 @@ Deve ser executado no servidor Linux.
 
 Por padrão, antes de restaurar, o script cria automaticamente um **backup de segurança** do estado atual do banco:
 ```
-backups/pre_restore_refeitorio_snd_YYYY-MM-DD_HH-MM-SS.sql
+backups/pre_restore/pre_restore_refeitorio_snd_YYYY-MM-DD_HH-MM-SS.sql
 ```
 Se precisar desfazer a restauração, basta restaurar esse arquivo.
+
+O menu de restauração lista os backups de `diarios/`, `fim_mes/` e, por compatibilidade, os backups antigos ainda presentes na raiz. Os backups `questor/` são registros de auditoria de exportações específicas e não fazem parte do fluxo normal de disaster recovery.
 
 ---
 
@@ -162,7 +202,7 @@ O IP do servidor está hardcoded na variável `ORIGEM` do `.bat` no Windows.
 
 5. Editar a variável `ORIGEM` nos **dois arquivos** `.bat` com o novo IP:
    ```bat
-   set "ORIGEM=usuario@NOVO_IP:/home/usuario/raphael/projetos/backups_refeitorio/backups/*.sql"
+   set "ORIGEM=usuario@NOVO_IP:/home/usuario/raphael/projetos/backups_refeitorio/backups/."
    ```
    - `C:\Users\usuario\estagio\producao\backups_refeitorio\baixar_backups.bat`
    - `scripts/baixar_backups.bat` (no repositório)
@@ -225,5 +265,7 @@ A nova máquina precisa de chave SSH própria registrada no servidor Linux.
 
 | Local                                                                          | Descrição                        |
 |--------------------------------------------------------------------------------|----------------------------------|
-| `/home/usuario/raphael/projetos/backups_refeitorio/backups/` (servidor Linux)  | Fonte primária, gerada pelo cron |
-| `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (Windows INF010)| Cópia secundária baixada via SCP |
+| `/home/usuario/raphael/projetos/backups_refeitorio/backups/` (servidor Linux)  | Fonte primária — `diarios/`, `fim_mes/`, `questor/`, `pre_restore/` |
+| `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (Windows INF010)| Cópia secundária baixada via SCP, mesma estrutura de subpastas |
+
+Este `BACKUP_DIR` é **compartilhado** entre o ambiente de produção (`refeitorio`, banco `refeitorio_snd`) e o de teste (`refeitorio-teste`, banco `refeitorio_teste`) neste servidor — por isso o nome do banco sempre aparece no nome de cada arquivo, em todas as categorias.

@@ -8,6 +8,7 @@ require_once __DIR__ . '/Support/functions.php';
 
 // Garante sessão ativa para testes que dependem de $_SESSION
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.save_path', sys_get_temp_dir());
     session_start();
 }
 

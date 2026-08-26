@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+umask 077
 
 # Carrega variáveis do .env se existir na raiz do projeto
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +24,8 @@ fi
 #   ./scripts/restaurar_backup.sh --dry-run latest
 #   ./scripts/restaurar_backup.sh --no-pre-backup latest
 
-CONTAINER_NAME="${CONTAINER_NAME:?CONTAINER_NAME não definido no .env}"
+DB_HOST="${BACKUP_DB_HOST:-127.0.0.1}"
+DB_PORT="${BACKUP_DB_PORT:-3103}"
 DB_USER="${DB_USERNAME:?DB_USERNAME não definido no .env}"
 DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD não definido no .env}"
 DB_DATABASE="${DB_DATABASE:?DB_DATABASE não definido no .env}"
@@ -56,8 +58,8 @@ for arg in "$@"; do
   esac
 done
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo "Erro: docker nao encontrado no PATH."
+if ! command -v mysql >/dev/null 2>&1 || ! command -v mysqldump >/dev/null 2>&1; then
+  echo "Erro: clientes mysql/mysqldump nao encontrados no PATH."
   exit 1
 fi
 
@@ -142,7 +144,7 @@ if [[ $USE_PRE_BACKUP -eq 1 ]]; then
 else
   echo "Backup de seguranca: desativado (--no-pre-backup)"
 fi
-echo "Container: $CONTAINER_NAME"
+echo "Servidor: $DB_HOST:$DB_PORT"
 echo "Banco: $DB_DATABASE"
 
 if [[ $DRY_RUN -eq 1 ]]; then
@@ -163,18 +165,38 @@ fi
 
 if [[ $USE_PRE_BACKUP -eq 1 ]]; then
   echo "1/2 Criando backup de seguranca do estado atual..."
-  docker exec -e MYSQL_PWD="$DB_PASSWORD" "$CONTAINER_NAME" \
-    mysqldump --no-tablespaces -u"$DB_USER" "$DB_DATABASE" > "$PRE_BACKUP_FILE"
+  PRE_BACKUP_TEMP="${PRE_BACKUP_FILE}.tmp"
+  trap 'rm -f -- "$PRE_BACKUP_TEMP"' EXIT
+  MYSQL_PWD="$DB_PASSWORD" mysqldump \
+    --host="$DB_HOST" \
+    --port="$DB_PORT" \
+    --user="$DB_USER" \
+    --single-transaction \
+    --quick \
+    --no-tablespaces \
+    "$DB_DATABASE" > "$PRE_BACKUP_TEMP"
+  if [[ ! -s "$PRE_BACKUP_TEMP" ]]; then
+    echo "Erro: backup de seguranca vazio." >&2
+    exit 1
+  fi
+  mv -- "$PRE_BACKUP_TEMP" "$PRE_BACKUP_FILE"
+  trap - EXIT
 
   echo "2/2 Restaurando backup selecionado..."
-  docker exec -i -e MYSQL_PWD="$DB_PASSWORD" "$CONTAINER_NAME" \
-    mysql -u"$DB_USER" "$DB_DATABASE" < "$TARGET_FILE"
+  MYSQL_PWD="$DB_PASSWORD" mysql \
+    --host="$DB_HOST" \
+    --port="$DB_PORT" \
+    --user="$DB_USER" \
+    "$DB_DATABASE" < "$TARGET_FILE"
 
   echo "Restauracao concluida com sucesso."
   echo "Se precisar desfazer, restaure: $PRE_BACKUP_FILE"
 else
   echo "Restaurando backup selecionado..."
-  docker exec -i -e MYSQL_PWD="$DB_PASSWORD" "$CONTAINER_NAME" \
-    mysql -u"$DB_USER" "$DB_DATABASE" < "$TARGET_FILE"
+  MYSQL_PWD="$DB_PASSWORD" mysql \
+    --host="$DB_HOST" \
+    --port="$DB_PORT" \
+    --user="$DB_USER" \
+    "$DB_DATABASE" < "$TARGET_FILE"
   echo "Restauracao concluida com sucesso."
 fi

@@ -100,7 +100,8 @@ class QuestorService
      */
     public static function gerarBackup(string $dataInicio, string $dataFim): string
     {
-        $host     = $_ENV['DB_HOST']     ?? 'db';
+        $host     = $_ENV['DB_HOST']     ?? 'host.docker.internal';
+        $port     = $_ENV['DB_PORT']     ?? '3103';
         $user     = $_ENV['DB_USERNAME'] ?? '';
         $password = $_ENV['DB_PASSWORD'] ?? '';
         $database = $_ENV['DB_DATABASE'] ?? '';
@@ -119,9 +120,10 @@ class QuestorService
         $arquivoErro = $arquivo . '.err';
 
         $cmd = sprintf(
-            'MYSQL_PWD=%s mysqldump --skip-ssl --no-tablespaces -h %s -u %s %s > %s 2> %s',
+            'MYSQL_PWD=%s mysqldump --skip-ssl --single-transaction --quick --no-tablespaces -h %s -P %s -u %s %s > %s 2> %s',
             escapeshellarg($password),
             escapeshellarg($host),
+            escapeshellarg($port),
             escapeshellarg($user),
             escapeshellarg($database),
             escapeshellarg($temporario),

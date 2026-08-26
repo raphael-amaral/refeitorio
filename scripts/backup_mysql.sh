@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+umask 077
 
 # Carrega variáveis do .env se existir na raiz do projeto
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +14,8 @@ fi
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-CONTAINER_NAME="${CONTAINER_NAME:?CONTAINER_NAME não definido no .env}"
+DB_HOST="${BACKUP_DB_HOST:-127.0.0.1}"
+DB_PORT="${BACKUP_DB_PORT:-3103}"
 DB_USER="${DB_USERNAME:?DB_USERNAME não definido no .env}"
 DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD não definido no .env}"
 DB_DATABASE="${DB_DATABASE:?DB_DATABASE não definido no .env}"
@@ -33,8 +35,14 @@ cleanup() {
 trap cleanup EXIT
 
 # Publica o backup diario apenas depois que o mysqldump terminar com conteúdo.
-/usr/bin/docker exec -e MYSQL_PWD="$DB_PASSWORD" "$CONTAINER_NAME" \
-  /usr/bin/mysqldump --no-tablespaces -u"$DB_USER" "$DB_DATABASE" > "$TEMP_FILE"
+MYSQL_PWD="$DB_PASSWORD" /usr/bin/mysqldump \
+  --host="$DB_HOST" \
+  --port="$DB_PORT" \
+  --user="$DB_USER" \
+  --single-transaction \
+  --quick \
+  --no-tablespaces \
+  "$DB_DATABASE" > "$TEMP_FILE"
 
 if [[ ! -s "$TEMP_FILE" ]]; then
   echo "Erro: mysqldump gerou um arquivo vazio." >&2

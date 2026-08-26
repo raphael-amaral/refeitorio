@@ -73,13 +73,14 @@ O dump é escrito primeiro com extensão `.tmp` e só é publicado como `.sql` d
 
 ### Atualização de uma instalação existente
 
-Antes de subir a versão que grava `arquivo_backup`, aplique a migração uma única vez no banco de cada ambiente:
+As alterações de schema são controladas pelo executor descrito em `MIGRATIONS.md`. Antes de aplicar migrations, gere e valide um backup completo e consulte o estado:
 
 ```bash
-docker compose exec -T db sh -c \
-  'MYSQL_PWD="$DB_PASSWORD" mysql -u"$DB_USERNAME" "$DB_DATABASE"' \
-  < database/migrations/20260807_add_arquivo_backup_questor_exportacoes.sql
+docker compose exec -T web php bin/migrate status
+docker compose exec -T web php bin/migrate up --database=refeitorio_snd
 ```
+
+Instalações que já receberam uma migration manualmente devem usar o baseline explícito somente depois de verificar o schema, conforme `MIGRATIONS.md`.
 
 Depois, recrie o container web para ativar o bind mount de `questor/`:
 

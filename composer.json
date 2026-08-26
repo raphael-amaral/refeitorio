@@ -12,6 +12,17 @@
       "Tests\\": "tests/"
     }
   },
+  "scripts": {
+    "test": "phpunit",
+    "test:operational": [
+      "docker build --quiet --tag refeitorio-entrypoint-test .",
+      "phpunit --configuration phpunit-operational.xml"
+    ],
+    "test:all": [
+      "@test",
+      "@test:operational"
+    ]
+  },
   "require-dev": {
     "phpunit/phpunit": "^12.0"
   }

@@ -30,6 +30,7 @@ class MySqlBackupRestoreTest extends ProcessTestCase
 
             $this->waitForMysql($container);
             $this->seedDatabase($container);
+            $this->runMigrations($network, $container);
 
             $backupDirectory = $this->temporaryDirectory . '/backups';
             mkdir($backupDirectory, 0700, true);
@@ -73,7 +74,74 @@ class MySqlBackupRestoreTest extends ProcessTestCase
             $container,
             "CREATE TABLE smoke_data (id INT PRIMARY KEY, valor VARCHAR(50));"
             . " INSERT INTO smoke_data VALUES (1, 'registro_preservado');"
+            . " CREATE TABLE questor_exportacoes ("
+            . " id INT AUTO_INCREMENT PRIMARY KEY,"
+            . " data_inicio DATE NOT NULL,"
+            . " data_fim DATE NOT NULL,"
+            . " valor_refeicao DECIMAL(6,2) NOT NULL,"
+            . " exportado_por VARCHAR(12),"
+            . " criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP"
+            . ");"
         );
+    }
+
+    private function runMigrations(string $network, string $container): void
+    {
+        $projectDirectory = dirname(__DIR__, 2);
+        $environmentFile = $this->writeFile('migration.env', implode("\n", [
+            'DB_HOST=' . $container,
+            'DB_PORT=3306',
+            'DB_DATABASE=refeitorio_test',
+            'DB_USERNAME=backup_user',
+            'DB_PASSWORD=backup_password',
+            '',
+        ]));
+        $command = [
+            'docker', 'run', '--rm', '--network', $network,
+            '--volume', $projectDirectory . ':/workspace:ro',
+            '--volume', $environmentFile . ':/workspace/.env:ro',
+            '--workdir', '/workspace',
+            '--entrypoint', 'php',
+            'refeitorio-entrypoint-test',
+            'bin/migrate',
+        ];
+
+        $wrongDatabase = $this->runProcess(array_merge($command, ['up', '--database=refeitorio_snd']));
+        $this->assertSame(1, $wrongDatabase['exitCode']);
+        $this->assertStringContainsString('difere do banco conectado', $wrongDatabase['stderr']);
+        $this->assertSame('0', trim($this->queryMysql(
+            $container,
+            "SELECT COUNT(*) FROM information_schema.TABLES"
+            . " WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations';"
+        )));
+
+        $first = $this->runProcess(array_merge($command, ['up', '--database=refeitorio_test']));
+        $this->assertSame(0, $first['exitCode'], $first['stderr']);
+        $this->assertStringContainsString(
+            'Aplicada: 20260807_add_arquivo_backup_questor_exportacoes.sql',
+            $first['stdout']
+        );
+
+        $second = $this->runProcess(array_merge($command, ['up', '--database=refeitorio_test']));
+        $this->assertSame(0, $second['exitCode'], $second['stderr']);
+        $this->assertStringContainsString('Nenhuma migration pendente.', $second['stdout']);
+
+        $status = $this->runProcess(array_merge($command, ['status']));
+        $this->assertSame(0, $status['exitCode'], $status['stderr']);
+        $this->assertStringContainsString('[aplicada]', $status['stdout']);
+
+        $column = $this->queryMysql(
+            $container,
+            "SELECT COLUMN_TYPE FROM information_schema.COLUMNS"
+            . " WHERE TABLE_SCHEMA = DATABASE()"
+            . " AND TABLE_NAME = 'questor_exportacoes'"
+            . " AND COLUMN_NAME = 'arquivo_backup';"
+        );
+        $this->assertSame('varchar(255)', trim($column));
+        $this->assertSame('1', trim($this->queryMysql(
+            $container,
+            'SELECT COUNT(*) FROM schema_migrations;'
+        )));
     }
 
     private function runQuestorBackup(string $network, string $container, string $backupDirectory): void

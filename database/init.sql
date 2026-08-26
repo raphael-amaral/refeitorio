@@ -1,5 +1,14 @@
 SET NAMES utf8mb4;
 
+CREATE TABLE schema_migrations (
+    versao VARCHAR(255) PRIMARY KEY,
+    checksum CHAR(64) NOT NULL,
+    aplicada_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO schema_migrations (versao, checksum) VALUES
+('20260807_add_arquivo_backup_questor_exportacoes.sql', 'e033816d99615eebcc88a8519a012de4f8d2f513a1ad78155783124272734874');
+
 CREATE TABLE usuarios (
     matricula VARCHAR(12) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,

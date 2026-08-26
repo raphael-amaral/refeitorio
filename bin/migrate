@@ -1,0 +1,107 @@
+#!/usr/bin/env php
+<?php
+
+use App\Core\Database;
+use App\Core\Migrator;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+function usage(): void
+{
+    echo <<<'TEXT'
+Uso:
+  php bin/migrate status
+  php bin/migrate up --database=NOME_DO_BANCO
+  php bin/migrate baseline ARQUIVO.sql --database=NOME_DO_BANCO
+
+O baseline apenas registra uma migration já aplicada e exige verificação manual prévia do schema.
+TEXT;
+    echo "\n";
+}
+
+$arguments = array_slice($argv, 1);
+$requestedHelp = array_intersect($arguments, ['help', '--help', '-h']) !== [];
+if ($requestedHelp) {
+    usage();
+    exit(0);
+}
+
+$command = $arguments[0] ?? 'up';
+if (str_starts_with($command, '--')) {
+    $command = 'up';
+} else {
+    array_shift($arguments);
+}
+
+$expectedDatabase = null;
+$positionals = [];
+foreach ($arguments as $argument) {
+    if (str_starts_with($argument, '--database=')) {
+        $expectedDatabase = substr($argument, strlen('--database='));
+        continue;
+    }
+    $positionals[] = $argument;
+}
+
+try {
+    $migrator = new Migrator(
+        Database::getConnection(),
+        __DIR__ . '/../database/migrations'
+    );
+    $database = $migrator->databaseName();
+    echo "Banco selecionado: {$database}\n";
+
+    if ($expectedDatabase !== null && $expectedDatabase !== $database) {
+        throw new RuntimeException(
+            "Banco confirmado ({$expectedDatabase}) difere do banco conectado ({$database})."
+        );
+    }
+
+    if ($command === 'status') {
+        $invalid = false;
+        foreach ($migrator->status() as $migration) {
+            echo sprintf("%-16s %s\n", '[' . $migration['estado'] . ']', $migration['versao']);
+            $invalid = $invalid || in_array($migration['estado'], ['alterada', 'arquivo_ausente'], true);
+        }
+        exit($invalid ? 1 : 0);
+    }
+
+    if (!in_array($command, ['up', 'baseline'], true)) {
+        usage();
+        throw new RuntimeException("Comando inválido: {$command}");
+    }
+
+    if ($expectedDatabase === null || $expectedDatabase === '') {
+        throw new RuntimeException('Operações de escrita exigem --database=NOME_DO_BANCO.');
+    }
+
+    if ($command === 'baseline') {
+        $version = $positionals[0] ?? '';
+        if ($version === '' || count($positionals) !== 1) {
+            throw new RuntimeException('Informe exatamente uma migration para o baseline.');
+        }
+
+        $created = $migrator->baseline($version);
+        echo $created
+            ? "Baseline registrado sem executar SQL: {$version}\n"
+            : "Baseline já estava registrado: {$version}\n";
+        exit(0);
+    }
+
+    if ($positionals !== []) {
+        throw new RuntimeException('Argumentos posicionais não são aceitos pelo comando up.');
+    }
+
+    $applied = $migrator->applyPending();
+    if ($applied === []) {
+        echo "Nenhuma migration pendente.\n";
+        exit(0);
+    }
+
+    foreach ($applied as $version) {
+        echo "Aplicada: {$version}\n";
+    }
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Erro: ' . $e->getMessage() . "\n");
+    exit(1);
+}

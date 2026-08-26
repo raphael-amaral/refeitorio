@@ -33,7 +33,7 @@ class UsuarioService
         if ($senha === '') {
             $senha = 'stcasa' . $matricula;
         } else {
-            if (strlen($senha) < 5) {
+            if (strlen($senha) < Perfil::tamanhoMinimoSenha($tipo)) {
                 throw new SenhaCurtaException();
             }
             if ($senha !== $confirmarSenha) {
@@ -142,7 +142,7 @@ class UsuarioService
         }
 
         if ($senha !== '') {
-            if (strlen($senha) < 5) {
+            if (strlen($senha) < Perfil::tamanhoMinimoSenha($tipo)) {
                 throw new SenhaCurtaException();
             }
             if ($senha !== $confirmarSenha) {

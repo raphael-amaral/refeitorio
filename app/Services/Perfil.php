@@ -31,6 +31,12 @@ class Perfil
         return $tipo === 'dp';
     }
 
+    /** Usuários comuns exigem 6 caracteres; perfis internos aceitam 5 (ex.: dp123). */
+    public static function tamanhoMinimoSenha(string $tipo): int
+    {
+        return self::ehComum($tipo) ? 6 : 5;
+    }
+
     /** snd ou dev — opera o scanner e o cadastro de cardápio. */
     public static function podeScanner(string $tipo): bool
     {

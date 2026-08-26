@@ -60,11 +60,19 @@ class UsuarioServiceTest extends DatabaseTestCase
         UsuarioService::criar('30004', 'NOME', 'senha123', 'senha123', 'invalido');
     }
 
-    public function testCriarLancaSenhaCurta(): void
+    public function testCriarUsuarioComumLancaSenhaCurtaComCincoCaracteres(): void
     {
         $this->expectException(SenhaCurtaException::class);
 
-        UsuarioService::criar('30005', 'NOME', '123', '123', 'comum');
+        UsuarioService::criar('30005', 'NOME', 'dp123', 'dp123', 'comum');
+    }
+
+    public function testCriarUsuarioNaoComumAceitaCincoCaracteres(): void
+    {
+        UsuarioService::criar('30008', 'DP TESTE', 'dp123', 'dp123', 'dp');
+
+        $usuario = Usuario::buscarPorMatricula('30008');
+        $this->assertTrue(password_verify('dp123', $usuario['senha']));
     }
 
     public function testCriarLancaSenhasNaoCoincidem(): void
@@ -203,13 +211,32 @@ class UsuarioServiceTest extends DatabaseTestCase
         UsuarioService::editar('30023', 'NOME', 'invalido', '', '');
     }
 
-    public function testEditarLancaSenhaCurtaParaSenhaMenorQueCinco(): void
+    public function testEditarUsuarioNaoComumLancaSenhaCurtaParaQuatroCaracteres(): void
     {
-        $this->inserirUsuario('30024', 'NOME');
+        $this->inserirUsuario('30024', 'DP TESTE', 'dp');
 
         $this->expectException(SenhaCurtaException::class);
 
-        UsuarioService::editar('30024', 'NOME', 'comum', '1234', '1234');
+        UsuarioService::editar('30024', 'DP TESTE', 'dp', '1234', '1234');
+    }
+
+    public function testEditarUsuarioComumLancaSenhaCurtaComCincoCaracteres(): void
+    {
+        $this->inserirUsuario('30027', 'NOME', 'comum');
+
+        $this->expectException(SenhaCurtaException::class);
+
+        UsuarioService::editar('30027', 'NOME', 'comum', 'dp123', 'dp123');
+    }
+
+    public function testEditarUsuarioNaoComumAceitaCincoCaracteres(): void
+    {
+        $this->inserirUsuario('30028', 'DP TESTE', 'dp');
+
+        UsuarioService::editar('30028', 'DP TESTE', 'dp', 'dp123', 'dp123');
+
+        $usuario = Usuario::buscarPorMatricula('30028');
+        $this->assertTrue(password_verify('dp123', $usuario['senha']));
     }
 
     public function testEditarLancaSenhasNaoCoincidemQuandoConfirmacaoDiferente(): void

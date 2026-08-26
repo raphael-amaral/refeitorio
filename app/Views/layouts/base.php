@@ -95,11 +95,11 @@ $tipoU    = $u['tipo'] ?? '';
                     </div>
                     <div class="form-group">
                         <label for="nova_senha">Nova senha</label>
-                        <input type="password" id="nova_senha" name="nova_senha" required placeholder="Mínimo 6 caracteres">
+                        <input type="password" id="nova_senha" name="nova_senha" required minlength="6" placeholder="Mínimo 6 caracteres">
                     </div>
                     <div class="form-group">
                         <label for="confirmar_nova_senha">Confirmar nova senha</label>
-                        <input type="password" id="confirmar_nova_senha" name="confirmar_nova_senha" required placeholder="Repita a nova senha">
+                        <input type="password" id="confirmar_nova_senha" name="confirmar_nova_senha" required minlength="6" placeholder="Repita a nova senha">
                     </div>
                     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
                         <button type="button" id="btn-fechar-modal-senha" class="btn-acao btn-inativar" style="padding:6px 14px;">Cancelar</button>

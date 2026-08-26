@@ -32,11 +32,11 @@ class ContaServiceTest extends DatabaseTestCase
         ContaService::alterarSenha('50001', 'senha_errada', 'senhaNova123', 'senhaNova123');
     }
 
-    public function testAlterarSenhaLancaSenhaCurta(): void
+    public function testAlterarSenhaDeUsuarioComumLancaSenhaCurtaComCincoCaracteres(): void
     {
         $this->expectException(SenhaCurtaException::class);
 
-        ContaService::alterarSenha('50001', 'senhaAtual123', '123', '123');
+        ContaService::alterarSenha('50001', 'senhaAtual123', 'dp123', 'dp123');
     }
 
     public function testAlterarSenhaLancaSenhasNaoCoincidem(): void

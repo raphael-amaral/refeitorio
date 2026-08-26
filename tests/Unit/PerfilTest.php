@@ -25,6 +25,15 @@ class PerfilTest extends TestCase
         $this->assertFalse(Perfil::ehComum('snd'));
     }
 
+    public function testTamanhoMinimoSenhaDependeDoTipo(): void
+    {
+        $this->assertSame(6, Perfil::tamanhoMinimoSenha('comum'));
+
+        foreach (['snd', 'dp', 'dev'] as $tipo) {
+            $this->assertSame(5, Perfil::tamanhoMinimoSenha($tipo));
+        }
+    }
+
     public function testEhDev(): void
     {
         $this->assertTrue(Perfil::ehDev('dev'));

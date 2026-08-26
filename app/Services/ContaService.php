@@ -22,7 +22,7 @@ class ContaService
             throw new SenhaAtualIncorretaException();
         }
 
-        if ($novaSenha === '' || strlen($novaSenha) < 5) {
+        if ($novaSenha === '' || strlen($novaSenha) < Perfil::tamanhoMinimoSenha($usuario['tipo'])) {
             throw new SenhaCurtaException();
         }
 

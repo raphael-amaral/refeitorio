@@ -14,6 +14,7 @@ use App\Exceptions\SenhaCurtaException;
 use App\Exceptions\SenhasNaoCoincidemException;
 use App\Exceptions\ValidacaoException;
 use App\Models\Usuario;
+use App\Services\Perfil;
 use App\Services\UsuarioService;
 
 class UsuarioController extends Controller
@@ -62,7 +63,7 @@ class UsuarioController extends Controller
             $this->redirect('/usuario');
         } catch (SenhaCurtaException) {
             $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
-            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
+            $this->flash('A senha deve ter pelo menos ' . Perfil::tamanhoMinimoSenha($tipo) . ' caracteres.', 'error');
             $this->redirect('/usuario');
         } catch (SenhasNaoCoincidemException) {
             $this->oldInput(['matricula' => $matricula, 'nome' => $nome, 'tipo' => $tipo]);
@@ -143,7 +144,7 @@ class UsuarioController extends Controller
             $this->redirect('/usuario');
         } catch (SenhaCurtaException) {
             $this->oldInput($dadosAntigos);
-            $this->flash('A senha deve ter pelo menos 5 caracteres.', 'error');
+            $this->flash('A senha deve ter pelo menos ' . Perfil::tamanhoMinimoSenha($tipo) . ' caracteres.', 'error');
             $this->redirect('/usuario');
         } catch (SenhasNaoCoincidemException) {
             $this->oldInput($dadosAntigos);

@@ -142,7 +142,7 @@ unset($_SESSION['old_input']);
                         </div>
                         <div class="form-group">
                             <label for="senha" id="label-senha">Senha</label>
-                            <input type="password" id="senha" name="senha" minlength="5"
+                            <input type="password" id="senha" name="senha"
                                 placeholder="Deixe vazio para usar senha padrão">
                             <small id="hint-senha-padrao" style="color:#888;font-size:.78rem">
                                 Se vazio, a senha será <strong>stcasa</strong> + matrícula
@@ -153,7 +153,7 @@ unset($_SESSION['old_input']);
                         </div>
                         <div class="form-group" id="campo-confirmar-senha" style="display:none;">
                             <label for="confirmar_senha">Confirmar senha</label>
-                            <input type="password" id="confirmar_senha" name="confirmar_senha" minlength="5"
+                            <input type="password" id="confirmar_senha" name="confirmar_senha"
                                 placeholder="Repita a senha">
                         </div>
                         <div class="form-group">
@@ -251,6 +251,7 @@ unset($_SESSION['old_input']);
         var campoMat = document.getElementById('campo-matricula');
         var inputMat = document.getElementById('matricula');
         var inputNome = document.getElementById('nome');
+        var labelSenha = document.getElementById('label-senha');
         var inputSenha = document.getElementById('senha');
         var campoConfirmar = document.getElementById('campo-confirmar-senha');
         var inputConfirmar = document.getElementById('confirmar_senha');
@@ -259,6 +260,15 @@ unset($_SESSION['old_input']);
         var selectTipo = document.getElementById('tipo');
         var btnSubmit = document.getElementById('btn-submit');
         var btnCancel = document.getElementById('btn-cancelar-edicao');
+
+        function atualizarMinimoSenha() {
+            var minimo = selectTipo.value === 'comum' ? 6 : 5;
+            labelSenha.textContent = 'Senha (mínimo ' + minimo + ' caracteres)';
+            inputSenha.minLength = minimo;
+            inputConfirmar.minLength = minimo;
+        }
+
+        selectTipo.addEventListener('change', atualizarMinimoSenha);
 
         // Exibe/oculta campo de confirmação conforme o usuário digita a senha
         var modoEdicao = false;
@@ -296,6 +306,7 @@ unset($_SESSION['old_input']);
 
             inputNome.value = nome;
             selectTipo.value = tipo;
+            atualizarMinimoSenha();
             inputSenha.value = '';
             campoConfirmar.style.display = 'none';
             inputConfirmar.value = '';
@@ -323,11 +334,13 @@ unset($_SESSION['old_input']);
             campoConfirmar.style.display = 'none';
             inputConfirmar.removeAttribute('required');
             form.reset();
+            atualizarMinimoSenha();
             btnSubmit.textContent = 'Criar usuário';
             btnCancel.style.display = 'none';
         });
 
         inputMat.setAttribute('required', '');
+        atualizarMinimoSenha();
 
         <?php if (($oldInput['modo'] ?? '') === 'editar'): ?>
         entrarModoEdicao(

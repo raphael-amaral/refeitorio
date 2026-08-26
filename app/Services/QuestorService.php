@@ -94,9 +94,9 @@ class QuestorService
     }
 
     /**
-     * Gera um backup do banco via mysqldump. Dependência externa verdadeira (processo + MySQL
-     * de verdade) — não é testável pela suíte automatizada, que roda contra SQLite em memória.
-     * Retorna o nome do arquivo publicado. Uma falha cancela a exportação do CSV.
+     * Gera um backup do banco via mysqldump. A suíte simula o processo para validar publicação
+     * e falhas sem acessar o MySQL configurado. Retorna o nome do arquivo publicado; uma falha
+     * cancela a exportação do CSV.
      */
     public static function gerarBackup(string $dataInicio, string $dataFim): string
     {

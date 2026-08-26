@@ -20,6 +20,7 @@ DB_USER="${DB_USERNAME:?DB_USERNAME não definido no .env}"
 DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD não definido no .env}"
 DB_DATABASE="${DB_DATABASE:?DB_DATABASE não definido no .env}"
 DIR_BACKUP="${BACKUP_DIR:?BACKUP_DIR não definido no .env}"
+MYSQLDUMP_BIN="${MYSQLDUMP_BIN:-/usr/bin/mysqldump}"
 DIR_DIARIOS="$DIR_BACKUP/diarios"
 DIR_FIM_MES="$DIR_BACKUP/fim_mes"
 
@@ -35,7 +36,7 @@ cleanup() {
 trap cleanup EXIT
 
 # Publica o backup diario apenas depois que o mysqldump terminar com conteúdo.
-MYSQL_PWD="$DB_PASSWORD" /usr/bin/mysqldump \
+MYSQL_PWD="$DB_PASSWORD" "$MYSQLDUMP_BIN" \
   --host="$DB_HOST" \
   --port="$DB_PORT" \
   --user="$DB_USER" \

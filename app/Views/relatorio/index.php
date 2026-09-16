@@ -1,6 +1,9 @@
 <?php
 
 /** @var array[] $registros */
+/** @var array   $funcionarios */
+/** @var bool    $consolidado */
+/** @var float   $valorRefeicao */
 /** @var array   $totais */
 /** @var string  $modo */
 /** @var string  $dataInicio */
@@ -159,6 +162,10 @@ $anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
             font-size: 0.8rem;
         }
 
+        .btn-gerar-pdf .btn-label {
+            display: none;
+        }
+
         /* Campos do painel de data ficam lado a lado (De/Até, Mês/Ano) */
         .tab-pane.active {
             flex-direction: row;
@@ -207,7 +214,10 @@ $anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
         <button type="button" class="tab-btn <?= $modo === 'dia' ? 'active' : '' ?>" data-target="tab-dia">Dia Específico</button>
         <button type="button" class="tab-btn <?= $modo === 'periodo' ? 'active' : '' ?>" data-target="tab-periodo">Período</button>
         <button type="button" class="tab-btn <?= $modo === 'mes' ? 'active' : '' ?>" data-target="tab-mes">Por Mês</button>
-        <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" class="btn-gerar-pdf">🖨️ Gerar PDF</a>
+        <a href="/relatorios/pdf?<?= http_build_query($_GET) ?>" target="_blank" class="btn-gerar-pdf" aria-label="Gerar PDF" title="Gerar PDF">🖨️ <span class="btn-label">Gerar PDF</span></a>
+        <?php if ($consolidado): ?>
+            <a href="/relatorios/csv?<?= http_build_query($_GET) ?>" class="btn-gerar-pdf" style="margin-left:0;background:var(--verde);" aria-label="Baixar CSV" title="Baixar CSV">⬇️ <span class="btn-label">Baixar CSV</span></a>
+        <?php endif; ?>
     </div>
 
     <form method="get" action="/relatorios" style="display:flex; flex-direction:column; gap:16px;">
@@ -257,15 +267,21 @@ $anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
                 <label>Matrícula</label>
                 <input type="text" name="matricula" value="<?= htmlspecialchars($matricula) ?>" placeholder="Ex: 123456">
             </div>
-            <div class="filtro-campo">
-                <label>Status</label>
-                <select name="status">
-                    <option value="">Todos</option>
-                    <?php foreach ($labelStatus as $val => $label): ?>
-                        <option value="<?= $val ?>" <?= $status === $val ? 'selected' : '' ?>><?= $label ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            <?php if ($consolidado): ?>
+                <div style="font-size:.82rem;color:#555;align-self:center;">
+                    Somente refeições concluídas. Valor unitário: <strong>R$ <?= number_format($valorRefeicao, 2, ',', '.') ?></strong>.
+                </div>
+            <?php else: ?>
+                <div class="filtro-campo">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="">Todos</option>
+                        <?php foreach ($labelStatus as $val => $label): ?>
+                            <option value="<?= $val ?>" <?= $status === $val ? 'selected' : '' ?>><?= $label ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
             <div class="filtro-comuns-acoes">
                 <button type="submit" style="background:var(--verde);color:white;padding:8px 20px;border:none;border-radius:4px;font-weight:600;cursor:pointer;">Filtrar</button>
                 <?php if (!empty($_GET)): ?>
@@ -279,12 +295,18 @@ $anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
 <!-- Totalizadores -->
 <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
     <?php
-    $cards = [
-        ['label' => 'Agendados',  'val' => $totais['agendado'],  'cor' => 'var(--verde)'],
-        ['label' => 'Concluídos', 'val' => $totais['concluido'], 'cor' => 'var(--laranja)'],
-        ['label' => 'Cancelados', 'val' => $totais['cancelado'], 'cor' => '#991b1b'],
-        ['label' => 'Total',      'val' => count($registros),    'cor' => '#6b7280'],
-    ];
+    $cards = $consolidado
+        ? [
+            ['label' => 'Funcionários', 'val' => count($funcionarios), 'cor' => 'var(--verde)'],
+            ['label' => 'Refeições', 'val' => count($registros), 'cor' => 'var(--laranja)'],
+            ['label' => 'Valor total', 'val' => 'R$ ' . number_format(count($registros) * $valorRefeicao, 2, ',', '.'), 'cor' => '#6b7280'],
+        ]
+        : [
+            ['label' => 'Agendados',  'val' => $totais['agendado'],  'cor' => 'var(--verde)'],
+            ['label' => 'Concluídos', 'val' => $totais['concluido'], 'cor' => 'var(--laranja)'],
+            ['label' => 'Cancelados', 'val' => $totais['cancelado'], 'cor' => '#991b1b'],
+            ['label' => 'Total',      'val' => count($registros),    'cor' => '#6b7280'],
+        ];
     foreach ($cards as $c): ?>
         <div style="background:#fff;border-radius:8px;padding:14px 22px;box-shadow:1px 5px 12px rgba(0,0,0,0.18);min-width:120px;text-align:center;">
             <div style="font-size:1.7rem;font-weight:700;color:<?= $c['cor'] ?>;"><?= $c['val'] ?></div>
@@ -296,6 +318,29 @@ $anoFiltro = $modo === 'mes' ? date('Y', strtotime($dataInicio)) : date('Y');
 <!-- Tabela -->
 <?php if (empty($registros)): ?>
     <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Nenhum registro encontrado para estes filtros.</p>
+<?php elseif ($consolidado): ?>
+    <div style="background:#fff;border-radius:6px;overflow:hidden;box-shadow:1px 5px 12px rgba(0,0,0,0.2);">
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>Quantidade</th>
+                    <th>Valor total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($funcionarios as $matriculaFuncionario => $dados): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($matriculaFuncionario) ?></td>
+                        <td><?= htmlspecialchars($dados['nome']) ?></td>
+                        <td><?= $dados['quantidade'] ?></td>
+                        <td><strong>R$ <?= number_format($dados['valor_total'], 2, ',', '.') ?></strong></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 <?php else: ?>
     <div style="background:#fff;border-radius:6px;overflow:hidden;box-shadow:1px 5px 12px rgba(0,0,0,0.2);">
         <table class="tabela">

@@ -1,6 +1,9 @@
 <?php
 
 /** @var array[] $registros */
+/** @var array   $funcionarios */
+/** @var bool    $consolidado */
+/** @var float   $valorRefeicao */
 /** @var array   $totais */
 /** @var string  $modo */
 /** @var string  $dataInicio */
@@ -35,7 +38,7 @@ if ($modo === 'dia') {
     <table class="tabela-print">
         <thead>
             <tr>
-                <td colspan="5" style="border: none !important; background: transparent !important; padding: 0 !important; text-align: left;">
+                <td colspan="<?= $consolidado ? 4 : 5 ?>" style="border: none !important; background: transparent !important; padding: 0 !important; text-align: left;">
                     <div class="print-header">
                         <div class="logo-box">SND</div>
                         <div>
@@ -47,26 +50,49 @@ if ($modo === 'dia') {
 
                     <!-- Resumo -->
                     <div class="resumo-box">
-                        <div><strong>Concluídos:</strong> <?= $totais['concluido'] ?></div>
-                        <div><strong>Cancelados:</strong> <?= $totais['cancelado'] ?></div>
-                        <div><strong>Agendados/Não Concluidos:</strong> <?= $totais['agendado'] ?></div>
-                        <div><strong>Total Geral:</strong> <?= count($registros) ?></div>
+                        <?php if ($consolidado): ?>
+                            <div><strong>Funcionários:</strong> <?= count($funcionarios) ?></div>
+                            <div><strong>Refeições concluídas:</strong> <?= count($registros) ?></div>
+                            <div><strong>Valor unitário:</strong> R$ <?= number_format($valorRefeicao, 2, ',', '.') ?></div>
+                            <div><strong>Valor total:</strong> R$ <?= number_format(count($registros) * $valorRefeicao, 2, ',', '.') ?></div>
+                        <?php else: ?>
+                            <div><strong>Concluídos:</strong> <?= $totais['concluido'] ?></div>
+                            <div><strong>Cancelados:</strong> <?= $totais['cancelado'] ?></div>
+                            <div><strong>Agendados/Não Concluidos:</strong> <?= $totais['agendado'] ?></div>
+                            <div><strong>Total Geral:</strong> <?= count($registros) ?></div>
+                        <?php endif; ?>
                     </div>
                 </td>
             </tr>
             <tr>
-                <th>Data</th>
-                <th>Refeição</th>
-                <th>Matrícula</th>
-                <th>Nome do Usuário</th>
-                <th>Status</th>
+                <?php if ($consolidado): ?>
+                    <th>Matrícula</th>
+                    <th>Nome do Usuário</th>
+                    <th>Quantidade</th>
+                    <th>Valor total</th>
+                <?php else: ?>
+                    <th>Data</th>
+                    <th>Refeição</th>
+                    <th>Matrícula</th>
+                    <th>Nome do Usuário</th>
+                    <th>Status</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($registros)): ?>
                 <tr>
-                    <td colspan="5" class="empty" style="text-align: center; padding: 20px;">Nenhum registro encontrado para este filtro.</td>
+                    <td colspan="<?= $consolidado ? 4 : 5 ?>" class="empty" style="text-align: center; padding: 20px;">Nenhum registro encontrado para este filtro.</td>
                 </tr>
+            <?php elseif ($consolidado): ?>
+                <?php foreach ($funcionarios as $matriculaFuncionario => $dados): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($matriculaFuncionario) ?></td>
+                        <td><?= htmlspecialchars($dados['nome']) ?></td>
+                        <td><?= $dados['quantidade'] ?></td>
+                        <td><strong>R$ <?= number_format($dados['valor_total'], 2, ',', '.') ?></strong></td>
+                    </tr>
+                <?php endforeach; ?>
             <?php else: ?>
                 <?php foreach ($registros as $r):
                     $ts = strtotime($r['data_cardapio']);

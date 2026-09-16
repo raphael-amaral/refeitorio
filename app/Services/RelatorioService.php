@@ -20,7 +20,8 @@ class RelatorioService
         string $anoRaw,
         string $mesRaw,
         string $statusRaw,
-        string $matriculaRaw
+        string $matriculaRaw,
+        bool $consolidado = false
     ): array {
         $reData = '/^\d{4}-\d{2}-\d{2}$/';
 
@@ -48,7 +49,9 @@ class RelatorioService
             $dataFim    = date('Y-m-t', strtotime($dataInicio));
         }
 
-        $status    = in_array($statusRaw, ['', 'agendado', 'cancelado', 'concluido'], true) ? $statusRaw : '';
+        $status    = $consolidado
+            ? 'concluido'
+            : (in_array($statusRaw, ['', 'agendado', 'cancelado', 'concluido'], true) ? $statusRaw : '');
         $matricula = trim($matriculaRaw);
 
         $registros = Registro::buscarParaRelatorio($status, $dataInicio, $dataFim, $matricula);
@@ -60,14 +63,70 @@ class RelatorioService
             }
         }
 
+        $valorRefeicao = (float) str_replace(',', '.', (string) ($_ENV['VALOR_REFEICAO'] ?? '15'));
+        if ($valorRefeicao <= 0) {
+            $valorRefeicao = 15.0;
+        }
+
+        $funcionarios = [];
+        if ($consolidado) {
+            foreach ($registros as $r) {
+                $mat = $r['matricula'];
+                if (!isset($funcionarios[$mat])) {
+                    $funcionarios[$mat] = [
+                        'nome'        => $r['nome_usuario'],
+                        'quantidade'  => 0,
+                        'valor_total' => 0.0,
+                    ];
+                }
+                $funcionarios[$mat]['quantidade']++;
+                $funcionarios[$mat]['valor_total'] += $valorRefeicao;
+            }
+        }
+
         return [
-            'registros'  => $registros,
-            'totais'     => $totais,
-            'modo'       => $modo,
-            'dataInicio' => $dataInicio,
-            'dataFim'    => $dataFim,
-            'status'     => $status,
-            'matricula'  => $matricula,
+            'registros'      => $registros,
+            'funcionarios'   => $funcionarios,
+            'consolidado'    => $consolidado,
+            'valorRefeicao'  => $valorRefeicao,
+            'totais'         => $totais,
+            'modo'           => $modo,
+            'dataInicio'     => $dataInicio,
+            'dataFim'        => $dataFim,
+            'status'         => $status,
+            'matricula'      => $matricula,
         ];
+    }
+
+    /**
+     * Gera um CSV de consulta do relatório consolidado, sem efeitos no histórico Questor.
+     */
+    public static function csv(array $relatorio): string
+    {
+        $arquivo = fopen('php://temp', 'r+');
+        fwrite($arquivo, "\xEF\xBB\xBF");
+        fputcsv($arquivo, ['Matrícula', 'Nome', 'Quantidade', 'Valor total'], ';', '"', '', "\r\n");
+
+        foreach ($relatorio['funcionarios'] as $matricula => $dados) {
+            fputcsv($arquivo, [
+                $matricula,
+                $dados['nome'],
+                $dados['quantidade'],
+                number_format($dados['valor_total'], 2, ',', ''),
+            ], ';', '"', '', "\r\n");
+        }
+
+        rewind($arquivo);
+        $csv = stream_get_contents($arquivo);
+        fclose($arquivo);
+
+        return $csv;
+    }
+
+    public static function nomeArquivoCsv(array $relatorio): string
+    {
+        return 'relatorio_refeitorio_'
+            . str_replace('-', '', $relatorio['dataInicio']) . '_'
+            . str_replace('-', '', $relatorio['dataFim']) . '.csv';
     }
 }

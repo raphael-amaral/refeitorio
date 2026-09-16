@@ -93,4 +93,63 @@ class RelatorioServiceTest extends DatabaseTestCase
         $this->assertSame(1, $dados['totais']['concluido']);
         $this->assertSame(1, $dados['totais']['cancelado']);
     }
+
+    public function testConsolidadoAgrupaSomenteConcluidosPorUsuario(): void
+    {
+        $this->inserirUsuario('60002', 'OUTRO FUNCIONARIO');
+        $idCard1 = $this->inserirCardapio('2026-07-15', 'almoco');
+        $idCard2 = $this->inserirCardapio('2026-07-16', 'almoco');
+        $idCard3 = $this->inserirCardapio('2026-07-17', 'almoco');
+        $this->inserirRegistro('60001', $idCard1, 'concluido');
+        $this->inserirRegistro('60001', $idCard2, 'concluido');
+        $this->inserirRegistro('60002', $idCard3, 'agendado');
+
+        $valorAnterior = $_ENV['VALOR_REFEICAO'] ?? null;
+        $_ENV['VALOR_REFEICAO'] = '12.50';
+        try {
+            $dados = RelatorioService::preparar(
+                'periodo', '', '2026-07-01', '2026-07-31', '', '', '', '', true
+            );
+        } finally {
+            if ($valorAnterior === null) {
+                unset($_ENV['VALOR_REFEICAO']);
+            } else {
+                $_ENV['VALOR_REFEICAO'] = $valorAnterior;
+            }
+        }
+
+        $this->assertTrue($dados['consolidado']);
+        $this->assertSame('concluido', $dados['status']);
+        $this->assertCount(1, $dados['funcionarios']);
+        $this->assertSame('FUNCIONARIO TESTE', $dados['funcionarios']['60001']['nome']);
+        $this->assertSame(2, $dados['funcionarios']['60001']['quantidade']);
+        $this->assertSame(25.0, $dados['funcionarios']['60001']['valor_total']);
+    }
+
+    public function testCsvConsolidadoIncluiQuantidadeEValorTotal(): void
+    {
+        $csv = RelatorioService::csv([
+            'funcionarios' => [
+                '60001' => [
+                    'nome'        => 'FUNCIONÁRIO; TESTE',
+                    'quantidade'  => 2,
+                    'valor_total' => 25.0,
+                ],
+            ],
+        ]);
+
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
+        $this->assertStringContainsString('Matrícula;Nome;Quantidade;"Valor total"', $csv);
+        $this->assertStringContainsString('60001;"FUNCIONÁRIO; TESTE";2;25,00', $csv);
+    }
+
+    public function testNomeArquivoCsvIncluiPeriodo(): void
+    {
+        $nome = RelatorioService::nomeArquivoCsv([
+            'dataInicio' => '2026-07-01',
+            'dataFim'    => '2026-07-31',
+        ]);
+
+        $this->assertSame('relatorio_refeitorio_20260701_20260731.csv', $nome);
+    }
 }

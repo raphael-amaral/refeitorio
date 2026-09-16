@@ -48,6 +48,7 @@ $router->get('/scanner/lista-hoje', 'App\Controllers\ScannerController', 'listaH
 // Relatórios (snd, dp e dev)
 // ---------------------------------------------------------------------------
 $router->get('/relatorios/pdf', 'App\Controllers\RelatorioController', 'pdf',   ['App\Middleware\Auth@relatorio']);
+$router->get('/relatorios/csv', 'App\Controllers\RelatorioController', 'csv',   ['App\Middleware\Auth@relatorio']);
 $router->get('/relatorios',     'App\Controllers\RelatorioController', 'index', ['App\Middleware\Auth@relatorio']);
 
 // ---------------------------------------------------------------------------

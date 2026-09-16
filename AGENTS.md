@@ -1,5 +1,14 @@
 # AGENTS.md
 
+## 0. Environment safety — mandatory
+
+- Treat `/home/raphael/raphael/projetos/refeitorio` as the production checkout.
+- Make all future code changes in `/home/raphael/raphael/projetos/refeitorio-teste` by default.
+- Before editing files, verify the current directory and repository. If the task starts in the production checkout, switch the working directory to `../refeitorio-teste` before making changes.
+- Production may be inspected with read-only commands, but do not edit files, run migrations, rebuild/restart services, or deploy there unless the user explicitly authorizes a production action in the current request.
+- Never copy changes from test to production or deploy them without an explicit request from the user.
+- If `refeitorio-teste` is unavailable or cannot be written, stop and tell the user instead of falling back to production.
+
 ## General behavioral guidelines
 
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.

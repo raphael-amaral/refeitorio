@@ -63,6 +63,61 @@ class BackupScriptsTest extends ProcessTestCase
         $this->assertSame([], glob($this->backupDirectory . '/diarios/*'));
     }
 
+    public function testBackupMantemTodosOsArquivosDosUltimosSeteDias(): void
+    {
+        $hoje = new \DateTimeImmutable('today');
+        $arquivosMantidos = [];
+
+        for ($diasAtras = 0; $diasAtras <= 6; $diasAtras++) {
+            $data = $hoje->modify("-{$diasAtras} days")->format('Y-m-d');
+            $arquivo = $this->backupDirectory . "/diarios/backup_refeitorio_test_{$data}_00-00-00.sql";
+            file_put_contents($arquivo, "backup {$data}\n");
+            $arquivosMantidos[] = $arquivo;
+        }
+
+        $arquivoAntigo = $this->backupDirectory . '/diarios/backup_refeitorio_test_'
+            . $hoje->modify('-7 days')->format('Y-m-d') . '_00-00-00.sql';
+        file_put_contents($arquivoAntigo, "backup antigo\n");
+
+        $result = $this->runProcess(
+            ['/bin/bash', $this->projectDirectory . '/scripts/backup_mysql.sh'],
+            '',
+            $this->processEnvironment(['FAKE_MYSQLDUMP_MODE' => 'success'])
+        );
+
+        $this->assertSame(0, $result['exitCode'], $result['stderr']);
+        $this->assertFileDoesNotExist($arquivoAntigo);
+        foreach ($arquivosMantidos as $arquivoMantido) {
+            $this->assertFileExists($arquivoMantido);
+        }
+        $this->assertCount(8, glob($this->backupDirectory . '/diarios/backup_refeitorio_test_*.sql'));
+    }
+
+    public function testBackupRemoveArquivosOperacionaisComMaisDeTrintaDias(): void
+    {
+        foreach (['pre_restore', 'manual_migrations'] as $diretorio) {
+            mkdir($this->backupDirectory . '/' . $diretorio, 0700, true);
+            $arquivoAntigo = $this->backupDirectory . "/{$diretorio}/antigo.sql";
+            $arquivoRecente = $this->backupDirectory . "/{$diretorio}/recente.sql";
+            file_put_contents($arquivoAntigo, "antigo\n");
+            file_put_contents($arquivoRecente, "recente\n");
+            touch($arquivoAntigo, time() - (31 * 86400));
+            touch($arquivoRecente, time() - (29 * 86400));
+        }
+
+        $result = $this->runProcess(
+            ['/bin/bash', $this->projectDirectory . '/scripts/backup_mysql.sh'],
+            '',
+            $this->processEnvironment(['FAKE_MYSQLDUMP_MODE' => 'success'])
+        );
+
+        $this->assertSame(0, $result['exitCode'], $result['stderr']);
+        foreach (['pre_restore', 'manual_migrations'] as $diretorio) {
+            $this->assertFileDoesNotExist($this->backupDirectory . "/{$diretorio}/antigo.sql");
+            $this->assertFileExists($this->backupDirectory . "/{$diretorio}/recente.sql");
+        }
+    }
+
     public function testRestauracaoCriaBackupDeSegurancaAntesDeImportar(): void
     {
         $arquivoSelecionado = $this->backupDirectory . '/diarios/backup_refeitorio_test_2026-08-26_02-00-00.sql';

@@ -13,10 +13,11 @@ O backup opera em duas camadas independentes: o **servidor Linux** gera os dumps
        │                    │                         │
        ▼                    ▼                        ▼
   backups_refeitorio/backups/             C:\...\backups_refeitorio\backups\
-    ├── diarios/       (7 arquivos)          (cópia local via SCP, mesma estrutura)
+    ├── diarios/       (últimos 7 dias)      (cópia local via SCP)
     ├── fim_mes/       (indefinido)
     ├── questor/       (indefinido, escrito direto pelo container)
-    └── pre_restore/   (indefinido, gerado por restaurar_backup.sh)
+    ├── pre_restore/   (30 dias, somente servidor)
+    └── manual_migrations/ (30 dias, somente servidor)
 ```
 
 ---
@@ -42,7 +43,8 @@ Executa todo dia às **02:00**.
    ```
    backups_refeitorio/backups/fim_mes/backup_refeitorio_snd_FIM_JULHO_YYYY.sql
    ```
-5. Mantém exatamente os **7 arquivos mais recentes** em `diarios/`. `fim_mes/` nunca é tocado por essa rotina — fica em pasta separada.
+5. Mantém todos os backups das **7 datas mais recentes, incluindo hoje**, em `diarios/`. Execuções adicionais no mesmo dia não reduzem a cobertura dos outros dias.
+6. Remove de `pre_restore/` e `manual_migrations/` os arquivos `.sql` com mais de 30 dias. `fim_mes/` nunca é tocado por essa rotina — fica em pasta separada.
 
 Backups **Questor** não passam por esse script: o container web escreve direto em `backups_refeitorio/backups/questor/` a cada exportação (ver seção própria abaixo).
 
@@ -50,12 +52,13 @@ Backups **Questor** não passam por esse script: o container web escreve direto 
 
 | Tipo              | Pasta           | Retenção                   |
 |-------------------|-----------------|-----------------------------|
-| Diário            | `diarios/`      | Os 7 arquivos mais recentes|
+| Diário            | `diarios/`      | Todos dos últimos 7 dias   |
 | Fim de mês        | `fim_mes/`      | Indefinida                 |
 | Questor           | `questor/`      | Indefinida                 |
-| Pré-restauração   | `pre_restore/`  | Indefinida (manual)        |
+| Pré-restauração   | `pre_restore/`  | 30 dias, somente servidor  |
+| Migração manual   | `manual_migrations/` | 30 dias, somente servidor |
 
-Fim de mês, Questor e pré-restauração não têm rotação automática — são registros de auditoria/desconto em folha, não backups de curto prazo, e o volume de dados é pequeno o suficiente para não pesar no disco com o tempo.
+Fim de mês e Questor não têm rotação automática. Os fechamentos mensais são pontos periódicos de recuperação; os backups Questor preservam o estado do banco associado a cada exportação para auditoria.
 
 ### Backup Questor (exportação de vale-refeição)
 
@@ -63,13 +66,13 @@ Toda vez que o RH exporta o CSV Questor em `/questor/exportar` (usado para desco
 ```
 backups_refeitorio/backups/questor/questor_<banco>_<data_inicio>_<data_fim>_<HHMMSS>.sql
 ```
-O nome do banco (`refeitorio_snd` em produção, `refeitorio_teste` em teste) fica sempre no nome do arquivo, já que ambiente de produção e teste compartilham o mesmo `BACKUP_DIR` neste servidor.
+O nome do banco (`refeitorio_snd` em produção, `refeitorio_teste` em teste) fica sempre no nome do arquivo. Cada ambiente deve usar um `BACKUP_DIR` diferente: `backups_refeitorio/backups` em produção e `backups_refeitorio_teste/backups` em teste.
 
 Isso exige um bind mount do host para dentro do container (ver `compose.yaml`), para que o `mysqldump` do PHP escreva direto no destino final — sem depender do cron noturno para "materializar" o backup fora do container.
 
 O nome do arquivo gerado é salvo na coluna `arquivo_backup` da tabela `questor_exportacoes`, junto com o restante do histórico daquela exportação.
 
-O dump é escrito primeiro com extensão `.tmp` e só é publicado como `.sql` depois de o `mysqldump` terminar com sucesso e produzir conteúdo. Se isso falhar, o temporário é removido e a exportação do CSV é cancelada.
+O dump é escrito primeiro com extensão `.tmp` e só é publicado como `.sql` depois de o `mysqldump` terminar com sucesso e produzir conteúdo. Se isso falhar, o temporário é removido, a falha fica registrada na auditoria e a exportação do CSV continua normalmente com `arquivo_backup` nulo no histórico.
 
 ### Atualização de uma instalação existente
 
@@ -98,7 +101,7 @@ Backups anteriores que ainda estejam diretamente na raiz de `BACKUP_DIR` continu
 | `DB_USERNAME`     | Sim         | Usuário do banco                  |
 | `DB_PASSWORD`     | Sim         | Senha do banco                    |
 | `DB_DATABASE`     | Sim         | Nome do banco                     |
-| `BACKUP_DIR`      | Sim         | Diretório absoluto compartilhado  |
+| `BACKUP_DIR`      | Sim         | Diretório absoluto exclusivo do ambiente |
 
 ---
 
@@ -112,19 +115,22 @@ Backups anteriores que ainda estejam diretamente na raiz de `BACKUP_DIR` continu
 
 ### O que faz
 
-1. Baixa via **SCP**, recursivamente, toda a árvore de pastas do servidor Linux:
-   - **Origem:** `usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups/.`
-   - **Destino:** `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (mesma estrutura de subpastas)
-2. Após o download, **remove** apenas de `%DESTINO%\diarios\` os backups que não sejam de hoje nem de ontem. As pastas `fim_mes\`, `questor\` e `pre_restore\` nunca são tocadas por essa limpeza — ficam com o histórico completo.
+1. Baixa via **SCP** somente as pastas de produção `diarios/`, `fim_mes/` e `questor/`:
+   - **Origem:** `usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups`
+   - **Destino:** `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\`
+2. Após o download, remove de `%DESTINO%\diarios\` os backups de produção anteriores aos últimos 7 dias. `fim_mes\` e `questor\` ficam com o histórico completo.
+3. `pre_restore/`, `manual_migrations/` e todo o ambiente de teste não são transferidos para o Windows.
 
 ### Retenção na máquina Windows
 
 | Tipo              | Pasta          | Retenção                      |
 |-------------------|----------------|--------------------------------|
-| Diário            | `diarios\`     | Hoje + ontem (2 arquivos)     |
+| Diário            | `diarios\`     | Todos dos últimos 7 dias      |
 | Fim de mês        | `fim_mes\`     | Todos (não são removidos)     |
 | Questor           | `questor\`     | Todos (não são removidos)     |
-| Pré-restauração   | `pre_restore\` | Todos (não são removidos)     |
+| Pré-restauração   | —              | Não é baixado                 |
+| Migração manual   | —              | Não é baixado                 |
+| Ambiente de teste | —              | Não é baixado                 |
 
 ---
 
@@ -266,7 +272,8 @@ A nova máquina precisa de chave SSH própria registrada no servidor Linux.
 
 | Local                                                                          | Descrição                        |
 |--------------------------------------------------------------------------------|----------------------------------|
-| `/home/usuario/raphael/projetos/backups_refeitorio/backups/` (servidor Linux)  | Fonte primária — `diarios/`, `fim_mes/`, `questor/`, `pre_restore/` |
-| `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (Windows INF010)| Cópia secundária baixada via SCP, mesma estrutura de subpastas |
+| `/home/usuario/raphael/projetos/backups_refeitorio/backups/` (servidor Linux) | Produção — todas as categorias |
+| `/home/usuario/raphael/projetos/backups_refeitorio_teste/backups/` (servidor Linux) | Teste — isolado e não transferido |
+| `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (Windows INF010)| Cópia secundária de `diarios/`, `fim_mes/` e `questor/` de produção |
 
-Este `BACKUP_DIR` é **compartilhado** entre o ambiente de produção (`refeitorio`, banco `refeitorio_snd`) e o de teste (`refeitorio-teste`, banco `refeitorio_teste`) neste servidor — por isso o nome do banco sempre aparece no nome de cada arquivo, em todas as categorias.
+Produção e teste devem usar diretórios separados. O `.env` de `refeitorio` aponta para `backups_refeitorio/backups`; o de `refeitorio-teste`, para `backups_refeitorio_teste/backups`.

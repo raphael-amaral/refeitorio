@@ -9,7 +9,7 @@ REM NAO RODE ESSE ARQUIVO PELO VSCODE OU LINUX!!! Ele precisa ser rodado no Wind
 
 REM Configuracao
 set "DESTINO=C:\Users\usuario\estagio\producao\backups_refeitorio\backups"
-set "ORIGEM=usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups/."
+set "ORIGEM=usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups"
 
 echo [INFO] Iniciando download de backups...
 
@@ -17,21 +17,21 @@ if not exist "%DESTINO%" (
     mkdir "%DESTINO%"
 )
 
-scp -r %ORIGEM% "%DESTINO%"
-if errorlevel 1 (
-    echo [ERRO] Falha ao baixar backups via SCP.
-    exit /b 1
+REM Baixa apenas as categorias que devem ter copia no Windows.
+for %%D in (diarios fim_mes questor) do (
+    if not exist "%DESTINO%\%%D" mkdir "%DESTINO%\%%D"
+    scp -r "%ORIGEM%/%%D/." "%DESTINO%\%%D"
+    if errorlevel 1 (
+        echo [ERRO] Falha ao baixar a categoria %%D via SCP.
+        exit /b 1
+    )
 )
 
-echo [INFO] Download concluido. Limpando diarios antigos (fim_mes, questor e pre_restore ficam intactos)...
+echo [INFO] Download concluido. Mantendo as 7 datas mais recentes em diarios...
 
-REM Datas para manter
-for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set "HOJE=%%a"
-for /f %%a in ('powershell -NoProfile -Command "(Get-Date).AddDays(-1).ToString(\"yyyy-MM-dd\")"') do set "ONTEM=%%a"
-
-REM Remove, apenas na pasta diarios, arquivos que NAO sejam de hoje ou ontem
+REM Remove apenas diarios de producao anteriores as 7 datas mais recentes, incluindo hoje.
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$p='%DESTINO%\diarios'; $hoje='%HOJE%'; $ontem='%ONTEM%'; if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { $n=$_.Name; if ($n -notmatch $hoje -and $n -notmatch $ontem) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } }"
+    "$p='%DESTINO%\diarios'; $limite=(Get-Date).Date.AddDays(-6); if (Test-Path $p) { Get-ChildItem -Path $p -Filter 'backup_refeitorio_snd_*.sql' -File | ForEach-Object { if ($_.BaseName -match '^backup_refeitorio_snd_(\d{4}-\d{2}-\d{2})_') { $data=[datetime]::ParseExact($Matches[1], 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture); if ($data -lt $limite) { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } } } }"
 
 if errorlevel 1 (
     echo [ERRO] Falha durante limpeza dos backups antigos.

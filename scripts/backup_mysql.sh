@@ -61,13 +61,23 @@ if [[ "$(date -d tomorrow +%d)" == "01" ]]; then
   cp "$FILE_PATH" "$FINAL_MES_FILE"
 fi
 
-# Mantem exatamente os 7 backups diarios mais recentes.
-mapfile -t BACKUPS_DIARIOS < <(
-  find "$DIR_DIARIOS" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" \
-    -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-
+# Mantem todos os backups das 7 datas mais recentes, incluindo hoje.
+LIMITE_DIARIOS="$(date -d '6 days ago' +%Y-%m-%d)"
+while IFS= read -r -d '' backup_diario; do
+  nome_backup="${backup_diario##*/}"
+  data_backup="${nome_backup#backup_${DB_DATABASE}_}"
+  data_backup="${data_backup:0:10}"
+
+  if [[ "$data_backup" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ && "$data_backup" < "$LIMITE_DIARIOS" ]]; then
+    rm -- "$backup_diario"
+  fi
+done < <(
+  find "$DIR_DIARIOS" -maxdepth 1 -type f -name "backup_${DB_DATABASE}_*.sql" -print0
 )
-if (( ${#BACKUPS_DIARIOS[@]} > 7 )); then
-  for backup_antigo in "${BACKUPS_DIARIOS[@]:7}"; do
-    rm -- "$backup_antigo"
-  done
-fi
+
+# Backups operacionais ficam apenas no servidor por 30 dias.
+for diretorio_operacional in "$DIR_BACKUP/pre_restore" "$DIR_BACKUP/manual_migrations"; do
+  if [[ -d "$diretorio_operacional" ]]; then
+    find "$diretorio_operacional" -maxdepth 1 -type f -name '*.sql' -mmin +43200 -exec rm -- {} +
+  fi
+done

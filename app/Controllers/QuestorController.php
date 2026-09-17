@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Exceptions\PeriodoInvalidoException;
-use App\Exceptions\QuestorBackupException;
 use App\Models\QuestorExportacao;
 use App\Services\QuestorService;
 
@@ -48,9 +47,6 @@ class QuestorController extends Controller
             ]);
         } catch (PeriodoInvalidoException $e) {
             $this->flash($e->getMessage(), 'error');
-            $this->redirect('/questor');
-        } catch (QuestorBackupException $e) {
-            $this->flash($e->getMessage() . ' A exportação foi cancelada.', 'error');
             $this->redirect('/questor');
         }
 

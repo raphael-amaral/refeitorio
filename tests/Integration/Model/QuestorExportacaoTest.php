@@ -23,4 +23,21 @@ class QuestorExportacaoTest extends DatabaseTestCase
 
         $this->assertSame('questor_refeitorio_snd_20260701_20260731_120000.sql', $ultima['arquivo_backup']);
     }
+
+    public function testPersisteExportacaoSemBackupQuandoDumpFalha(): void
+    {
+        $this->inserirUsuario('dp02', 'DEPARTAMENTO PESSOAL', 'dp');
+
+        QuestorExportacao::criar([
+            'data_inicio'    => '2026-08-01',
+            'data_fim'       => '2026-08-31',
+            'valor_refeicao' => 15.0,
+            'exportado_por'  => 'dp02',
+            'arquivo_backup' => null,
+        ]);
+
+        $ultima = QuestorExportacao::ultima();
+
+        $this->assertNull($ultima['arquivo_backup']);
+    }
 }

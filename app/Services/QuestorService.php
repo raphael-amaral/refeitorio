@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Core\Audit;
 use App\Exceptions\PeriodoInvalidoException;
-use App\Exceptions\QuestorBackupException;
 use App\Models\Registro;
 
 class QuestorService
@@ -94,11 +93,10 @@ class QuestorService
     }
 
     /**
-     * Gera um backup do banco via mysqldump. A suíte simula o processo para validar publicação
-     * e falhas sem acessar o MySQL configurado. Retorna o nome do arquivo publicado; uma falha
-     * cancela a exportação do CSV.
+     * Gera um backup do banco via mysqldump. Retorna o nome do arquivo publicado ou null quando
+     * o backup falha. A falha é auditada, mas não impede a exportação do CSV.
      */
-    public static function gerarBackup(string $dataInicio, string $dataFim): string
+    public static function gerarBackup(string $dataInicio, string $dataFim): ?string
     {
         $host     = $_ENV['DB_HOST']     ?? 'host.docker.internal';
         $port     = $_ENV['DB_PORT']     ?? '3103';
@@ -110,7 +108,7 @@ class QuestorService
         $dir       = $backupDir . '/questor';
         if ($backupDir === '' || (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir))) {
             Audit::write('questor_backup', 'error', null, ['saida' => 'BACKUP_DIR ausente ou diretório inacessível.']);
-            throw new QuestorBackupException();
+            return null;
         }
 
         $sufixo      = str_replace('-', '', $dataInicio) . '_' . str_replace('-', '', $dataFim);
@@ -141,7 +139,7 @@ class QuestorService
                 unlink($arquivoErro);
             }
             Audit::write('questor_backup', 'error', null, ['saida' => $erro]);
-            throw new QuestorBackupException();
+            return null;
         }
 
         if (is_file($arquivoErro)) {
@@ -153,7 +151,7 @@ class QuestorService
                 unlink($temporario);
             }
             Audit::write('questor_backup', 'error', null, ['saida' => 'Dump vazio ou falha ao publicar o arquivo.']);
-            throw new QuestorBackupException();
+            return null;
         }
 
         Audit::write('questor_backup', 'success', null, ['arquivo' => $nomeArquivo]);

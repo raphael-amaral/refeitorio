@@ -3,7 +3,6 @@
 namespace Tests\Integration\Service;
 
 use App\Core\Audit;
-use App\Exceptions\QuestorBackupException;
 use App\Services\QuestorService;
 use Tests\Support\ProcessTestCase;
 
@@ -93,31 +92,27 @@ SH);
         $this->assertSame([], glob($_ENV['BACKUP_DIR'] . '/questor/*.{tmp,err}', GLOB_BRACE));
     }
 
-    public function testGerarBackupRemoveTemporariosQuandoMysqldumpFalha(): void
+    public function testGerarBackupRetornaNullERemoveTemporariosQuandoMysqldumpFalha(): void
     {
         putenv('FAKE_MYSQLDUMP_MODE=failure');
 
-        try {
-            QuestorService::gerarBackup('2026-08-01', '2026-08-31');
-            $this->fail('Era esperada uma falha no backup.');
-        } catch (QuestorBackupException) {
-            $arquivos = glob($_ENV['BACKUP_DIR'] . '/questor/*');
-            $this->assertSame([], $arquivos);
-            $this->assertStringContainsString('falha simulada do mysqldump', file_get_contents($this->temporaryDirectory . '/audit.log'));
-        }
+        $nomeArquivo = QuestorService::gerarBackup('2026-08-01', '2026-08-31');
+
+        $arquivos = glob($_ENV['BACKUP_DIR'] . '/questor/*');
+        $this->assertNull($nomeArquivo);
+        $this->assertSame([], $arquivos);
+        $this->assertStringContainsString('falha simulada do mysqldump', file_get_contents($this->temporaryDirectory . '/audit.log'));
     }
 
-    public function testGerarBackupRejeitaDumpVazioSemPublicarArquivo(): void
+    public function testGerarBackupRetornaNullParaDumpVazioSemPublicarArquivo(): void
     {
         putenv('FAKE_MYSQLDUMP_MODE=empty');
 
-        try {
-            QuestorService::gerarBackup('2026-08-01', '2026-08-31');
-            $this->fail('Era esperada uma falha para dump vazio.');
-        } catch (QuestorBackupException) {
-            $arquivos = glob($_ENV['BACKUP_DIR'] . '/questor/*');
-            $this->assertSame([], $arquivos);
-            $this->assertStringContainsString('Dump vazio', file_get_contents($this->temporaryDirectory . '/audit.log'));
-        }
+        $nomeArquivo = QuestorService::gerarBackup('2026-08-01', '2026-08-31');
+
+        $arquivos = glob($_ENV['BACKUP_DIR'] . '/questor/*');
+        $this->assertNull($nomeArquivo);
+        $this->assertSame([], $arquivos);
+        $this->assertStringContainsString('Dump vazio', file_get_contents($this->temporaryDirectory . '/audit.log'));
     }
 }

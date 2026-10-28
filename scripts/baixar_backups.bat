@@ -9,7 +9,7 @@ REM NAO RODE ESSE ARQUIVO PELO VSCODE OU LINUX!!! Ele precisa ser rodado no Wind
 
 REM Configuracao
 set "DESTINO=C:\Users\usuario\estagio\producao\backups_refeitorio\backups"
-set "ORIGEM=usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups"
+set "ORIGEM=raphael@10.1.0.225:/home/raphael/backups/backups_refeitorio/backups"
 
 echo [INFO] Iniciando download de backups...
 

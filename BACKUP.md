@@ -27,7 +27,7 @@ O backup opera em duas camadas independentes: o **servidor Linux** gera os dumps
 **Arquivo:** `scripts/backup_mysql.sh`  
 **Agendamento (crontab do usuário `usuario`):**
 ```
-0 2 * * * /home/usuario/raphael/projetos/refeitorio/scripts/backup_mysql.sh
+0 2 * * * /home/raphael/projetos/refeitorio/scripts/backup_mysql.sh
 ```
 Executa todo dia às **02:00**.
 
@@ -116,7 +116,7 @@ Backups anteriores que ainda estejam diretamente na raiz de `BACKUP_DIR` continu
 ### O que faz
 
 1. Baixa via **SCP** somente as pastas de produção `diarios/`, `fim_mes/` e `questor/`:
-   - **Origem:** `usuario@10.1.0.225:/home/usuario/raphael/projetos/backups_refeitorio/backups`
+   - **Origem:** `usuario@10.1.0.225:/home/raphael/backups/backups_refeitorio/backups`
    - **Destino:** `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\`
 2. Após o download, remove de `%DESTINO%\diarios\` os backups de produção anteriores aos últimos 7 dias. `fim_mes\` e `questor\` ficam com o histórico completo.
 3. `pre_restore/`, `manual_migrations/` e todo o ambiente de teste não são transferidos para o Windows.
@@ -184,7 +184,7 @@ O IP do servidor está hardcoded na variável `ORIGEM` do `.bat` no Windows.
 1. Clonar o repositório e configurar o `.env` normalmente.
 2. Criar o diretório de backups:
    ```bash
-   mkdir -p /home/usuario/raphael/projetos/backups_refeitorio/backups
+   mkdir -p /home/raphael/backups/backups_refeitorio/backups
    ```
 3. Autorizar a chave SSH do INF010 para que o SCP continue funcionando:
    ```bash
@@ -202,14 +202,14 @@ O IP do servidor está hardcoded na variável `ORIGEM` do `.bat` no Windows.
    ```
    Adicionar:
    ```
-   0 2 * * * /home/usuario/raphael/projetos/refeitorio/scripts/backup_mysql.sh
+   0 2 * * * /home/raphael/projetos/refeitorio/scripts/backup_mysql.sh
    ```
 
 **No Windows INF010 (e no repositório):**
 
 5. Editar a variável `ORIGEM` nos **dois arquivos** `.bat` com o novo IP:
    ```bat
-   set "ORIGEM=usuario@NOVO_IP:/home/usuario/raphael/projetos/backups_refeitorio/backups/."
+   set "ORIGEM=usuario@NOVO_IP:/home/raphael/backups/backups_refeitorio/backups/."
    ```
    - `C:\Users\usuario\estagio\producao\backups_refeitorio\baixar_backups.bat`
    - `scripts/baixar_backups.bat` (no repositório)
@@ -272,8 +272,8 @@ A nova máquina precisa de chave SSH própria registrada no servidor Linux.
 
 | Local                                                                          | Descrição                        |
 |--------------------------------------------------------------------------------|----------------------------------|
-| `/home/usuario/raphael/projetos/backups_refeitorio/backups/` (servidor Linux) | Produção — todas as categorias |
-| `/home/usuario/raphael/projetos/backups_refeitorio_teste/backups/` (servidor Linux) | Teste — isolado e não transferido |
+| `/home/raphael/backups/backups_refeitorio/backups/` (servidor Linux) | Produção — todas as categorias |
+| `/home/raphael/backups/backups_refeitorio_teste/backups/` (servidor Linux) | Teste — isolado e não transferido |
 | `C:\Users\usuario\estagio\producao\backups_refeitorio\backups\` (Windows INF010)| Cópia secundária de `diarios/`, `fim_mes/` e `questor/` de produção |
 
 Produção e teste devem usar diretórios separados. O `.env` de `refeitorio` aponta para `backups_refeitorio/backups`; o de `refeitorio-teste`, para `backups_refeitorio_teste/backups`.

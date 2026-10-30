@@ -10,7 +10,7 @@ Este diretório é o ambiente de testes isolado do sistema Refeitório. Alteraç
 [GitHub — branch develop]                [GitHub — branch main]
         │                                         │
         ▼                                         ▼
-/home/usuario/raphael/projetos/       /home/raphael/projeto/
+/home/raphael/projetos/       /home/raphael/projeto/
   refeitorio-teste/                     refeitorio/
   (ESTE DIRETÓRIO — TESTE)              (PRODUÇÃO)
   Porta web : 8151                      Porta web : 8101
@@ -63,7 +63,7 @@ As demais variáveis já têm valores padrão adequados para teste e podem ser a
 ## 2. Subir os containers
 
 ```bash
-cd /home/usuario/raphael/projetos/refeitorio-teste
+cd /home/raphael/projetos/refeitorio-teste
 
 # Primeira vez (ou após rebuild do Dockerfile)
 docker compose up -d --build
